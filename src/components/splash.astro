@@ -5,6 +5,7 @@ import astronautImage from "~/assets/astronaut.png";
 import logo from "~/assets/logo_white.png";
 import HeroImage from "~/components/hero-image.astro";
 import Starfield from "~/components/starfield.astro";
+import Boba3D from "~/components/boba-3d.astro";
 
 const widths = [450, 800];
 const sizes = "(min-width: 640px) 42vw, 67vw";
@@ -16,32 +17,31 @@ const sizes = "(min-width: 640px) 42vw, 67vw";
     <HeroImage />
   </div>
   <div class="relative grid h-full place-items-center sm:grid-cols-2">
-    <h2
-      class="flex flex-col gap-2 self-end sm:gap-4 sm:self-auto sm:justify-self-end"
-    >
+    <h2 class="self-end sm:self-auto sm:justify-self-end">
       <!-- <Icon name="logomark" class="h-24 text-white md:h-32" /> -->
-      <Image class="" src={logo} height={[200]} />
+      <!-- <Image class="" src={logo} height={[200]} /> -->
       <div
-        class="gradient-text text-center font-extrabold tracking-tighter text-8xl"
+        class="gradient-text text-center font-extrabold tracking-tighter text-3xl sm:text-5xl"
       >
-        Build fast
-        <br /> websites,
-        <br /> faster.
+        Your Tea. <br />
+        How you like it. <br />
+        On your time.
       </div>
     </h2>
-    <div
-      id="astronaut"
-      class="w-2/3 max-w-3xl self-start sm:w-10/12 sm:self-auto sm:justify-self-start"
-    >
-      <Picture
-        class="object-cover w-full h-full"
-        src={astronautImage}
-        widths={widths}
-        sizes={sizes}
-        loading="eager"
-        alt="A floating astronaut in a space suit"
-      />
-    </div>
+    <Boba3D />
+    <!-- <div
+         id="astronaut"
+         class="w-2/3 max-w-3xl self-start sm:w-10/12 sm:self-auto sm:justify-self-start"
+         >
+         <Picture
+         class="object-cover w-full h-full"
+         src={astronautImage}
+         widths={widths}
+         sizes={sizes}
+         loading="eager"
+         alt="A floating astronaut in a space suit"
+         />
+         </div> -->
   </div>
 </section>
 

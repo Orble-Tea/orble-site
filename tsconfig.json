@@ -1,6 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
+    "target": "es2017",
     // Alias `src` to `~`
     "baseUrl": ".",
     "paths": {

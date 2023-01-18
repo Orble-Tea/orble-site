@@ -1,6 +1,7 @@
 import image from "@astrojs/image";
 import tailwind from "@astrojs/tailwind";
 import { defineConfig } from "astro/config";
+import glsl from "vite-plugin-glsl";
 
 // https://astro.build/config
 export default defineConfig({
@@ -12,6 +13,10 @@ export default defineConfig({
     }),
   ],
   vite: {
+    plugins: [glsl({ watch: false })],
+    build: {
+      target: "es2017"
+    },
     ssr: {
       external: ["svgo"],
     },
