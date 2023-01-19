@@ -3,6 +3,7 @@ import {
   Renderer,
   Camera,
   Transform,
+  Texture,
   Program,
   GLTFLoader,
   Vec2,
@@ -11,13 +12,31 @@ import {
   RendererSortable,
   Mesh,
   Orbit,
+  Vec3,
 } from "ogl";
 
-import vert from "./standard.vert"
-import frag from "./plastic.frag"
+import vert from "./standard.vert";
+import frag from "./plastic.frag";
 
 function degrees(...angles: number[]): number[] {
   return angles.map((r) => (r * Math.PI) / 180);
+}
+
+// See https://stackoverflow.com/a/66180709
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  })
+;
+
+function getTexture(src: string, generateMipmaps = true) {
+  const texture = new Texture(gl, { generateMipmaps });
+  texture.flipY = false;
+  loadImage(src).then(img => texture.image = img);
+  return texture;
 }
 
 const renderer = new Renderer({
@@ -35,18 +54,21 @@ gl.clearColor(1.0, 1.0, 1.0, 0.0);
 // const post = new Post(gl);
 
 const uniforms = {
-  uTime: { value: 0 },
-  uResolution: { value: new Vec2(gl.canvas.width, gl.canvas.height) },
+  tBaseColor: { value: getTexture("/logo_new.png") },
+  tLUT: { value: getTexture("/lut.png", false) },
+  tEnvDiffuse: { value: getTexture("/waterfall-diffuse-RGBM.png", false) },
+  tEnvSpecular: { value: getTexture("/waterfall-specular-RGBM.png", false) },
 };
 
 const camera = new Camera(gl, { near: 1, far: 1000 });
-camera.position.z = 3;
+camera.position = new Vec3(0, 3.5, 6.5);
 const controls = new Orbit(camera);
+controls.target = new Vec3(0, 1.4, 0);
+// controls.enabled = false;
 
 // TODO: do this 'properly'
 function resize() {
   renderer.setSize(el?.clientWidth!, el?.clientHeight!);
-  uniforms.uResolution.value.set(gl.canvas.width, gl.canvas.height);
   const aspect = gl.canvas.width / gl.canvas.height;
   camera.perspective({
     aspect: gl.canvas.width / gl.canvas.height,
@@ -78,26 +100,28 @@ const plasticMat = new Program(gl, {
 });
 
 interface GLTFTransform extends Transform {
-  name: string
+  name: string;
 }
 
 interface BobaScene {
-  [key: string]: GLTFTransform
-  cup: GLTFTransform
-  lid: GLTFTransform
-  stars: GLTFTransform
-  tea: GLTFTransform
-  boba: GLTFTransform
-};
+  [key: string]: GLTFTransform;
+  cup: GLTFTransform;
+  lid: GLTFTransform;
+  stars: GLTFTransform;
+  tea: GLTFTransform;
+  boba: GLTFTransform;
+}
+
+let bs: BobaScene;
 
 async function loadInitial() {
-  const modelPath = "/boba_mat.glb";
+  const modelPath = "/boba_logo.glb";
   const gltf = await GLTFLoader.load(gl, modelPath);
   console.log(gltf);
 
   const test = gltf.scene as Mesh[];
 
-  const bs = test.reduce((acc, node) => {
+  bs = test.reduce((acc, node) => {
     acc[node.name] = node;
     return acc;
   }, {} as BobaScene);
@@ -107,14 +131,16 @@ async function loadInitial() {
   // );
 
   (bs.cup.children[0] as RendererSortable).program = plasticMat;
+  (bs.lid.children[0] as RendererSortable).program = plasticMat;
 
-  Object.values(bs).forEach(o => o.setParent(scene));
+  Object.values(bs).forEach((o) => o.setParent(scene));
 
   console.log(scene);
   requestAnimationFrame(update);
 }
 
 loadInitial();
+scene.rotation.y -= 90;
 
 // const controls = new Orbit(camera);
 // const grid = new GridHelper(gl, { size: 10, divisions: 10 });
@@ -143,10 +169,10 @@ function update(time: number) {
   requestAnimationFrame(update);
   // outlineProgram.uniforms.uTime.value = time * 0.001;
 
-  scene.rotation.y -= 0.02;
+  // bs.cup.rotation.y -= 0.02;
   // mesh.rotation.x += 0.03;
   // console.log(camera.position);
   // console.log(camera.rotation.x + " " + camera.rotation.y + " " + camera.rotation.z);
   controls.update();
-  renderer.render({ scene, camera, sort: true});
+  renderer.render({ scene, camera, sort: true });
 }

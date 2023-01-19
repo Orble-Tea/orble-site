@@ -1,10 +1,11 @@
+import { defineConfig } from "astro/config";
 import image from "@astrojs/image";
 import tailwind from "@astrojs/tailwind";
-import { defineConfig } from "astro/config";
 import glsl from "vite-plugin-glsl";
 
 // https://astro.build/config
 export default defineConfig({
+  // watch: true,
   site: "http://localhost:3000", // TODO: set site url
   integrations: [
     tailwind(),
@@ -13,12 +14,15 @@ export default defineConfig({
     }),
   ],
   vite: {
-    plugins: [glsl({ watch: false })],
+    plugins: [glsl()],
     build: {
-      target: "es2017"
+      target: "safari14"
     },
     ssr: {
       external: ["svgo"],
     },
+    server: {
+      port: 3000
+    }
   },
 });

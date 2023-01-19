@@ -1,18 +1,20 @@
 #version 300 es
+
 in vec3 position;
 in vec2 uv;
 in vec3 normal;
 // in mat4 instanceMatrix;
 
+// uniforms passed in by OGL
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 modelMatrix;
 uniform mat3 normalMatrix;
 
-out vec2 vUv;
-out vec3 vNormal;
-out vec3 vMPos;
-out vec4 vMVPos;
+out vec2 v_uv;
+out vec3 v_normal;
+out vec3 v_modelPos;
+out vec4 v_modelViewPos;
 
 void main() {
   vec4 pos = vec4(position, 1);
@@ -25,10 +27,10 @@ void main() {
   //   nml = m * nml;
   // #endif
 
-  vUv = uv;
-  vNormal = normalize(nml);
-  vec4 mPos = modelMatrix * pos;
-  vMPos = mPos.xyz / mPos.w;
-  vMVPos = modelViewMatrix * pos;
-  gl_Position = projectionMatrix * vMVPos;
+  v_uv = uv;
+  v_normal = normalize(nml);
+  vec4 modelPos = modelMatrix * pos;
+  v_modelPos = modelPos.xyz / modelPos.w;
+  v_modelViewPos = modelViewMatrix * pos;
+  gl_Position = projectionMatrix * v_modelViewPos;
 }

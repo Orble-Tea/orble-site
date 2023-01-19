@@ -1,13 +1,14 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es2020",
     // Alias `src` to `~`
     "baseUrl": ".",
     "paths": {
       "~/*": [
         "src/*"
       ]
-    }
+    },
+    "types": ["@astrojs/image/client", "vite-plugin-glsl/ext"]
   }
 }
