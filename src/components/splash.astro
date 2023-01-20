@@ -1,25 +1,21 @@
 ---
 import { Image, Picture } from "@astrojs/image/components";
 import { Icon } from "astro-icon";
-import astronautImage from "~/assets/astronaut.png";
+import machineImage from "~/assets/machine_render.png";
 import logo from "~/assets/logo_white.png";
-import HeroImage from "~/components/hero-image.astro";
-import Starfield from "~/components/starfield.astro";
 import Boba3D from "~/components/boba-3d.astro";
-
-const widths = [450, 800];
-const sizes = "(min-width: 640px) 42vw, 67vw";
 ---
 
-<section class="relative h-full bg-slate-400">
+<section class="relative h-full bg-white">
   <!-- <Starfield /> -->
-  <div id="splash-bg-fallback" class="absolute inset-0 hidden opacity-40">
-    <HeroImage />
-  </div>
-  <div class="relative grid h-full place-items-center sm:grid-cols-2">
+  <!-- <div id="splash-bg-fallback" class="absolute inset-0 hidden opacity-40"> -->
+  <!-- <HeroImage /> -->
+  <!-- </div> -->
+  <div
+    class="relative grid h-[calc(100%-4rem)] place-items-center sm:grid-cols-2"
+  >
     <h2 class="self-end sm:self-auto sm:justify-self-end">
-      <!-- <Icon name="logomark" class="h-24 text-white md:h-32" /> -->
-      <!-- <Image class="" src={logo} height={[200]} alt="test" width={[400]} /> -->
+      <Icon name="logo" class="h-24 md:h-32 m-auto pb-4" />
       <div
         class="gradient-text text-center font-extrabold tracking-tighter text-3xl sm:text-5xl"
       >
@@ -28,20 +24,15 @@ const sizes = "(min-width: 640px) 42vw, 67vw";
         On your time.
       </div>
     </h2>
-    <Boba3D />
-    <!-- <div
-         id="astronaut"
-         class="w-2/3 max-w-3xl self-start sm:w-10/12 sm:self-auto sm:justify-self-start"
-         >
-         <Picture
-         class="object-cover w-full h-full"
-         src={astronautImage}
-         widths={widths}
-         sizes={sizes}
-         loading="eager"
-         alt="A floating astronaut in a space suit"
-         />
-         </div> -->
+    <!-- <Boba3D /> -->
+    <!-- <div class="h-full"> -->
+    <Image
+      class="h-auto max-h-[60%] w-auto max-w-[90%]"
+      src={machineImage}
+      loading="eager"
+      alt="3D render of the Orble Boba Tea Machine"
+    />
+    <!-- </div> -->
   </div>
 </section>
 
@@ -52,33 +43,3 @@ const sizes = "(min-width: 640px) 42vw, 67vw";
     }
   </style>
 </noscript>
-
-<style>
-  @keyframes float {
-    0% {
-      transform: translate3d(0, 0, 0);
-    }
-
-    100% {
-      transform: translate3d(0, 30px, 0);
-    }
-  }
-
-  #astronaut {
-    animation: float linear 2.5s infinite alternate;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    #astronaut {
-      @apply animate-none;
-    }
-
-    :global(#starfield) {
-      @apply hidden;
-    }
-
-    #splash-bg-fallback {
-      @apply block;
-    }
-  }
-</style>

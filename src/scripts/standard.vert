@@ -1,8 +1,12 @@
 #version 300 es
 
+#include structs
+
+// Geometry attributes
 in vec3 position;
 in vec2 uv;
 in vec3 normal;
+in vec4 tangent;
 // in mat4 instanceMatrix;
 
 // uniforms passed in by OGL
@@ -11,8 +15,11 @@ uniform mat4 projectionMatrix;
 uniform mat4 modelMatrix;
 uniform mat3 normalMatrix;
 
-out vec2 v_uv;
-out vec3 v_normal;
+// out vec2 v_uv;
+// out vec3 v_normal;
+// out vec4 v_tangent;
+
+out VertexData v_vert;
 out vec3 v_modelPos;
 out vec4 v_modelViewPos;
 
@@ -27,8 +34,12 @@ void main() {
   //   nml = m * nml;
   // #endif
 
-  v_uv = uv;
-  v_normal = normalize(nml);
+  v_vert.uv = uv;
+  v_vert.normal = normalize(nml);
+  v_vert.tangent = tangent.xyz;
+  // Use GLTF tangent data spec to correct for UV winding order.
+  v_vert.bitangent = cross(normal, tangent.xyz) * tangent.w;
+
   vec4 modelPos = modelMatrix * pos;
   v_modelPos = modelPos.xyz / modelPos.w;
   v_modelViewPos = modelViewMatrix * pos;

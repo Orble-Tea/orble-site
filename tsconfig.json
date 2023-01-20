@@ -2,7 +2,6 @@
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "target": "es2020",
-    // Alias `src` to `~`
     "baseUrl": ".",
     "paths": {
       "~/*": [

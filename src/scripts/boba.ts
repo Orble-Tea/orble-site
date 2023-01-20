@@ -13,10 +13,12 @@ import {
   Mesh,
   Orbit,
   Vec3,
+  TextureOptions,
 } from "ogl";
 
 import vert from "./standard.vert";
 import frag from "./plastic.frag";
+import pbr from "./pbr.frag";
 
 function degrees(...angles: number[]): number[] {
   return angles.map((r) => (r * Math.PI) / 180);
@@ -29,13 +31,12 @@ const loadImage = (src: string) =>
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
-  })
-;
+  });
 
-function getTexture(src: string, generateMipmaps = true) {
-  const texture = new Texture(gl, { generateMipmaps });
+function getTexture(src: string, opts?: Partial<TextureOptions>) {
+  const texture = new Texture(gl, opts);
   texture.flipY = false;
-  loadImage(src).then(img => texture.image = img);
+  loadImage(src).then((img) => (texture.image = img));
   return texture;
 }
 
@@ -54,10 +55,22 @@ gl.clearColor(1.0, 1.0, 1.0, 0.0);
 // const post = new Post(gl);
 
 const uniforms = {
-  tBaseColor: { value: getTexture("/logo_new.png") },
-  tLUT: { value: getTexture("/lut.png", false) },
-  tEnvDiffuse: { value: getTexture("/waterfall-diffuse-RGBM.png", false) },
-  tEnvSpecular: { value: getTexture("/waterfall-specular-RGBM.png", false) },
+  t_baseColour: {
+    value: getTexture("/cup_tex.png", { format: gl.LUMINANCE_ALPHA })
+  },
+  t_LUT: {
+    value: getTexture("/lut.png", { generateMipmaps: false }),
+  },
+  t_envDiffuse: {
+    value: getTexture("/waterfall-diffuse-RGBM.png", {
+      generateMipmaps: false,
+    })
+  },
+  t_envSpecular: {
+    value: getTexture("/waterfall-specular-RGBM.png", {
+      generateMipmaps: false,
+    })
+  }
 };
 
 const camera = new Camera(gl, { near: 1, far: 1000 });
@@ -93,7 +106,7 @@ const scene = new Transform();
 
 const plasticMat = new Program(gl, {
   vertex: vert,
-  fragment: frag,
+  fragment: pbr,
   uniforms: uniforms,
   transparent: true,
   cullFace: false,
@@ -115,7 +128,7 @@ interface BobaScene {
 let bs: BobaScene;
 
 async function loadInitial() {
-  const modelPath = "/boba_logo.glb";
+  const modelPath = "/boba_opt.glb";
   const gltf = await GLTFLoader.load(gl, modelPath);
   console.log(gltf);
 

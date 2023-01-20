@@ -1,6 +1,7 @@
 #version 300 es
 precision highp float;
 
+#include structs
 // #include colourspace
 
 struct MaterialProps {
@@ -11,10 +12,9 @@ struct IBL {
   vec3 diffuse, specular;
 };
 
-in vec2 v_uv;
-in vec3 v_normal;
+in VertexData v_vert;
 in vec3 v_modelPos;
-// in vec4 v_modelViewPos;
+in vec4 v_modelViewPos;
 
 // uniforms passed in by OGL
 uniform vec3 cameraPosition;
@@ -72,7 +72,7 @@ vec3 getNormal() {
 
   // Get world normal from view normal (normalMatrix * normal)
   // return normalize((vec4(normal, 0.0) * viewMatrix).xyz);
-  return normalize((vec4(v_normal, 0.0) * viewMatrix).xyz);
+  return normalize((vec4(v_vert.normal, 0.0) * viewMatrix).xyz);
 }
 
 vec3 specularReflection(vec3 specularEnvR0, vec3 specularEnvR90, float VdH) {
@@ -137,7 +137,7 @@ IBL getIBLContribution(float NdV, float roughness, vec3 n, vec3 reflection,
 }
 
 void main() {
-  vec4 tex = SRGBtoLinear(texture(tBaseColor, v_uv));
+  vec4 tex = SRGBtoLinear(texture(tBaseColor, v_vert.uv));
   vec3 baseColor = tex.rgb;
   // For PBR texture mapping
   // RMO map packed as rgb = [roughness, metallic, occlusion]
