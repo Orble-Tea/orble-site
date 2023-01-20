@@ -6,9 +6,8 @@ import glsl from "vite-plugin-glsl";
 // https://astro.build/config
 export default defineConfig({
   // watch: true,
-  // site: "https://www.orble-tea.com",
-  site: "https://cosmic-goat.github.io",
-  ...(process.env.BUILD_ENV === "GITHUB" && {base: "/orble-site"}),
+  site: "https://www.orble-tea.com",
+  // ...(process.env.BUILD_ENV === "GITHUB" && {base: "/orble-site"}),
   integrations: [
     tailwind(),
     image({
