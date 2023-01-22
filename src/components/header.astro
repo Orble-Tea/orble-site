@@ -113,10 +113,13 @@ const navItems: Array<NavItem> = [
   openNavButton.addEventListener("click", openMenu);
   closeNavButton.addEventListener("click", closeMenu);
 
-  document.addEventListener("scroll", () => {
+  const calcHeader = () => {
     const d = page.clientHeight - page.scrollTop - header.offsetHeight;
     header.classList.toggle("fixed-header", d < 0);
-  });
+  };
+
+  document.addEventListener("scroll", calcHeader);
+  document.addEventListener("DOMContentLoaded", calcHeader);
 
   menu.addEventListener("click", (event) => {
     if ((event.target as HTMLElement).tagName === "A") {
