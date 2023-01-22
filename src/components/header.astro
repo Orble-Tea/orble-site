@@ -5,18 +5,25 @@ import ThemeSwitcher from "~/components/theme-switcher.astro";
 import type { NavItem } from "~/types";
 
 const navItems: Array<NavItem> = [
-  { title: "Features", url: "#features" },
-  { title: "Compatibility", url: "#compatibility" },
-  { title: "Showcase", url: "#showcase" },
+  { title: "What is Orble?", url: "#what" },
+  { title: "About Us", url: "#about" },
 ];
 ---
 
 <header
   id="page-header"
-  class="absolute bottom-0 z-20 flex w-full items-center justify-between border-b border-transparent bg-primary px-8 py-4 text-black"
+  class="absolute bottom-0 z-20 flex w-full items-center justify-between border-b border-transparent px-8 py-4 text-black transition-colors duration-300"
 >
-  <a class="flex items-center gap-3 hover:!text-default" href="#">
-    <!-- <Image src={logo} class="h-10" /> -->
+  <a class="flex items-center gap-2 hover:!text-default" href="#">
+    <!--
+  negative margin is sum of button width (8) and gap size of flex parent (2)
+  TODO don't hardcode these values
+-->
+    <Icon
+      id="logo"
+      name="logo"
+      class="relative h-8 bottom-1 -ml-10 origin-[right_center] scale-0 transition-all duration-500"
+    />
     <h1 class="hidden sm:block">Orble Tea</h1>
   </a>
   <div>
@@ -42,7 +49,6 @@ const navItems: Array<NavItem> = [
       >
         <Icon pack="mdi" name="menu" class="h-8" />
       </button>
-      <ThemeSwitcher />
     </div>
     <div id="menu-modal" class="modal hidden" aria-hidden="true">
       <div class="fixed inset-0 bg-default px-8 py-4 text-default">
@@ -130,8 +136,13 @@ const navItems: Array<NavItem> = [
 <style>
   .fixed-header {
     @apply fixed top-0 bottom-auto;
-    @apply border-default bg-default text-default;
+    @apply border-default bg-primary text-default;
   }
+
+  .fixed-header #logo {
+    @apply ml-0 scale-100;
+  }
+
   .modal.is-open {
     @apply block;
   }

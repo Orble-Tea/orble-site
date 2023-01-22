@@ -4,10 +4,10 @@ export interface CompatibilityItem {
   url: string;
 }
 
-export interface FeatureItem {
-  description: string;
-  icon: string;
-  title: string;
+export interface PersonItem {
+  name: string;
+  bio: string;
+  picture: string;
 }
 
 export interface FooterLink {

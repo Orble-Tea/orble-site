@@ -12,22 +12,22 @@ import Boba3D from "~/components/boba-3d.astro";
   <!-- <HeroImage /> -->
   <!-- </div> -->
   <div
-    class="relative grid h-[calc(100%-4rem)] place-items-center sm:grid-cols-2"
+    class="flex h-[calc(100%-4rem)] flex-wrap place-items-center justify-evenly"
   >
-    <h2 class="self-end sm:self-auto sm:justify-self-end">
+    <h2 class="">
       <Icon name="logo" class="h-24 md:h-32 m-auto pb-4" />
       <div
-        class="gradient-text text-center font-extrabold tracking-tighter text-3xl sm:text-5xl"
+        class="text-center font-extrabold tracking-tighter text-3xl sm:text-5xl"
       >
-        Your Tea. <br />
-        How you like it. <br />
-        On your time.
+        Your fully<br />
+        au<span class="text-primary">tea</span>matic <br />
+        boba machine.
       </div>
     </h2>
     <!-- <Boba3D /> -->
     <!-- <div class="h-full"> -->
     <Image
-      class="h-auto max-h-[60%] w-auto max-w-[90%]"
+      class="h-auto max-h-[45%] sm:max-h-[70%] w-auto max-w-[80%]"
       src={machineImage}
       loading="eager"
       alt="3D render of the Orble Boba Tea Machine"

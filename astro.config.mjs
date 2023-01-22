@@ -2,6 +2,7 @@ import { defineConfig } from "astro/config";
 import image from "@astrojs/image";
 import tailwind from "@astrojs/tailwind";
 import glsl from "vite-plugin-glsl";
+import yaml from '@rollup/plugin-yaml';
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,7 +16,7 @@ export default defineConfig({
     }),
   ],
   vite: {
-    plugins: [glsl()],
+    plugins: [glsl(), yaml()],
     build: {
       target: "safari14"
     },
