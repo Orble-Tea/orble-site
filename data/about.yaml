@@ -1,25 +1,43 @@
-subtitle: "We're a startup that's purely passionate about all things Boba tea. Here's who we are:"
+title: About Us
+
+subtitle:
+  We're a startup that's purely passionate about all things Boba tea. Here's who we are.
 
 body: ""
 
 # 'picture' is path within the assets/ folder
+# the | after bio: is to keep the linebreaks
 people:
-  - name: "Lada Korotaeva"
-    bio: "bio"
-    picture: "headshots/lada.jpg"
-
-  - name: "Sophia Anzai Takahashi"
-    bio: "bio"
-    picture: "headshots/sophia.png"
-
-  - name: "Esther Amao"
-    bio: "bio"
+  - name: Esther Amao
+    bio: |-
+      University of Pennsylvania
+      CMPE 2023
+      ROBO 2024
     picture: "headshots/esther.jpg"
 
-  - name: "Nastassja Kuznetsova"
-    bio: "bio"
+  - name: Sophia Anzai Takahashi
+    bio: |-
+      University of Pennsylvania
+      MEAM 2023
+      M&T 2023
+    picture: "headshots/sophia.png"
+
+  - name: Lada Korotaeva
+    bio: |-
+      University of Pennsylvania
+      MEAM 2023
+    picture: "headshots/lada.jpg"
+
+
+  - name: Nastassja Kuznetsova
+    bio: |-
+      University of Pennsylvania
+      CMPE 2023
+      DATS 2024
     picture: "headshots/nastassja.jpg"
 
   - name: "Sarah Tadlock"
-    bio: "bio"
+    bio: |-
+      University of Pennsylvania
+      MEAM 2023
     picture: "headshots/sarah.jpg"

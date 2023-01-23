@@ -1,5 +1,9 @@
-subtitle: "Boba Tea for all!"
-body: "Orble is a commericial automated bubble tea machine that can be installed anywhere."
+title: What is Orble?
+
+subtitle: Boba Tea for all!
+
+body:
+  Orble is a commericial automated bubble tea machine that can be installed anywhere.
 
 # See https://icones.js.org for available icons
 points:

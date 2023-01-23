@@ -18,10 +18,9 @@ const people = await Promise.all(
 );
 ---
 
-<ContentSection title="About Us" id="about">
-  <Fragment slot="lead">{data.subtitle}</Fragment>
-  {data.body}
-  <ul class="flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8">
+<ContentSection title={data.title} subtitle={data.subtitle} id="about">
+  <Fragment slot="desc">{data.body}</Fragment>
+  <ul class="flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8 mt-4">
     {
       people.map(({ name, bio, picture, resolvedImage }) => (
         <div>
@@ -35,7 +34,7 @@ const people = await Promise.all(
             alt={"Picture of " + name}
           />
           <p class="text-center font-bold">{name}</p>
-          <p class="text-center text-offset text-sm">{bio}</p>
+          <p class="whitespace-pre-line text-center text-offset text-sm">{bio}</p>
         </div>
       ))
     }

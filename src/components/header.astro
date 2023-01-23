@@ -11,7 +11,7 @@ const navItems: Array<NavItem> = [
 
 <header
   id="page-header"
-  class="absolute bottom-0 z-20 flex w-full items-center justify-between border-b border-transparent px-8 py-4 text-black transition-colors duration-300"
+  class="absolute bottom-0 z-20 flex w-full items-center justify-between border-b border-transparent p-4 text-black transition-colors duration-300"
 >
   <a class="flex items-center gap-2 hover:!text-default" href="#">
     <!--
@@ -92,7 +92,7 @@ const navItems: Array<NavItem> = [
   const menuModalId = "menu-modal";
 
   const header = document.querySelector("#page-header") as HTMLElement;
-  const scrolly = document.querySelector("#scrolly") as HTMLElement;
+  const scrolly = document.getElementById("scrolly");
   const page = document.documentElement;
   const menu = document.querySelector(`#${menuModalId} ul`);
   const openNavButton = document.querySelector("#open-nav-button");
@@ -116,13 +116,40 @@ const navItems: Array<NavItem> = [
   closeNavButton.addEventListener("click", closeMenu);
 
   const calcHeader = () => {
-    const d = page.clientHeight - page.scrollTop - header.offsetHeight;
-    header.classList.toggle("fixed-header", d < 0);
-    scrolly.classList.toggle("scroll-down-test", d >= 0);
+    // const d = page.clientHeight - page.scrollTop - header.offsetHeight;
+    // d < 0
+    // if (page.scrollTop < 100)
+    //   scrolly.classList.replace
+    //   "scrolly-prompt",
+    //   "opacity-0"
+    // );
   };
 
-  document.addEventListener("scroll", calcHeader);
-  document.addEventListener("DOMContentLoaded", calcHeader);
+  // document.addEventListener("scroll", calcHeader);
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+      const splash = document.getElementById("splash")!;
+
+      const arrowObs = new IntersectionObserver(
+        (entries) => {
+          scrolly.classList.toggle("opacity-0", !entries[0].isIntersecting);
+        },
+        { threshold: 0.5 }
+      );
+      arrowObs.observe(splash);
+
+      const headerObs = new IntersectionObserver(
+        (entries) =>
+          header.classList.toggle("fixed-header", !entries[0].isIntersecting),
+        {
+          rootMargin: "-1% 0px",
+        }
+      );
+      headerObs.observe(splash);
+    },
+    false
+  );
 
   menu.addEventListener("click", (event) => {
     if ((event.target as HTMLElement).tagName === "A") {
