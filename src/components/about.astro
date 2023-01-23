@@ -1,27 +1,58 @@
 ---
 import { Icon } from "astro-icon";
-import ContentSection from "~/components/content-section.astro";
+import { Image } from "@astrojs/image/components";
+import ContentSection from "@components/content-section.astro";
 import { PersonItem } from "~/types";
-import PeopleData from "~/data/people.yaml";
+import data from "@data/people.yaml";
 
-const people: Array<PersonItem> = PeopleData;
+const MemberData: Array<PersonItem> = data;
+const images = await import.meta.glob("../../assets/headshots/*");
+const people = await Promise.all(
+  MemberData.map(async (m) => {
+    const im = Object.entries(images).find(([file, load]) =>
+      file.endsWith(m.picture)
+    );
+    m.resolvedImage = ((await im![1]()) as any)["default"];
+    return m;
+  })
+);
 ---
 
 <ContentSection title="About Us" id="about">
   <Fragment slot="lead">
     We're passionate about Boba tea. Here's the team:
   </Fragment>
-  <ul class="grid max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+  <ul class="flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8">
     {
-      people.map(({ name, bio, picture }) => (
-        <li class="flex flex-col items-center gap-4 border border-default bg-offset p-6">
-          <div class="h-16 w-16 rounded-full border-2 border-current p-3">
-            <Icon name={picture} />
-          </div>
-          <p class="text-center font-extrabold text-xl">{name}</p>
+      people.map(({ name, bio, picture, resolvedImage }) => (
+        <div>
+          <Image
+            class="headshot m-auto"
+            width={200}
+            aspectRatio="1:1"
+            position="entropy"
+            formats={["webp", "avif"]}
+            src={resolvedImage}
+            alt={"Picture of " + name}
+          />
+          <p class="text-center font-bold">{name}</p>
           <p class="text-center text-offset text-sm">{bio}</p>
-        </li>
+        </div>
       ))
     }
   </ul>
 </ContentSection>
+
+<!-- <li class="flex flex-col items-center gap-4 border border-default bg-offset p-6">
+     <div class="h-16 w-16 rounded-full border-2 border-current p-3">
+     <Icon name={picture} />
+     </div>
+     <p class="text-center font-extrabold text-xl">{name}</p>
+     <p class="text-center text-offset text-sm">{bio}</p>
+     </li> -->
+
+<style>
+  .headshot {
+    clip-path: circle();
+  }
+</style>
