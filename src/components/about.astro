@@ -3,9 +3,9 @@ import { Icon } from "astro-icon";
 import { Image } from "@astrojs/image/components";
 import ContentSection from "@components/content-section.astro";
 import { PersonItem } from "~/types";
-import data from "@data/people.yaml";
+import data from "@data/about.yaml";
 
-const MemberData: Array<PersonItem> = data;
+const MemberData: Array<PersonItem> = data.people;
 const images = await import.meta.glob("../../assets/headshots/*");
 const people = await Promise.all(
   MemberData.map(async (m) => {
@@ -19,9 +19,8 @@ const people = await Promise.all(
 ---
 
 <ContentSection title="About Us" id="about">
-  <Fragment slot="lead">
-    We're passionate about Boba tea. Here's the team:
-  </Fragment>
+  <Fragment slot="lead">{data.subtitle}</Fragment>
+  {data.body}
   <ul class="flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8">
     {
       people.map(({ name, bio, picture, resolvedImage }) => (
@@ -42,14 +41,6 @@ const people = await Promise.all(
     }
   </ul>
 </ContentSection>
-
-<!-- <li class="flex flex-col items-center gap-4 border border-default bg-offset p-6">
-     <div class="h-16 w-16 rounded-full border-2 border-current p-3">
-     <Icon name={picture} />
-     </div>
-     <p class="text-center font-extrabold text-xl">{name}</p>
-     <p class="text-center text-offset text-sm">{bio}</p>
-     </li> -->
 
 <style>
   .headshot {

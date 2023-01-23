@@ -1,0 +1,9 @@
+---
+import ContentSection from "@components/content-section.astro";
+import data from "@data/what-is-orble.yaml";
+---
+
+<ContentSection title="What is Orble?" id="what-is-orble">
+  <Fragment slot="lead">{data.subtitle}</Fragment>
+  <p>{data.body}</p>
+</ContentSection>

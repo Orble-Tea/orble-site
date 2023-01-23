@@ -1,0 +1,25 @@
+subtitle: "We're a startup that's purely passionate about all things Boba tea. Here's who we are:"
+
+body: ""
+
+# 'picture' is path within the assets/ folder
+people:
+  - name: "Lada Korotaeva"
+    bio: "bio"
+    picture: "headshots/lada.jpg"
+
+  - name: "Sophia Anzai Takahashi"
+    bio: "bio"
+    picture: "headshots/sophia.png"
+
+  - name: "Esther Amao"
+    bio: "bio"
+    picture: "headshots/esther.jpg"
+
+  - name: "Nastassja Kuznetsova"
+    bio: "bio"
+    picture: "headshots/nastassja.jpg"
+
+  - name: "Sarah Tadlock"
+    bio: "bio"
+    picture: "headshots/sarah.jpg"
