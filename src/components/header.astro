@@ -1,7 +1,6 @@
 ---
 import { Icon } from "astro-icon";
-import logo from "~/assets/logo_white.png";
-import ThemeSwitcher from "~/components/theme-switcher.astro";
+import ScrollDown from "./scroll-down.astro";
 import type { NavItem } from "~/types";
 
 const navItems: Array<NavItem> = [
@@ -26,6 +25,7 @@ const navItems: Array<NavItem> = [
     />
     <h1 class="sm:block">Orble Tea</h1>
   </a>
+  <ScrollDown id="scrolly" />
   <div>
     <div class="flex items-center gap-6">
       <nav class="hidden sm:block">
@@ -92,12 +92,14 @@ const navItems: Array<NavItem> = [
   const menuModalId = "menu-modal";
 
   const header = document.querySelector("#page-header") as HTMLElement;
+  const scrolly = document.querySelector("#scrolly") as HTMLElement;
   const page = document.documentElement;
   const menu = document.querySelector(`#${menuModalId} ul`);
   const openNavButton = document.querySelector("#open-nav-button");
   const closeNavButton = document.querySelector("#close-nav-button");
 
   invariant(header, "header should not be null");
+  invariant(scrolly, "scrolly should not be null");
   invariant(menu, "menu should not be null");
   invariant(openNavButton, "openNavButton should not be null");
   invariant(closeNavButton, "closeNavButton should not be null");
@@ -116,6 +118,7 @@ const navItems: Array<NavItem> = [
   const calcHeader = () => {
     const d = page.clientHeight - page.scrollTop - header.offsetHeight;
     header.classList.toggle("fixed-header", d < 0);
+    scrolly.classList.toggle("scroll-down-test", d >= 0);
   };
 
   document.addEventListener("scroll", calcHeader);
@@ -142,8 +145,13 @@ const navItems: Array<NavItem> = [
     @apply border-default bg-secondary text-default;
   }
 
-  .fixed-header #logo {
+  .fixed-header # logo {
     @apply ml-0 scale-100;
+  }
+
+  .fixed-header > #scrolly {
+    display: none !important;
+    height: 40px !important;
   }
 
   .modal.is-open {

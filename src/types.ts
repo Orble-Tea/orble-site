@@ -8,6 +8,7 @@ export interface PersonItem {
   name: string;
   bio: string;
   picture: string;
+  resolvedImage: unknown | undefined;
 }
 
 export interface FooterLink {

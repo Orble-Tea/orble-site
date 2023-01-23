@@ -1,9 +1,8 @@
 ---
 import { Image, Picture } from "@astrojs/image/components";
 import { Icon } from "astro-icon";
-import machineImage from "~/assets/machine_render.png";
-import logo from "~/assets/logo_white.png";
-import Boba3D from "~/components/boba-3d.astro";
+import machineImage from "@assets/machine_render.png";
+import Boba3D from "@components/boba-3d.astro";
 ---
 
 <section class="relative h-full bg-white">
@@ -12,7 +11,7 @@ import Boba3D from "~/components/boba-3d.astro";
   <!-- <HeroImage /> -->
   <!-- </div> -->
   <div
-    class="flex h-[calc(100%-4rem)] flex-wrap place-items-center justify-evenly"
+    class="flex h-[calc(100%-4rem)] flex-col place-items-center justify-evenly sm:flex-row"
   >
     <h2 class="">
       <Icon name="logo" class="h-24 md:h-32 m-auto pb-4" />

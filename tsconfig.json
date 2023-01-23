@@ -4,10 +4,11 @@
     "target": "es2020",
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "src/*"
-      ]
+      "~/*": ["src/*"],
+      "@assets/*": ["assets/*"],
+      "@components/*": ["src/components/*"],
+      "@data/*": ["data/*"]
     },
-    "types": ["@astrojs/image/client", "vite-plugin-glsl/ext"]
+    "types": ["@astrojs/image/client", "vite-plugin-glsl/ext", "vite/client"]
   }
 }

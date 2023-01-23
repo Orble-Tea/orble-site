@@ -1,7 +1,0 @@
-- name: "Person 1"
-  bio: "bio"
-  picture: "mdi:handshake"
-
-- name: "Person"
-  bio: "bio"
-  picture: "mdi:handshake"
