@@ -1,6 +1,8 @@
 [data-theme="light"] {
   --color-primary: #a1c4af;
-  --color-secondary: theme("colors.indigo.500");
+  --color-secondary: #eacaac;
+  --color-accent: #54486b;
+  /* --color-accent: #b5c2f6; */
   --color-text: theme("colors.gray.900");
   --color-text-offset: theme("colors.gray.600");
   --color-background: theme("colors.gray.50");

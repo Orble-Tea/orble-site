@@ -1,5 +1,4 @@
 ---
-import "@fontsource/inter/variable.css";
 import Compatibility from "~/components/compatibility.astro";
 import About from "~/components/about.astro";
 import Footer from "~/components/footer.astro";
@@ -7,6 +6,9 @@ import Header from "~/components/header.astro";
 import Intro from "~/components/intro.astro";
 import Showcase from "~/components/showcase.astro";
 import Splash from "~/components/splash.astro";
+
+import "@fontsource/staatliches";
+import "@fontsource/lato";
 import "~/styles/index.css";
 
 const { generator, site } = Astro;
@@ -40,7 +42,7 @@ const description = "Driving innovation in self-serve Boba Tea.";
   >
     <Header />
     <Splash />
-    <div class="space-y-24 px-8 py-32">
+    <div class="space-y-24 px-8 py-16">
       <About />
     </div>
   </body>

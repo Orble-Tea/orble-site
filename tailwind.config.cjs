@@ -5,12 +5,13 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Iosevka Aile", ...defaultTheme.fontFamily.sans],
-        mono: ["Iosevka", ...defaultTheme.fontFamily.mono],
+        sans: ["Lato", ...defaultTheme.fontFamily.sans],
+        heading: ["Staatliches", ...defaultTheme.fontFamily.sans]
       },
       colors: {
         primary: "var(--color-primary)",
         secondary: "var(--color-secondary)",
+        accent: "var(--color-accent)",
       },
       textColor: {
         default: "var(--color-text)",
