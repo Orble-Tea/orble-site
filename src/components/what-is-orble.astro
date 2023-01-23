@@ -1,4 +1,5 @@
 ---
+import { Icon } from "astro-icon";
 import ContentSection from "@components/content-section.astro";
 import data from "@data/what-is-orble.yaml";
 ---
@@ -6,4 +7,17 @@ import data from "@data/what-is-orble.yaml";
 <ContentSection title="What is Orble?" id="what-is-orble">
   <Fragment slot="lead">{data.subtitle}</Fragment>
   <p>{data.body}</p>
+  <ul class="flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8">
+    {
+      data.points.map(({ icon, heading, text }) => (
+        <li class="flex flex-col items-center gap-4 border border-default bg-offset p-6">
+          <div class="h-16 w-16 rounded-full border-2 border-current p-3">
+            <Icon name={icon} />
+          </div>
+          <p class="text-center font-extrabold text-xl">{heading}</p>
+          <p class="text-center text-offset text-sm">{text}</p>
+        </li>
+      ))
+    }
+  </ul>
 </ContentSection>
