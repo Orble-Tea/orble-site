@@ -6,6 +6,12 @@ import data from "@data/what-is-orble.yaml";
 
 <ContentSection title={data.title} subtitle={data.subtitle} id="what-is-orble">
   <Fragment slot="lead">{data.body}</Fragment>
+  <p>
+    Are you an interested buisness? Download our <a
+      class="text-primary underline"
+      href="/Orble-Product-Specifications.pdf">product specification sheet</a
+    > to learn more!
+  </p>
   <ul class="mt-2 grid max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
     {
       data.points.map(({ icon, heading, text }) => (

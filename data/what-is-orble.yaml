@@ -5,7 +5,8 @@ subtitle: Boba Tea for all!
 body:
   Orble is a commericial automated bubble tea machine that can be installed anywhere.
 
-# See https://icones.js.org for available icons
+# This is an array, you can add as many points as you want and the site will fill in the grid automatically.
+# See https://icones.js.org for available icons.
 points:
   - icon: "mdi:package-variant"
     heading: "COMPACT"
