@@ -1,7 +1,7 @@
 title: About Us
 
 subtitle:
-  We're a startup that's purely passionate about all things Boba tea. Here's who we are.
+  We're an engineer-led team of student founders from the University of Pennsylvania.
 
 body: ""
 
@@ -11,33 +11,33 @@ people:
   - name: Esther Amao
     bio: |-
       University of Pennsylvania
-      CMPE 2023
-      ROBO 2024
+      B.S.E. from SEAS in Computer Engineering 2023
+      M.S.E from SEAS in Robotics 2024
     picture: "headshots/esther.jpg"
 
   - name: Sophia Anzai Takahashi
     bio: |-
       University of Pennsylvania
-      MEAM 2023
-      M&T 2023
+      B.S.E. from SEAS in Mechanical Engineering 2023 
+      B.S.E from Wharton in Management 2023
     picture: "headshots/sophia.png"
 
   - name: Lada Korotaeva
     bio: |-
       University of Pennsylvania
-      MEAM 2023
+      B.S.E. from SEAS in Mechanical Engineering 2023 
     picture: "headshots/lada.jpg"
 
 
   - name: Nastassja Kuznetsova
     bio: |-
       University of Pennsylvania
-      CMPE 2023
-      DATS 2024
+      B.S.E. from SEAS in Computer Engineering 2023 
+      M.S.E. from SEAS in Data Science 2024
     picture: "headshots/nastassja.jpg"
 
   - name: "Sarah Tadlock"
     bio: |-
       University of Pennsylvania
-      MEAM 2023
+      B.S.E. from SEAS in Mechanical Engineering 2023 
     picture: "headshots/sarah.jpg"
