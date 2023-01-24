@@ -10,26 +10,26 @@ body: ""
 people:
   - name: Esther Amao
     bio: |-
-      B.S.E. from SEAS in Computer Engineering 2023
-      M.S.E from SEAS in Robotics 2024
+      B.S.E. from SEAS in Computer Engineering '23
+      M.S.E from SEAS in Robotics '24
     picture: "headshots/esther.jpg"
 
   - name: Sophia Anzai Takahashi
     bio: |-
-      B.S.E. from SEAS in Mechanical Engineering 2023 
-      B.S.E from Wharton in Management 2023
+      B.S.E. from SEAS in Mechanical Engineering '23 
+      B.S.E from Wharton in Management '23
     picture: "headshots/sophia.png"
 
   - name: Lada Korotaeva
     bio: |-
-      B.S.E. from SEAS in Mechanical Engineering 2023 
+      B.S.E. from SEAS in Mechanical Engineering '23 
     picture: "headshots/lada.jpg"
 
 
   - name: Nastassja Kuznetsova
     bio: |-
-      B.S.E. from SEAS in Computer Engineering 2023 
-      M.S.E. from SEAS in Data Science 2024
+      B.S.E. from SEAS in Computer Engineering '23 
+      M.S.E. from SEAS in Data Science '24
     picture: "headshots/nastassja.jpg"
 
   - name: "Sarah Tadlock"
