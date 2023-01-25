@@ -1,2 +1,7 @@
-@import "global.css";
+/* Import Fonts */
+@import "@fontsource/staatliches";
+@import "@fontsource/lato";
+
+/* Import our theme(s) and global css styles. */
 @import "theme.css";
+@import "global.css";

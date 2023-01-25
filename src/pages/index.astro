@@ -1,16 +1,17 @@
 ---
-import Header from "@components/header.astro";
-import Splash from "@components/splash.astro";
-import WhatIsOrble from "@components/what-is-orble.astro";
-import About from "@components/about.astro";
-
-import "@fontsource/staatliches";
-import "@fontsource/lato";
 import "~/styles/index.css";
 
+/* Any Astro component imports MUST come after global style imports, due to css loading order! (Especially tailwind.) */
+import Header from "$components/header.astro";
+import Splash from "$components/splash.astro";
+import WhatIsOrble from "$components/what-is-orble.astro";
+import About from "$components/about.astro";
+
+import info from "$data/site";
+
 const { generator, site } = Astro;
-const image = new URL("machine_render.png", site);
-const description = "Driving innovation in self-serve Boba Tea.";
+const image = new URL(info.preview_image, site);
+const sections = [WhatIsOrble, About];
 ---
 
 <!DOCTYPE html>
@@ -23,13 +24,13 @@ const description = "Driving innovation in self-serve Boba Tea.";
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={generator} />
 
-    <title>Orble Tea</title>
-    <meta name="description" content={description} />
+    <title>{info.title}</title>
+    <meta name="description" content={info.description} />
 
     <!-- social media -->
-    <meta property="og:title" content="Orble" />
+    <meta property="og:title" content={info.title} />
     <meta property="og:type" content="website" />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={info.description} />
     <meta property="og:image" content={image} />
     <meta property="og:url" content={site} />
     <meta name="twitter:card" content="summary_large_image" />

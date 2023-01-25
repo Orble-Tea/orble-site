@@ -1,40 +1,28 @@
 ---
-import { Icon } from "astro-icon";
 import { Image } from "@astrojs/image/components";
-import ContentSection from "@components/content-section.astro";
-import { PersonItem } from "~/types";
-import data from "@data/about.yaml";
-
-const MemberData: Array<PersonItem> = data.people;
-const images = await import.meta.glob("../../assets/headshots/*");
-const people = await Promise.all(
-  MemberData.map(async (m) => {
-    const im = Object.entries(images).find(([file, load]) =>
-      file.endsWith(m.picture)
-    );
-    m.resolvedImage = ((await im![1]()) as any)["default"];
-    return m;
-  })
-);
+import ContentSection from "$components/content-section.astro";
+import data from "$data/about";
 ---
 
 <ContentSection title={data.title} subtitle={data.subtitle} id="about">
   <Fragment slot="desc">{data.body}</Fragment>
-  <ul class="flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8 mt-4">
+  <ul class="mt-4 flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8">
     {
-      people.map(({ name, bio, picture, resolvedImage }) => (
+      data.people.map(({ name, bio, picture }) => (
         <div>
           <Image
             class="headshot m-auto"
-            width={200}
-            aspectRatio="1:1"
+            width={250}
+            height={250}
             position="entropy"
-            formats={["webp", "avif"]}
-            src={resolvedImage}
+            format="webp"
+            src={picture}
             alt={"Picture of " + name}
           />
           <p class="text-center font-bold">{name}</p>
-          <p class="whitespace-pre-line text-center text-offset text-sm">{bio}</p>
+          {bio.map((b) => (
+            <p class="py-1 text-center text-offset text-xs">{b}</p>
+          ))}
         </div>
       ))
     }
