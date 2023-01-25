@@ -3,10 +3,12 @@ import { Icon } from "astro-icon";
 import ScrollDown from "./scroll-down.astro";
 import type { NavItem } from "~/types";
 
-const navItems: Array<NavItem> = [
-  { title: "What is Orble?", url: "#what-is-orble" },
-  { title: "About Us", url: "#about" },
-];
+export interface Props {
+  mainTitle: string;
+  navItems: NavItem[];
+}
+
+const { mainTitle, navItems } = Astro.props;
 ---
 
 <header
@@ -23,7 +25,7 @@ const navItems: Array<NavItem> = [
       name="logo"
       class="relative h-8 bottom-1 -ml-10 origin-[right_center] scale-0 transition-all duration-500"
     />
-    <h1 class="sm:block">Orble Tea</h1>
+    <h1 class="sm:block">{mainTitle}</h1>
   </a>
   <ScrollDown id="scrolly" />
   <div>
@@ -31,10 +33,10 @@ const navItems: Array<NavItem> = [
       <nav class="hidden sm:block">
         <ul class="flex items-center gap-6">
           {
-            navItems.map(({ title, url }) => (
+            navItems.map((item) => (
               <li>
-                <a class="text-sm" href={url}>
-                  {title}
+                <a class="text-sm" href={item.id}>
+                  {item.title}
                 </a>
               </li>
             ))
@@ -69,10 +71,10 @@ const navItems: Array<NavItem> = [
           <nav>
             <ul class="flex flex-col">
               {
-                navItems.map(({ title, url }) => (
+                navItems.map((item) => (
                   <li>
-                    <a class="block py-4 text-center text-xl" href={url}>
-                      {title}
+                    <a class="block py-4 text-center text-xl" href={item.id}>
+                      {item.title}
                     </a>
                   </li>
                 ))
@@ -87,35 +89,21 @@ const navItems: Array<NavItem> = [
 
 <script>
   import MicroModal from "micromodal";
-  import invariant from "tiny-invariant";
 
   const menuModalId = "menu-modal";
 
   const header = document.querySelector("#page-header") as HTMLElement;
   const scrolly = document.getElementById("scrolly");
-  const page = document.documentElement;
   const menu = document.querySelector(`#${menuModalId} ul`);
   const openNavButton = document.querySelector("#open-nav-button");
   const closeNavButton = document.querySelector("#close-nav-button");
 
-  invariant(header, "header should not be null");
-  invariant(scrolly, "scrolly should not be null");
-  invariant(menu, "menu should not be null");
-  invariant(openNavButton, "openNavButton should not be null");
-  invariant(closeNavButton, "closeNavButton should not be null");
+  const openMenu = () => MicroModal.show(menuModalId, { disableScroll: true });
+  const closeMenu = () => MicroModal.close(menuModalId);
 
-  const openMenu = () => {
-    MicroModal.show(menuModalId, { disableScroll: true });
-  };
+  openNavButton?.addEventListener("click", openMenu);
+  closeNavButton?.addEventListener("click", closeMenu);
 
-  const closeMenu = () => {
-    MicroModal.close(menuModalId);
-  };
-
-  openNavButton.addEventListener("click", openMenu);
-  closeNavButton.addEventListener("click", closeMenu);
-
-  // document.addEventListener("scroll", calcHeader);
   document.addEventListener(
     "DOMContentLoaded",
     () => {
@@ -123,7 +111,7 @@ const navItems: Array<NavItem> = [
 
       const arrowObs = new IntersectionObserver(
         (entries) => {
-          scrolly.classList.toggle("opacity-0", !entries[0].isIntersecting);
+          scrolly?.classList.toggle("opacity-0", !entries[0].isIntersecting);
         },
         { threshold: 0.5 }
       );
@@ -141,7 +129,7 @@ const navItems: Array<NavItem> = [
     false
   );
 
-  menu.addEventListener("click", (event) => {
+  menu?.addEventListener("click", (event) => {
     if ((event.target as HTMLElement).tagName === "A") {
       closeMenu();
     }

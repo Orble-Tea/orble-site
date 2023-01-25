@@ -1,14 +1,15 @@
 ---
 import { Image } from "@astrojs/image/components";
 import ContentSection from "$components/content-section.astro";
-import data from "$data/about";
+import { info, members } from "$data/about";
+
+export { info };
 ---
 
-<ContentSection title={data.title} subtitle={data.subtitle} id="about">
-  <Fragment slot="desc">{data.body}</Fragment>
+<ContentSection info={info}>
   <ul class="mt-4 flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8">
     {
-      data.people.map(({ name, bio, picture }) => (
+      members.map(({ name, bio, picture }) => (
         <div>
           <Image
             class="headshot m-auto"

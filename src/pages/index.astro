@@ -2,16 +2,24 @@
 import "~/styles/index.css";
 
 /* Any Astro component imports MUST come after global style imports, due to css loading order! (Especially tailwind.) */
+import type { NavItem } from "~/types";
 import Header from "$components/header.astro";
 import Splash from "$components/splash.astro";
-import WhatIsOrble from "$components/what-is-orble.astro";
-import About from "$components/about.astro";
+import WhatIsOrble, { info as whatInfo } from "$components/what-is-orble.astro";
+import About, { info as aboutInfo } from "$components/about.astro";
 
-import info from "$data/site";
+import siteInfo from "$data/site";
 
 const { generator, site } = Astro;
-const image = new URL(info.preview_image, site);
-const sections = [WhatIsOrble, About];
+const image = new URL(siteInfo.preview_image, site);
+
+const sectionInfos = [whatInfo, aboutInfo];
+/* Prepend section char # to each id, and copy strings to new object array */
+const sectionNavs: NavItem[] = sectionInfos.map((n) => ({
+  id: "#" + n.id,
+  title: n.title,
+}));
+const navItems = sectionNavs;
 ---
 
 <!DOCTYPE html>
@@ -24,13 +32,13 @@ const sections = [WhatIsOrble, About];
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={generator} />
 
-    <title>{info.title}</title>
-    <meta name="description" content={info.description} />
+    <title>{siteInfo.title}</title>
+    <meta name="description" content={siteInfo.description} />
 
     <!-- social media -->
-    <meta property="og:title" content={info.title} />
+    <meta property="og:title" content={siteInfo.title} />
     <meta property="og:type" content="website" />
-    <meta property="og:description" content={info.description} />
+    <meta property="og:description" content={siteInfo.description} />
     <meta property="og:image" content={image} />
     <meta property="og:url" content={site} />
     <meta name="twitter:card" content="summary_large_image" />
@@ -38,7 +46,7 @@ const sections = [WhatIsOrble, About];
   <body
     class="h-full overflow-x-hidden bg-default text-default text-base selection:bg-secondary selection:text-white"
   >
-    <Header />
+    <Header mainTitle={siteInfo.title} navItems={navItems} />
     <Splash />
     <div class="space-y-24 px-8 py-16">
       <WhatIsOrble />

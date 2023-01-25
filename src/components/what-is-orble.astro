@@ -1,11 +1,12 @@
 ---
 import { Icon } from "astro-icon";
 import ContentSection from "$components/content-section.astro";
-import data from "$data/what-is-orble";
+import { info, points } from "$data/what-is-orble";
+
+export { info };
 ---
 
-<ContentSection title={data.title} subtitle={data.subtitle} id="what-is-orble">
-  <Fragment slot="lead">{data.body}</Fragment>
+<ContentSection info={info}>
   <p>
     Are you an interested business? Download our <a
       class="text-primary underline"
@@ -14,7 +15,7 @@ import data from "$data/what-is-orble";
   </p>
   <ul class="mt-2 grid max-w-6xl grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
     {
-      data.points.map(({ icon, heading, text }) => (
+      points.map(({ icon, heading, text }) => (
         <li class="flex flex-col items-center gap-4 border border-default bg-offset p-6">
           <div class="h-16 w-16 rounded-full border-2 border-primary p-3">
             <Icon name={icon} />

@@ -19,7 +19,7 @@ export default defineConfig({
     css: {
       devSourcemap: true,
     },
-    plugins: [glsl(), yaml()],
+    plugins: [glsl()],
     ssr: {
       external: ["svgo"],
     },

@@ -1,3 +1,14 @@
+export interface NavItem {
+  /** The section ID used for things like links and nav items. */
+  id: string;
+  title?: string;
+}
+
+export interface SectionInfo extends NavItem {
+  subtitle?: string;
+  body?: string;
+}
+
 export interface CompatibilityItem {
   icon: string;
   title: string;
@@ -17,10 +28,6 @@ export interface FooterLink {
   url: string;
 }
 
-export interface NavItem {
-  title: string;
-  url: string;
-}
 
 export interface ShowcaseSite {
   title: string;

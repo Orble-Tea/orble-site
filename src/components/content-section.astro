@@ -1,25 +1,29 @@
 ---
+import type { SectionInfo } from "~/types";
+
 export interface Props {
-  id: string;
-  subtitle: string;
-  title: string;
+  info: SectionInfo;
 }
 
-const { title, subtitle, id } = Astro.props;
+const { info } = Astro.props;
 ---
 
-<section id={id} class="flex scroll-mt-24 flex-col items-center gap-4">
+<section id={info.id} class="flex scroll-mt-24 flex-col items-center gap-4">
   <div class="flex flex-col items-center gap-4">
     <slot name="eyebrow" />
-    <h2 class="text-center font-heading text-primary text-6xl">
-      {title}
-    </h2>
+    {
+      info.title && (
+        <h2 class="text-center font-heading text-primary text-6xl">
+          {info.title}
+        </h2>
+      )
+    }
   </div>
-  <h3 class="max-w-xl text-center text-xl">
-    {subtitle}
-  </h3>
-  <p class="max-w-xl text-center">
-    <slot name="lead" />
-  </p>
+  {
+    info.subtitle && (
+      <h3 class="max-w-xl text-center text-xl">{info.subtitle}</h3>
+    )
+  }
+  {info.body && <p class="max-w-xl text-center">{info.body}</p>}
   <slot />
 </section>

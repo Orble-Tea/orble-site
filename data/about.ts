@@ -1,15 +1,19 @@
+import type { SectionInfo } from "~/types";
+
 import estherImg from "$assets/headshots/esther.jpg";
 import sophiaImg from "$assets/headshots/sophia.png";
 import ladaImg from "$assets/headshots/lada.jpg";
 import nastassjaImg from "$assets/headshots/nastassja.jpg";
 import sarahImg from "$assets/headshots/sarah.jpg";
 
-const title = "About Us";
-const subtitle =
-  "We're an engineer-led team of student founders from the University of Pennsylvania.";
-const body = "";
+export const info: SectionInfo = {
+  id: "about",
+  title: "About Us",
+  subtitle:
+    "We're an engineer-led team of student founders from the University of Pennsylvania.",
+};
 
-const people = [
+export const members = [
   {
     name: "Esther Amao",
     bio: [
@@ -41,18 +45,7 @@ const people = [
   },
   {
     name: "Sarah Tadlock",
-    bio: [
-    "B.S.E. from SEAS in Mechanical Engineering 2023"
-    ],
+    bio: ["B.S.E. from SEAS in Mechanical Engineering 2023"],
     picture: sarahImg,
   },
 ];
-
-const data = {
-  title,
-  subtitle,
-  body,
-  people,
-};
-
-export default data;
