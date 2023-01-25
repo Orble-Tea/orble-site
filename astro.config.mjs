@@ -1,30 +1,30 @@
 import { defineConfig } from "astro/config";
 import image from "@astrojs/image";
 import tailwind from "@astrojs/tailwind";
+import sitemap from "@astrojs/sitemap";
 import glsl from "vite-plugin-glsl";
-import yaml from '@rollup/plugin-yaml';
 
 // https://astro.build/config
 export default defineConfig({
-  // watch: true,
-  site: "https://www.orble-tea.com",
-  // ...(process.env.BUILD_ENV === "GITHUB" && {base: "/orble-site"}),
+  site: "https://osiris.cyber.nyu.edu/",
+  // ...(process.env.BUILD_ENV === "GITHUB" && {base: "/osiris-site"}),
   integrations: [
     tailwind(),
     image({
       serviceEntryPoint: "@astrojs/image/sharp",
     }),
+    sitemap(),
   ],
   vite: {
-    plugins: [glsl(), yaml()],
-    build: {
-      target: "safari14"
+    css: {
+      devSourcemap: true,
     },
+    plugins: [glsl(), yaml()],
     ssr: {
       external: ["svgo"],
     },
     server: {
-      port: 3000
-    }
+      port: 3000,
+    },
   },
 });
