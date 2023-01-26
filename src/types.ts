@@ -6,7 +6,7 @@ export interface NavItem {
 
 export interface SectionInfo extends NavItem {
   subtitle?: string;
-  body?: string;
+  Body?: AstroComponentFactory;
 }
 
 export interface CompatibilityItem {

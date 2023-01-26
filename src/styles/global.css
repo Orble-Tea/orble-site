@@ -10,3 +10,18 @@ a,
   @apply bg-clip-text text-transparent;
   @apply bg-gradient-to-br from-indigo-500 via-fuchsia-500 to-pink-500;
 }
+
+/* add spacing between rendered markdown paragraphs */
+.markdown-render {
+  a {
+    @apply underline;
+    @apply text-primary;
+    @apply hover:text-accent;
+  }
+
+  p {
+    &:not(:last-child) {
+      margin-bottom: 0.25em;
+    }
+  }
+}

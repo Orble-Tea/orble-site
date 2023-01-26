@@ -1,9 +1,15 @@
 ---
 import { Image } from "@astrojs/image/components";
-import ContentSection from "$components/content-section.astro";
-import { info, members } from "$data/about";
+import { members } from "$content/about";
 
-export { info };
+import ContentSection from "$layouts/content-section.astro";
+import type { SectionInfo } from "~/types";
+
+export interface Props {
+  info: SectionInfo;
+}
+
+const { info } = Astro.props;
 ---
 
 <ContentSection info={info}>

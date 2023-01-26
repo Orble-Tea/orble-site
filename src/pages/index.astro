@@ -2,24 +2,38 @@
 import "~/styles/index.css";
 
 /* Any Astro component imports MUST come after global style imports, due to css loading order! (Especially tailwind.) */
-import type { NavItem } from "~/types";
+import Path from "path";
+import type { NavItem, SectionInfo } from "~/types";
+
 import Header from "$components/header.astro";
 import Splash from "$components/splash.astro";
-import WhatIsOrble, { info as whatInfo } from "$components/what-is-orble.astro";
-import About, { info as aboutInfo } from "$components/about.astro";
 
-import siteInfo from "$data/site";
+import * as what from "$content/sections/what-is-it.mdx";
+import * as about from "$content/sections/about.mdx";
+
+import siteInfo from "$content/site";
+
+/* const test = await Astro.glob("../content/sections/*.mdx"); */
+const sectionData = [what, about];
 
 const { generator, site } = Astro;
 const image = new URL(siteInfo.preview_image, site);
 
-const sectionInfos = [whatInfo, aboutInfo];
-/* Prepend section char # to each id, and copy strings to new object array */
-const sectionNavs: NavItem[] = sectionInfos.map((n) => ({
-  id: "#" + n.id,
-  title: n.title,
+const sections = sectionData.map((s) => ({
+  info: {
+    id: Path.parse(s.file).name,
+    title: s.frontmatter.title,
+    subtitle: s.frontmatter.subtitle,
+    Body: s.Content,
+  } as SectionInfo,
+  Layout: s.layout,
 }));
-const navItems = sectionNavs;
+
+const navItems: NavItem[] = sections.map((s) => ({
+  id: "#" + s.info.id,
+  title: s.info.title,
+}));
+const target = navItems[0];
 ---
 
 <!DOCTYPE html>
@@ -46,11 +60,14 @@ const navItems = sectionNavs;
   <body
     class="h-full overflow-x-hidden bg-default text-default text-base selection:bg-secondary selection:text-white"
   >
-    <Header mainTitle={siteInfo.title} navItems={navItems} />
+    <Header
+      mainTitle={siteInfo.title}
+      navItems={navItems}
+      scrollTarget={target}
+    />
     <Splash />
-    <div class="space-y-24 px-8 py-16">
-      <WhatIsOrble />
-      <About />
+    <div class="space-y-10 px-6 py-16 sm:space-y-24 sm:px-8">
+      {sections.map((S) => <S.Layout info={S.info} />)}
     </div>
   </body>
 </html>

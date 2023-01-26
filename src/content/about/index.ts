@@ -1,17 +1,8 @@
-import type { SectionInfo } from "~/types";
-
 import estherImg from "$assets/headshots/esther.jpg";
 import sophiaImg from "$assets/headshots/sophia.png";
 import ladaImg from "$assets/headshots/lada.jpg";
 import nastassjaImg from "$assets/headshots/nastassja.jpg";
 import sarahImg from "$assets/headshots/sarah.jpg";
-
-export const info: SectionInfo = {
-  id: "about",
-  title: "About Us",
-  subtitle:
-    "We're an engineer-led team of student founders from the University of Pennsylvania.",
-};
 
 export const members = [
   {

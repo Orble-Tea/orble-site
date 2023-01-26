@@ -6,9 +6,10 @@ import type { NavItem } from "~/types";
 export interface Props {
   mainTitle: string;
   navItems: NavItem[];
+  scrollTarget: NavItem;
 }
 
-const { mainTitle, navItems } = Astro.props;
+const { mainTitle, navItems, scrollTarget } = Astro.props;
 ---
 
 <header
@@ -27,7 +28,7 @@ const { mainTitle, navItems } = Astro.props;
     />
     <h1 class="sm:block">{mainTitle}</h1>
   </a>
-  <ScrollDown id="scrolly" />
+  <ScrollDown id="scrolly" target={scrollTarget.id} />
   <div>
     <div class="flex items-center gap-6">
       <nav class="hidden sm:block">

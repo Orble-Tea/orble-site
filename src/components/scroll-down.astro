@@ -1,12 +1,18 @@
 ---
 import { Icon } from "astro-icon";
-const id = Astro.props.id;
+
+export interface Props {
+  id: string;
+  targent: string;
+}
+
+const { id, target } = Astro.props;
 ---
 
 <a
   class="absolute left-1/2 bottom-6 animate-fade-move-down"
   class="btn sm:hidden"
-  href="/#what-is-orble"
+  href={target}
 >
   <Icon
     id={id}
@@ -16,7 +22,7 @@ const id = Astro.props.id;
 </a>
 
 <style>
-  /* [astro-icon] {
-    color: var(--color-secondary);
-    } */
+  [astro-icon] {
+    color: var(--color-primary);
+  }
 </style>

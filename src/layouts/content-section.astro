@@ -21,9 +21,15 @@ const { info } = Astro.props;
   </div>
   {
     info.subtitle && (
-      <h3 class="max-w-xl text-center text-xl">{info.subtitle}</h3>
+      <h3 class="text-center text-base sm:text-xl">{info.subtitle}</h3>
     )
   }
-  {info.body && <p class="max-w-xl text-center">{info.body}</p>}
+  {
+    info.Body && (
+      <div class="markdown-render text-center text-sm sm:text-base">
+        <info.Body />
+      </div>
+    )
+  }
   <slot />
 </section>

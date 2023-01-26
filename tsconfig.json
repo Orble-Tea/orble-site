@@ -2,13 +2,14 @@
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "target": "es2020",
-    "module": "es2020" ,
+    "module": "es2020",
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"],
       "$assets/*": ["assets/*"],
       "$components/*": ["src/components/*"],
-      "$data/*": ["data/*"]
+      "$layouts/*": ["src/layouts/*"],
+      "$content/*": ["src/content/*"]
     },
     "types": ["@astrojs/image/client", "vite-plugin-glsl/ext", "vite/client"]
   }
