@@ -1,0 +1,238 @@
+---
+import Layout from "~/layouts/PageLayout.astro";
+// import Image from "~/components/common/Image.astro";
+import { Image } from "astro:assets";
+import Button from "~/components/ui/Button.astro";
+
+import orblelogo from "~/assets/images/orble-page-logo.png";
+import tealbar from "~/assets/images/teal-bar.png";
+import orblewhite from "~/assets/images/orble-white.png";
+import cad from "~/assets/images/cad-render.png";
+import twomachines from "~/assets/images/two-machine-render.png";
+import pricing from "~/assets/images/pricing.png";
+import getStartedBg from "~/assets/images/bg-design/orble-get-started-bg.png";
+
+const metadata = {
+  title: "Orble Tea",
+};
+---
+
+<Layout metadata={metadata}>
+  <div class="flex justify-left ml-[10%]">
+    <Image src={orblelogo} alt="Orble Logo" width={700} />
+  </div>
+  <div class="flex justify-end mr-[10%] mt-8">
+    <Image src={tealbar} alt="Bar" width={450} />
+  </div>
+
+
+
+
+  <div class="orble-tea-bg-one font-serif">
+    <div class="twobythree max-sm:grid-cols-1">
+      <div class="col-span-1 row-span-1 mt-28">
+        <Image src={orblewhite} alt="Orble" width={200} />
+        <h3 class="text-3xl tracking-normal italic text-white">
+          is a revolutionary boba tea machine
+        </h3>
+        <h3 class="text-l tracking-normal text-munch-blue mt-6">
+          designed to deliver freshly brewed bubble tea with unparalleled
+          convenience and customization.
+        </h3>
+      </div>
+      <div class="col-span-1 row-span-2">
+        <Image src={cad} alt="Orble Machine" width={600} />
+      </div>
+      <div class="col-span-1 row-span-2 mt-12">
+        <video width="600" controls id="orble-video">
+          <source src="/render-video.mp4" type="video/mp4" />
+          Your browser does not support this video.
+        </video>
+      </div>
+      <div class="col-span-1 row-span-1">
+        <span class="text-l tracking-normal text-munch-blue mt-6">With its</span
+        >
+        <span class="text-3xl ml-2 tracking-normal italic text-munch-blue"
+          >sleek and compact design,</span
+        >
+        <h3 class="text-l tracking-normal text-munch-blue">
+          Orble seamlessly integrates into any food service environment,
+          offering customers a delightful boba tea experience at the touch of a
+          button.
+        </h3>
+        <Image src={tealbar} alt="Bar" width={400} class="mt-10 mb-10" />
+      </div>
+    </div>
+
+
+
+
+    <div class="twobyone">
+      <div>
+        <Image src={twomachines} alt="Orble Machines" width={600} />
+      </div>
+      <div>
+        <h3
+          class="text-3xl ml-2 tracking-normal underline italic text-munch-blue mt-[46px]"
+        >
+          Specifications
+        </h3>
+        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+          <span class="font-bold">Dimensions:</span><br />
+          70 inches (H) x 35.5 inches (W) x 35.5 inches (D)
+        </h3>
+
+        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+          <span class="font-bold"></span>Weight:
+        </h3>
+        <br />
+        771 lb. (fully loaded, including water) <br />
+        716 lb. (empty weight) <br />
+        Additional 150 lb. for ice maker
+
+        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+          <span class="font-bold">Capacity:</span>
+          <br />
+          Up to 12 different flavors of tea and toppings
+        </h3>
+
+        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+          <span class="font-bold">Power:</span>
+          <br />
+          Requires a dedicated 15A outlet, 120V circuit <br />
+          Ice maker requires a separate 15A
+        </h3>
+      </div>
+    </div>
+
+    <div class="threebyonelesspadding">
+      <div></div>
+      <div class="col-span-2">
+        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+          <span class="font-bold">Interface:</span> Intuitive touchscreen display
+          for easy operation
+        </h3>
+        <h3 class="text-l tracking-normal text-munch-blue mt-12">
+          <span class="font-bold">Customization:</span> Adjustable sugar levels,
+          ice levels, and topping combinations
+        </h3>
+        <h3 class="text-l tracking-normal text-munch-blue mt-12 mb-14">
+          <span class="font-bold">Cleaning:</span> Self-cleaning system for hassle-free
+          maintenance
+        </h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-center">
+    <Image src={pricing} alt="Orble Pricing" width={1000} />
+  </div>
+
+  <div class="flex justify-center mt-[31.62px] font-serif z-10">
+    <div
+      class="w-full h-[422px] bg-[#B1D9CD] rounded-[80px] flex flex-col items-center"
+    >
+      <div class="features-title underline-offset-4 mt-[31px] mb-[47px]">
+        Unique Features
+      </div>
+      <div class="flex flex-row flex-wrap">
+        <div class="flex flex-col items-center">
+          <div
+            class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="57"
+              height="57"
+              viewBox="0 0 57 57"
+              fill="none"
+            >
+              <path
+                d="M12.1357 4.28613L9.62766 6.79057L13.3594 10.5205L15.8638 8.01607L12.1357 4.28613ZM44.8661 4.28613L41.1344 8.01607L43.6406 10.5205L47.3706 6.79235L44.8661 4.28613ZM28.5 5.39763C27.9122 5.40476 27.3172 5.4386 26.7188 5.51163C26.7009 5.51163 26.6831 5.50807 26.6653 5.51163C19.4406 6.33991 13.6907 12.1771 12.6914 19.3698C11.8934 25.1588 14.2803 30.4082 18.2578 33.789C19.8848 35.1775 20.9853 37.083 21.375 39.1862V49.8737H25.4362C26.0561 50.9371 27.1872 51.6549 28.5 51.6549C29.8128 51.6549 30.9439 50.9371 31.5637 49.8737H35.625V42.7487H35.7924V40.6325C35.7924 38.0212 37.1497 35.3885 39.3549 33.3419C42.3047 30.3886 44.5312 26.1937 44.5312 21.3754C44.5312 12.5761 37.2887 5.3157 28.5 5.39763ZM28.5 8.96013C35.3845 8.86395 40.9688 14.4998 40.9688 21.3754C40.9688 25.1054 39.2409 28.39 36.8487 30.7804L36.9057 30.8374C34.5284 33.0296 32.9912 35.9831 32.5595 39.1879H24.7683C24.3764 36.1349 23.0672 33.1798 20.593 31.0601C17.4456 28.3882 15.5699 24.3626 16.1969 19.8169C16.9753 14.2059 21.5282 9.69401 27.1071 9.07591C27.5677 9.0117 28.0315 8.97364 28.4964 8.96192L28.5 8.96013ZM3.5625 21.3754V24.9379H8.90625V21.3754H3.5625ZM48.0938 21.3754V24.9379H53.4375V21.3754H48.0938ZM13.3594 35.7929L9.62944 39.521L12.1357 42.0273L15.862 38.2973L13.3594 35.7929ZM43.6406 35.7929L41.1362 38.2973L44.8643 42.0273L47.3706 39.521L43.6406 35.7929ZM24.9375 42.7504H32.0625V46.3129H24.9375V42.7504Z"
+                fill="#B1D9CD"></path>
+            </svg>
+          </div>
+          <div
+            class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+          >
+            <p class="w-[241px]">
+              <span class="font-bold"
+                >Patent pending boba cooking technology</span
+              > ensures consistent quality and flavor in every cup.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-col items-center ml-[37px] mr-[33px]">
+          <div
+            class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="54"
+              height="54"
+              viewBox="0 0 54 54"
+              fill="none"
+            >
+              <path
+                d="M22.5 6.75H9C8.40326 6.75 7.83097 6.98705 7.40901 7.40901C6.98705 7.83097 6.75 8.40326 6.75 9V22.5C6.75 23.0967 6.98705 23.669 7.40901 24.091C7.83097 24.5129 8.40326 24.75 9 24.75H22.5C23.0967 24.75 23.669 24.5129 24.091 24.091C24.5129 23.669 24.75 23.0967 24.75 22.5V9C24.75 8.40326 24.5129 7.83097 24.091 7.40901C23.669 6.98705 23.0967 6.75 22.5 6.75ZM45 6.75H31.5C30.9033 6.75 30.331 6.98705 29.909 7.40901C29.4871 7.83097 29.25 8.40326 29.25 9V22.5C29.25 23.0967 29.4871 23.669 29.909 24.091C30.331 24.5129 30.9033 24.75 31.5 24.75H45C45.5967 24.75 46.169 24.5129 46.591 24.091C47.0129 23.669 47.25 23.0967 47.25 22.5V9C47.25 8.40326 47.0129 7.83097 46.591 7.40901C46.169 6.98705 45.5967 6.75 45 6.75ZM22.5 29.25H9C8.40326 29.25 7.83097 29.4871 7.40901 29.909C6.98705 30.331 6.75 30.9033 6.75 31.5V45C6.75 45.5967 6.98705 46.169 7.40901 46.591C7.83097 47.0129 8.40326 47.25 9 47.25H22.5C23.0967 47.25 23.669 47.0129 24.091 46.591C24.5129 46.169 24.75 45.5967 24.75 45V31.5C24.75 30.9033 24.5129 30.331 24.091 29.909C23.669 29.4871 23.0967 29.25 22.5 29.25ZM40.5 31.5H36V36H31.5V40.5H36V45H40.5V40.5H45V36H40.5V31.5Z"
+                fill="#B1D9CD"></path>
+            </svg>
+          </div>
+          <div
+            class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+          >
+            <p class="w-[241px]">
+              <span class="font-bold">Modular design</span> allows for easy customization
+              and expansion of flavor options.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-col items-center">
+          <div
+            class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="58"
+              height="58"
+              viewBox="0 0 58 58"
+              fill="none"
+            >
+              <path
+                d="M37.4583 48.1524L27.1875 37.8816L30.5708 34.4982L37.4583 41.3857L51.1125 27.7316L54.4958 31.1149L37.4583 48.1524ZM50.75 24.167H45.9167V12.0837H41.0833V19.3337H16.9167V12.0837H12.0833V45.917H26.5833V50.7503H12.0833C10.7542 50.7503 9.61672 50.2775 8.671 49.3317C7.72528 48.386 7.25161 47.2478 7.25 45.917V12.0837C7.25 10.7545 7.72367 9.61705 8.671 8.67133C9.61833 7.7256 10.7558 7.25194 12.0833 7.25033H22.1729C22.616 5.8406 23.4819 4.68302 24.7708 3.77758C26.0597 2.87213 27.4694 2.4186 29 2.41699C30.6111 2.41699 32.0514 2.87052 33.321 3.77758C34.5906 4.68463 35.4461 5.84221 35.8875 7.25033H45.9167C47.2458 7.25033 48.3841 7.72399 49.3314 8.67133C50.2788 9.61866 50.7516 10.7561 50.75 12.0837V24.167ZM29 12.0837C29.6847 12.0837 30.2591 11.8517 30.7231 11.3877C31.1871 10.9237 31.4183 10.3501 31.4167 9.66699C31.4167 8.98227 31.1847 8.40871 30.7207 7.94633C30.2567 7.48394 29.6831 7.25194 29 7.25033C28.3153 7.25033 27.7417 7.48233 27.2793 7.94633C26.8169 8.41033 26.5849 8.98388 26.5833 9.66699C26.5833 10.3517 26.8153 10.9261 27.2793 11.3901C27.7433 11.8541 28.3169 12.0853 29 12.0837Z"
+                fill="#B1D9CD"></path>
+            </svg>
+          </div>
+          <div
+            class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+          >
+            <p class="w-[241px]">
+              <span class="font-bold">Real-time monitoring and analytics</span> enable
+              proactive maintenance and inventory management.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="h-auto w-full">
+    <!-- <form action="/contact"> -->
+    <a href="mailto:info@orble-tea.com" class="no-underline hover:no-underline">
+      <button
+        class="get-started w-[80%] m-auto sm:w-[482px] h-[92px] sm:ml-[273px] mt-[134px] bg-[#B1D9CD] border-[3px] border-black rounded-[11px] flex justify-center items-center font-serif"
+        >GET STARTED WITH ORBLE</button
+      >
+    </a>
+    <!-- </form> -->
+    <div class="bg-[#B1D9CD] h-[4px] w-[80%] sm:w-[755px] mt-[50px] rounded-full sm:block hidden"></div>
+    <div class="flex justify-center mt-[-271px]">
+      <Image
+        src={getStartedBg}
+        alt="Background"
+        width={1221}
+        class={"mt-[-25px] -z-10"}
+      />
+    </div>
+  </div>
+</Layout>
