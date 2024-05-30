@@ -22,6 +22,7 @@ import cad from "~/assets/images/cad-render.png";
 import twomachines from "~/assets/images/two-machine-render.png";
 import pricing from "~/assets/images/pricing.png";
 import getStartedBg from "~/assets/images/bg-design/orble-get-started-bg.png";
+import Icon from "astro-icon";
 
 
 
@@ -49,6 +50,10 @@ const navItems: NavItem[] = sections.map((s) => ({
   title: s.info.title,
 }));
 const target = navItems[0];
+navItems.push({
+  id: "#features",
+  title: "Features",
+})
 ---
 
 <!DOCTYPE html>
@@ -191,7 +196,7 @@ const target = navItems[0];
             Your browser does not support this video.
           </video>
         </div>
-        <div class="col-span-1 row-span-1 text-center">
+        <div class="col-span-1 row-span-1 max-sm:text-center">
           <span class="text-l tracking-normal text-munch-blue mt-6">With its</span
           >
           <span class="text-3xl ml-2 tracking-normal italic text-munch-blue"
@@ -202,83 +207,19 @@ const target = navItems[0];
             offering customers a delightful boba tea experience at the touch of a
             button.
           </h3>
-          <Image src={tealbar} alt="Bar" width={400} class="mt-10" />
+          <Image id="features" src={tealbar} alt="Bar" width={400} class="mt-10 mx-auto" />
         </div>
       </div>
     </div>
-
   
-  
-  
-  
-    <!-- <div class="twobyone">
-      <div>
-        <Image src={twomachines} alt="Orble Machines" width={600} />
-      </div>
-      <div>
-        <h3
-          class="text-3xl ml-2 tracking-normal underline italic text-munch-blue mt-[46px]"
-        >
-          Specifications
-        </h3>
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
-          <span class="font-bold">Dimensions:</span><br />
-          70 inches (H) x 35.5 inches (W) x 35.5 inches (D)
-        </h3>
-
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
-          <span class="font-bold"></span>Weight:
-        </h3>
-        <br />
-        771 lb. (fully loaded, including water) <br />
-        716 lb. (empty weight) <br />
-        Additional 150 lb. for ice maker
-
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
-          <span class="font-bold">Capacity:</span>
-          <br />
-          Up to 12 different flavors of tea and toppings
-        </h3>
-
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
-          <span class="font-bold">Power:</span>
-          <br />
-          Requires a dedicated 15A outlet, 120V circuit <br />
-          Ice maker requires a separate 15A
-        </h3>
-      </div>
-    </div> -->
-
-    <!-- <div class="threebyonelesspadding">
-      <div></div>
-      <div class="col-span-2">
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
-          <span class="font-bold">Interface:</span> Intuitive touchscreen display
-          for easy operation
-        </h3>
-        <h3 class="text-l tracking-normal text-munch-blue mt-12">
-          <span class="font-bold">Customization:</span> Adjustable sugar levels,
-          ice levels, and topping combinations
-        </h3>
-        <h3 class="text-l tracking-normal text-munch-blue mt-12 mb-14">
-          <span class="font-bold">Cleaning:</span> Self-cleaning system for hassle-free
-          maintenance
-        </h3>
-      </div>
-    </div> -->
-  
-    <div class="flex justify-center">
-      <Image src={pricing} alt="Orble Pricing" width={1000} />
-    </div>
-  
-    <div class="flex justify-center mt-[31.62px] font-sans z-10">
+    <div class="flex justify-center sm:mt-8 font-sans z-10">
       <div
-        class="w-[90%] h-[422px] bg-[#B1D9CD] rounded-[80px] flex flex-col items-center"
+        class="w-[90%] h-auto p-12 bg-[#B1D9CD] rounded-[80px] flex flex-col items-center"
       >
-        <div class="features-title underline-offset-4 mt-[31px] mb-[47px]">
+        <div class="features-title underline-offset-4 mb-[47px]">
           Unique Features
         </div>
-        <div class="flex flex-row flex-wrap">
+        <div class="flex flex-row flex-wrap justify-center gap-10">
           <div class="flex flex-col items-center">
             <div
               class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
@@ -361,27 +302,34 @@ const target = navItems[0];
   
     <div class="h-auto w-full">
       <!-- <form action="/contact"> -->
-      <a href="mailto:info@orble-tea.com" class="no-underline hover:no-underline">
+      <!-- <a href="mailto:info@orble-tea.com" class="no-underline hover:no-underline">
         <button
-          class="get-started w-[80%] m-auto sm:w-[482px] h-[92px] sm:ml-[273px] mt-[134px] bg-[#B1D9CD] border-[3px] border-black rounded-[11px] flex justify-center items-center font-sans"
+          class="get-started w-[80%] m-auto mt-12 sm:w-[482px] h-[92px] sm:ml-[273px] bg-[#B1D9CD] border-[3px] border-black rounded-[11px] flex justify-center items-center font-sans"
           >GET STARTED WITH ORBLE</button
         >
-      </a>
+      </a> -->
       <!-- </form> -->
       <div class="bg-[#B1D9CD] h-[4px] w-[80%] sm:w-[755px] mt-[50px] rounded-full sm:block hidden"></div>
-      <div class="flex justify-center mt-[-271px]">
+      <div class="flex justify-center sm:mt-[-271px]">
         <Image
           src={getStartedBg}
           alt="Background"
-          class="mt-[-25px] -z-10 w-full"
+          class="mt-[-25px] -z-10 w-full hidden sm:block"
           style="clip-path: inset(0 0 50px 0);"
         />
       </div>
     </div>
 
 
-    <div class="space-y-10 px-6 py-16 sm:space-y-24 sm:px-8">
+    <div class="space-y-10 px-6 py-16 sm:space-y-24 sm:px-8 mt-12">
       {sections.map((S) => <S.Layout info={S.info} />)}
     </div>
   </body>
+  <footer>
+    <div class="flex justify-center items-center h-16 bg-gray-800 text-white">
+      <a href="https://munch-industries.com" class="text-xs sm:text-sm">
+        &copy; {new Date().getFullYear()} Munch Industries
+      </a>
+    </div>
+  </footer>
 </html>

@@ -17,7 +17,7 @@ const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg
 ---
 
 <ContentSection info={info}>
-  <ul class="mt-4 max-w-6xl grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-8">
+  <ul class="mt-4 max-w-6xl grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-24">
     {
       teamMembers.map(({ name, title, image, bio }) => (
         <div>
@@ -27,7 +27,7 @@ const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg
             height={250}
             position="entropy"
             format="webp"
-            src={"/team-headshots/" + image}
+            src={"src/assets/images/team-headshots/" + image}
             alt={"Picture of " + name}
           />
           <p class="text-center font-bold">{name}</p>

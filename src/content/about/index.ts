@@ -102,36 +102,42 @@ export const teamMembers = [
     image: "danshu.jpg",
     bio: "",
   },
-  {
-    name: "Ella Phillippy",
-    title: "Marketing Fellow",
-    image: "ella.jpg",
-    bio: "",
-  },
-  {
-    name: "Kyle Fukumoto",
-    title: "Business Development Fellow",
-    image: "kyle.png",
-    bio: "",
-  },
-  {
-    name: "Sammi Xu",
-    title: "Business Development Fellow",
-    image: "sammi.jpg",
-    bio: "",
-  },
-  {
-    name: "Jean Ee Chua",
-    title: "Business Development Fellow",
-    image: "jean.png",
-    bio: "",
-  },
+  // {
+  //   name: "Ella Phillippy",
+  //   title: "Marketing Fellow",
+  //   image: "ella.jpg",
+  //   bio: "",
+  // },
+  // {
+  //   name: "Kyle Fukumoto",
+  //   title: "Business Development Fellow",
+  //   image: "kyle.png",
+  //   bio: "",
+  // },
+  // {
+  //   name: "Sammi Xu",
+  //   title: "Business Development Fellow",
+  //   image: "sammi.jpg",
+  //   bio: "",
+  // },
+  // {
+  //   name: "Jean Ee Chua",
+  //   title: "Business Development Fellow",
+  //   image: "jean.png",
+  //   bio: "",
+  // },
   {
     name: "Sharon Zheng",
     title: "Embedded Engineer",
     image: "sharon.png",
     bio: "",
   },
+  {
+    name: "Maisha Takahashi",
+    title: "Software Intern",
+    image: "maisha.jpg",
+    bio: "",
+  }
 ];
 
 
