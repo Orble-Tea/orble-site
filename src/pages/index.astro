@@ -191,7 +191,7 @@ navItems.push({
           <Image src={cad} alt="Orble Machine" width={600} />
         </div>
         <div class="col-span-1 row-span-2 my-12">
-          <video width="600" controls id="orble-video">
+          <video width="600" autoplay loop muted playsinline id="orble-video">
             <source src="/media/render-video.mp4" type="video/mp4" />
             Your browser does not support this video.
           </video>
@@ -207,12 +207,19 @@ navItems.push({
             offering customers a delightful boba tea experience at the touch of a
             button.
           </h3>
-          <Image id="features" src={tealbar} alt="Bar" width={400} class="mt-10 mx-auto" />
+          <Image src={tealbar} alt="Bar" width={400} class="mt-10 mx-auto" />
         </div>
       </div>
     </div>
+
+    <div class="w-full flex justify-center -mt-8 mb-8 sm:mt-8">
+      <video autoplay loop controls playsinline class="rounded-lg w-[80%]">
+      <source src="/media/long-video.mp4" type="video/mp4" />
+      Your browser does not support this video.
+      </video>
+    </div>
   
-    <div class="flex justify-center sm:mt-8 font-sans z-10">
+    <div id="features" class="flex justify-center sm:mt-8 font-sans z-10">
       <div
         class="w-[90%] h-auto p-12 bg-[#B1D9CD] rounded-[80px] flex flex-col items-center"
       >
@@ -300,25 +307,6 @@ navItems.push({
       </div>
     </div>
   
-    <div class="h-auto w-full">
-      <!-- <form action="/contact"> -->
-      <!-- <a href="mailto:info@orble-tea.com" class="no-underline hover:no-underline">
-        <button
-          class="get-started w-[80%] m-auto mt-12 sm:w-[482px] h-[92px] sm:ml-[273px] bg-[#B1D9CD] border-[3px] border-black rounded-[11px] flex justify-center items-center font-sans"
-          >GET STARTED WITH ORBLE</button
-        >
-      </a> -->
-      <!-- </form> -->
-      <div class="bg-[#B1D9CD] h-[4px] w-[80%] sm:w-[755px] mt-[50px] rounded-full sm:block hidden"></div>
-      <div class="flex justify-center sm:mt-[-271px]">
-        <Image
-          src={getStartedBg}
-          alt="Background"
-          class="mt-[-25px] -z-10 w-full hidden sm:block"
-          style="clip-path: inset(0 0 50px 0);"
-        />
-      </div>
-    </div>
 
 
     <div class="space-y-10 px-6 py-16 sm:space-y-24 sm:px-8 mt-12">
