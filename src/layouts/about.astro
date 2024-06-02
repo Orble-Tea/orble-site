@@ -27,7 +27,7 @@ const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg
             height={250}
             position="entropy"
             format="webp"
-            src={"src/assets/images/team-headshots/" + image}
+            src={"/team-headshots/" + image}
             alt={"Picture of " + name}
           />
           <p class="text-center font-bold">{name}</p>
