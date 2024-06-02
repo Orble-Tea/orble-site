@@ -21,15 +21,6 @@ const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg
     {
       teamMembers.map(({ name, title, image, bio }) => (
         <div>
-          // <Image
-          //   class="headshot m-auto"
-          //   width={250}
-          //   height={250}
-          //   position="entropy"
-          //   format="webp"
-          //   src={"src/assets/images/team-headshots/" + image}
-          //   alt={"Picture of " + name}
-          // />
           <p class="text-center font-bold">{name}</p>
           <p class="py-1 text-center text-offset text-xs">{title}</p>
           <p class="py-1 text-center text-offset text-xs">{bio}</p>
