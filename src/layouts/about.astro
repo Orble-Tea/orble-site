@@ -1,6 +1,6 @@
 ---
 import { Image } from "@astrojs/image/components";
-import { members } from "$content/about";
+import { teamMembers } from "$content/about";
 
 import ContentSection from "$layouts/content-section.astro";
 import type { SectionInfo } from "~/types";
@@ -10,12 +10,16 @@ export interface Props {
 }
 
 const { info } = Astro.props;
+
+const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg,png,gif}");
+
+// src={images["/assets/images/team-headshots/" + image]}
 ---
 
 <ContentSection info={info}>
-  <ul class="mt-4 flex max-w-6xl flex-col gap-4 sm:flex-row sm:gap-8">
+  <ul class="mt-4 max-w-6xl grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-24">
     {
-      members.map(({ name, bio, picture }) => (
+      teamMembers.map(({ name, title, image, bio }) => (
         <div>
           <Image
             class="headshot m-auto"
@@ -23,13 +27,12 @@ const { info } = Astro.props;
             height={250}
             position="entropy"
             format="webp"
-            src={picture}
+            src={"src/assets/images/team-headshots/" + image}
             alt={"Picture of " + name}
           />
           <p class="text-center font-bold">{name}</p>
-          {bio.map((b) => (
-            <p class="py-1 text-center text-offset text-xs">{b}</p>
-          ))}
+          <p class="py-1 text-center text-offset text-xs">{title}</p>
+          <p class="py-1 text-center text-offset text-xs">{bio}</p>
         </div>
       ))
     }
@@ -39,5 +42,12 @@ const { info } = Astro.props;
 <style>
   .headshot {
     clip-path: circle();
+  }
+
+  .orble-tea-bg-one{
+    background-image: url("../images/bg-design/orble-tea-bg.png");
+    background-repeat: no-repeat;
+    background-size: 100% 97%;
+    background-position: 0px 40px
   }
 </style>
