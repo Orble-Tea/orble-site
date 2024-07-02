@@ -1,143 +1,101 @@
-import estherImg from "$assets/headshots/esther.jpg";
-import sophiaImg from "$assets/headshots/sophia.png";
-import ladaImg from "$assets/headshots/lada.jpg";
-import nastassjaImg from "$assets/headshots/nastassja.jpg";
-import sarahImg from "$assets/headshots/sarah.jpg";
-
-export const members = [
-  {
-    name: "Esther Amao",
-    bio: [
-      "B.S.E. from SEAS in Computer Engineering '23",
-      "M.S.E from SEAS in Robotics '24",
-    ],
-    picture: estherImg,
-  },
-  {
-    name: "Sophia Anzai Takahashi",
-    bio: [
-      "B.S.E. from SEAS in Mechanical Engineering '23",
-      "B.S.E from Wharton in Management '23",
-    ],
-    picture: sophiaImg,
-  },
-  {
-    name: "Lada Korotaeva",
-    bio: ["B.S.E. from SEAS in Mechanical Engineering '23"],
-    picture: ladaImg,
-  },
-  {
-    name: "Nastassja Kuznetsova",
-    bio: [
-      "B.S.E. from SEAS in Computer Engineering '23",
-      "M.S.E. from SEAS in Data Science '24",
-    ],
-    picture: nastassjaImg,
-  },
-  {
-    name: "Sarah Tadlock",
-    bio: ["B.S.E. from SEAS in Mechanical Engineering 2023"],
-    picture: sarahImg,
-  },
-];
+import jaiman from '~/assets/images/team-headshots/jaiman.jpg' 
+import nastassja from '~/assets/images/team-headshots/nastassja.jpg'
+import adam from '~/assets/images/team-headshots/adam.jpg'
+import tom from '~/assets/images/team-headshots/tom.png'
+import janavi from '~/assets/images/team-headshots/janavi.png'
+import maya from '~/assets/images/team-headshots/maya.jpg'
+import vidhya from '~/assets/images/team-headshots/vidhya.jpg'
+import josue from '~/assets/images/team-headshots/josue.jpg'
+import danshu from '~/assets/images/team-headshots/danshu.jpg'
+import ella from '~/assets/images/team-headshots/ella.jpg'
+import kyle from '~/assets/images/team-headshots/kyle.png'
+import sammi from '~/assets/images/team-headshots/sammi.jpg'
+import jean from '~/assets/images/team-headshots/jean.png'
+import maisha from '~/assets/images/team-headshots/maisha.jpg'
 
 export const teamMembers = [
   {
     name: "Nastassja Kuznetsova",
     title: "CEO, Founder",
-    image: "nastassja.jpg",
+    image: nastassja,
     bio: "",
   },
   {
     name: "Jaiman Munshi",
     title: "Software Engineer",
-    image: "jaiman.jpg",
+    image: jaiman,
     bio: "",
   },
   {
     name: "Adam Bhaloo",
     title: "Engineer and Business Development",
-    image: "adam.jpg",
+    image: adam,
     bio: "",
   },
   {
     name: "Tom Schmitz",
     title: "Embedded Developer",
-    image: "tom.png",
-    bio: "",
-  },
-  {
-    name: "Claire Wu",
-    title: "Software Engineer",
-    image: "claire.jpg",
+    image: tom,
     bio: "",
   },
   {
     name: "Janavi Chadha",
     title: "Project Manager",
-    image: "janavi.png",
+    image: janavi,
     bio: "",
   },
   {
     name: "Maya Pasricha",
     title: "Quality Assurance Engineer",
-    image: "maya.jpg",
+    image: maya,
     bio: "",
   },
   {
     name: "Vidhya Kalimani",
     title: "Mechanical Engineer",
-    image: "vidhya.jpg",
+    image: vidhya,
     bio: "",
   },
   {
     name: "Josué León",
     title: "Mechanical Engineer",
-    image: "josue.jpg",
+    image: josue,
     bio: "",
   },
   {
     name: "Danshu Shen",
     title: "Electrical Engineer",
-    image: "danshu.jpg",
+    image: danshu,
     bio: "",
   },
   // {
   //   name: "Ella Phillippy",
   //   title: "Marketing Fellow",
-  //   image: "ella.jpg",
+  //   image: ella,
   //   bio: "",
   // },
   // {
   //   name: "Kyle Fukumoto",
   //   title: "Business Development Fellow",
-  //   image: "kyle.png",
+  //   image: kyle,
   //   bio: "",
   // },
   // {
   //   name: "Sammi Xu",
   //   title: "Business Development Fellow",
-  //   image: "sammi.jpg",
+  //   image: sammi,
   //   bio: "",
   // },
   // {
   //   name: "Jean Ee Chua",
   //   title: "Business Development Fellow",
-  //   image: "jean.png",
+  //   image: jean,
   //   bio: "",
   // },
   {
-    name: "Sharon Zheng",
-    title: "Embedded Engineer",
-    image: "sharon.png",
-    bio: "",
-  },
-  {
     name: "Maisha Takahashi",
     title: "Software Intern",
-    image: "maisha.jpg",
+    image: maisha,
     bio: "",
   }
 ];
-
-
