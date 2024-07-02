@@ -216,6 +216,8 @@ declare module 'astro:content' {
 	type DataEntryMap = {
 		"about": {
 };
+"post": {
+};
 "sections": {
 };
 
