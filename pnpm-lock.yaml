@@ -19,7 +19,7 @@ specifiers:
   prettier: 2.8.3
   prettier-plugin-astro: ^0.7.2
   prettier-plugin-tailwindcss: ^0.2.2
-  sharp: ^0.31.3
+  sharp: ^0.34.4
   tailwindcss: ^3.2.4
   tailwindcss-fluid-type: ^2.0.3
   tiny-invariant: ^1.3.1
@@ -27,7 +27,7 @@ specifiers:
   vite-plugin-glsl: ^1.1.1
 
 dependencies:
-  '@astrojs/image': 0.13.0_astro@2.0.1+sharp@0.31.3
+  '@astrojs/image': 0.13.0_astro@2.0.1+sharp@0.34.4
   '@astrojs/mdx': 0.15.0_astro@2.0.1
   '@astrojs/sitemap': 1.0.0
   '@fontsource/lato': 4.5.10
@@ -36,7 +36,7 @@ dependencies:
   astro-icon: 0.8.0
   micromodal: 0.4.10
   ogl: 0.0.103
-  sharp: 0.31.3
+  sharp: 0.34.4
   tailwindcss: 3.2.4_postcss@8.4.21
   tiny-invariant: 1.3.1
 
@@ -73,11 +73,11 @@ packages:
   /@astrojs/compiler/1.0.1:
     resolution: {integrity: sha512-77aacobLKcL98NmhK3OBS5EHIrX9gs1ckB/vGSIdkVZuB7u51V4jh05I6W0tSvG7/86tALv6QtHTRZ8rLhFTbQ==}
 
-  /@astrojs/image/0.13.0_astro@2.0.1+sharp@0.31.3:
+  /@astrojs/image/0.13.0_astro@2.0.1+sharp@0.34.4:
     resolution: {integrity: sha512-18IlEsb/mau4ji9sR7+JVPFJHtgIk7Qh/Ol+Hh/JNcPn/oMrjP6FMU3VrNHPy5Ltvw1DyzkDV4wu+jYKU/V0Hw==}
     peerDependencies:
       astro: ^2.0.0
-      sharp: '>=0.31.0'
+      sharp: '>=0.34.4'
     peerDependenciesMeta:
       sharp:
         optional: true
@@ -89,7 +89,7 @@ packages:
       kleur: 4.1.5
       magic-string: 0.27.0
       mime: 3.0.0
-      sharp: 0.31.3
+      sharp: 0.34.4
       slash: 4.0.0
     dev: false
 
@@ -3579,7 +3579,7 @@ packages:
   /server-destroy/1.0.1:
     resolution: {integrity: sha512-rb+9B5YBIEzYcD6x2VKidaa+cqYBJQKnU4oe4E3ANwRRN56yk/ua1YCJT1n21NTS8w6CcOclAKNP3PhdCXKYtQ==}
 
-  /sharp/0.31.3:
+  /sharp/0.34.4:
     resolution: {integrity: sha512-XcR4+FCLBFKw1bdB+GEhnUNXNXvnt0tDo4WsBsraKymuo/IAuPuCBVAL2wIkUw2r/dwFW5Q5+g66Kwl2dgDFVg==}
     engines: {node: '>=14.15.0'}
     requiresBuild: true
