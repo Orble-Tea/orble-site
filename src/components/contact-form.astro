@@ -1,0 +1,157 @@
+---
+// This is now just the UI component - no form processing logic
+interface Props {
+  errors?: { name: string; email: string; message: string };
+  statusMessage?: string;
+  statusType?: "success" | "error" | "";
+}
+
+const { 
+  errors = { name: "", email: "", message: "" }, 
+  statusMessage = "", 
+  statusType = "" 
+} = Astro.props;
+---
+
+<style>
+  .status-message {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    max-width: 28rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .status-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+  }
+
+  .status-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+
+  .error-text {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    text-align: left;
+  }
+</style>
+
+{statusMessage && (
+  <div class={`status-message ${statusType === 'success' ? 'status-success' : 'status-error'}`}>
+    {statusMessage}
+  </div>
+)}
+
+<form
+  class="max-w-md mx-auto flex flex-col gap-4"
+  method="POST"
+  id="contact-form"
+>
+  <div>
+    <input 
+      type="text" 
+      name="name" 
+      placeholder="Your Name" 
+      class="p-3 rounded text-black w-full" 
+      required 
+    />
+    {errors.name && <p class="error-text">{errors.name}</p>}
+  </div>
+
+  <div>
+    <input 
+      type="email" 
+      name="email" 
+      placeholder="Your Email" 
+      class="p-3 rounded text-black w-full" 
+      required 
+    />
+    {errors.email && <p class="error-text">{errors.email}</p>}
+  </div>
+
+  <div>
+    <textarea 
+      name="message" 
+      placeholder="Your Message" 
+      class="p-3 rounded text-black w-full" 
+      rows="5" 
+      required
+    ></textarea>
+    {errors.message && <p class="error-text">{errors.message}</p>}
+  </div>
+
+  <button 
+    type="submit" 
+    class="bg-white text-[#B1D9CD] px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition"
+  >
+    Send Message
+  </button>
+</form>
+
+<script>
+  import { sanitizeInput, validateEmail, validateRequired } from "~/utils/clientValidation";
+
+  const form = document.getElementById("contact-form") as HTMLFormElement;
+  if (form) {
+    const inputs = {
+      name: form.querySelector('input[name="name"]') as HTMLInputElement,
+      email: form.querySelector('input[name="email"]') as HTMLInputElement,
+      message: form.querySelector('textarea[name="message"]') as HTMLTextAreaElement,
+    };
+
+    // Client-side validation
+    function showError(input: HTMLElement, message: string) {
+      let errorElement = input.parentElement?.querySelector(".error-text");
+      if (!errorElement) {
+        errorElement = document.createElement("p");
+        errorElement.className = "error-text";
+        input.parentElement?.appendChild(errorElement);
+      }
+      errorElement.textContent = message;
+    }
+
+    function clearError(input: HTMLElement) {
+      const errorElement = input.parentElement?.querySelector(".error-text");
+      if (errorElement) {
+        errorElement.remove();
+      }
+    }
+
+    // Add validation listeners
+    inputs.name.addEventListener("blur", (e) => {
+      const value = sanitizeInput((e.target as HTMLInputElement).value);
+      const error = validateRequired(value, "name");
+      if (error) showError(inputs.name, error);
+      else clearError(inputs.name);
+    });
+
+    inputs.email.addEventListener("blur", (e) => {
+      const value = sanitizeInput((e.target as HTMLInputElement).value);
+      const error = validateEmail(value);
+      if (error) showError(inputs.email, error);
+      else clearError(inputs.email);
+    });
+
+    inputs.message.addEventListener("blur", (e) => {
+      const value = sanitizeInput((e.target as HTMLTextAreaElement).value);
+      const error = validateRequired(value, "message");
+      if (error) showError(inputs.message, error);
+      else clearError(inputs.message);
+    });
+
+    // Sanitize on submit
+    form.addEventListener("submit", (e) => {
+      inputs.name.value = sanitizeInput(inputs.name.value);
+      inputs.email.value = sanitizeInput(inputs.email.value);
+      inputs.message.value = sanitizeInput(inputs.message.value);
+    });
+  }
+</script>

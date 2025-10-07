@@ -12,6 +12,8 @@ import Splash from "$components/splash.astro";
 import * as what from "$content/sections/what-is-it.mdx";
 import * as about from "$content/sections/about.mdx";
 
+import ContactForm from '$components/contact-form.astro';
+
 import siteInfo from "$content/site";
 
 import orblelogo from "~/assets/images/orble-page-logo.png";
@@ -24,7 +26,82 @@ import pricing from "~/assets/images/pricing.png";
 import getStartedBg from "~/assets/images/bg-design/orble-get-started-bg.png";
 import Icon from "astro-icon";
 
+import { sanitizeFormData, validateContactForm } from "~/utils/formValidation";
 
+const errors = { name: "", email: "", message: "" };
+let statusMessage = "";
+let statusType: "success" | "error" | "" = "";
+
+// Check if this is a form POST with proper content type
+const contentType = Astro.request.headers.get("content-type");
+if (Astro.request.method === "POST" && contentType?.includes("application/x-www-form-urlencoded")) {
+  try {
+    const data = await Astro.request.formData();
+    
+    // Sanitize all inputs
+    const sanitizedData = sanitizeFormData({
+      name: String(data.get("name") || ""),
+      email: String(data.get("email") || ""),
+      message: String(data.get("message") || ""),
+    });
+
+    // Validate form data
+    const validationErrors = validateContactForm(sanitizedData);
+    Object.assign(errors, validationErrors);
+
+    const hasErrors = Object.values(errors).some(msg => msg);
+    
+    if (!hasErrors) {
+      const emailData = {
+        personalizations: [{
+          to: [{
+            email: "your-email@example.com" // REPLACE WITH YOUR EMAIL
+          }]
+        }],
+        from: {
+          email: "your-verified-sender@example.com", // REPLACE WITH YOUR SENDGRID VERIFIED EMAIL
+          name: sanitizedData.name
+        },
+        reply_to: {
+          email: sanitizedData.email,
+          name: sanitizedData.name
+        },
+        subject: "New Contact Form Submission",
+        content: [{
+          type: "text/plain",
+          value: `Name: ${sanitizedData.name}\nEmail: ${sanitizedData.email}\n\nMessage:\n${sanitizedData.message}`
+        }]
+      };
+
+      const response = await fetch(`${Astro.url.origin}/api/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send email");
+      }
+
+      statusMessage = "Thank you! Your message has been sent successfully.";
+      statusType = "success";
+      
+      // Clear form errors on success
+      errors.name = "";
+      errors.email = "";
+      errors.message = "";
+    } else {
+      statusMessage = "Please fix the errors below.";
+      statusType = "error";
+    }
+  } catch (error) {
+    console.error("Form submission error:", error);
+    statusMessage = "An error occurred. Please try again later.";
+    statusType = "error";
+  }
+}
 
 /* const test = await Astro.glob("../content/sections/*.mdx"); */
 const sectionData = [
@@ -50,10 +127,16 @@ const navItems: NavItem[] = sections.map((s) => ({
   title: s.info.title,
 }));
 const target = navItems[0];
-navItems.push({
-  id: "#features",
-  title: "Features",
-})
+navItems.push(
+  {
+    id: "#features",
+    title: "Features",
+  },
+  {
+    id: "#contact",
+    title: "Contact Us",
+  }
+)
 ---
 
 <!DOCTYPE html>
@@ -305,17 +388,25 @@ navItems.push({
       </div>
     </div>
   
-
-
     <div class="space-y-10 px-6 py-16 sm:space-y-24 sm:px-8 mt-12">
       {sections.map((S) => <S.Layout info={S.info} />)}
     </div>
   </body>
+
+  <div id="contact" class="bg-[#B1D9CD] py-20 mt-20 text-center text-white">
+    <h2 class="text-3xl font-semibold mb-4">Contact Us</h2>
+    <p class="text-lg mb-6">
+      Have questions or want to partner with us? We'd love to hear from you!
+    </p>
+    <ContactForm errors={errors} statusMessage={statusMessage} statusType={statusType} />
+  </div>
+
   <footer>
     <div class="flex justify-center items-center h-16 bg-gray-800 text-white">
       <a href="https://munch-industries.com" class="text-xs sm:text-sm">
         &copy; {new Date().getFullYear()} Munch Industries
       </a>
     </div>
+
   </footer>
 </html>
