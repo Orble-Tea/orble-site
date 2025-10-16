@@ -11,6 +11,6 @@
       "$layouts/*": ["src/layouts/*"],
       "$content/*": ["src/content/*"]
     },
-    "types": ["@astrojs/image/client", "vite-plugin-glsl/ext", "vite/client"]
+    "types": ["vite-plugin-glsl/ext", "vite/client"]
   }
 }

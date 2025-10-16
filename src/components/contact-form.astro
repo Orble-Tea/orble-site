@@ -1,0 +1,203 @@
+---
+// ContactForm.astro - Reusable contact form component
+interface Props {
+  formId?: string;
+  containerClass?: string;
+}
+
+const { 
+  formId = "contact-form",
+  containerClass = ""
+} = Astro.props;
+---
+
+<div class={containerClass}>
+  <div id="status-message" class="hidden"></div>
+  
+  <form class="max-w-md mx-auto flex flex-col gap-4" id={formId}>
+    <div>
+      <input 
+        type="text" 
+        name="name" 
+        placeholder="Your Name" 
+        class="p-3 rounded text-black w-full" 
+        required 
+      />
+      <p class="error-text hidden text-red-600 text-sm mt-1 text-left"></p>
+    </div>
+
+    <div>
+      <input 
+        type="email" 
+        name="email" 
+        placeholder="Your Email" 
+        class="p-3 rounded text-black w-full" 
+        required 
+      />
+      <p class="error-text hidden text-red-600 text-sm mt-1 text-left"></p>
+    </div>
+
+    <div>
+      <textarea 
+        name="message" 
+        placeholder="Your Message" 
+        class="p-3 rounded text-black w-full" 
+        rows="5" 
+        required
+      ></textarea>
+      <p class="error-text hidden text-red-600 text-sm mt-1 text-left"></p>
+    </div>
+
+    <button 
+      type="submit" 
+      class="bg-white text-[#B1D9CD] px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Send Message
+    </button>
+  </form>
+</div>
+
+<style>
+  .status-message {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    max-width: 28rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .status-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+  }
+
+  .status-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+</style>
+
+<script define:vars={{ formId }}>
+  const form = document.getElementById(formId);
+  const statusDiv = document.getElementById("status-message");
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  function showStatus(message, type) {
+    statusDiv.textContent = message;
+    statusDiv.className = `status-message status-${type}`;
+    statusDiv.classList.remove("hidden");
+    statusDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function showError(input, message) {
+    const errorElement = input.parentElement?.querySelector(".error-text");
+    if (errorElement) {
+      errorElement.textContent = message;
+      errorElement.classList.remove("hidden");
+    }
+    input.classList.add("border-2", "border-red-500");
+  }
+
+  function clearError(input) {
+    const errorElement = input.parentElement?.querySelector(".error-text");
+    if (errorElement) {
+      errorElement.classList.add("hidden");
+    }
+    input.classList.remove("border-2", "border-red-500");
+  }
+
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function sanitizeInput(input) {
+    return input.trim().replace(/[<>]/g, "");
+  }
+
+  const nameInput = form.querySelector('input[name="name"]');
+  const emailInput = form.querySelector('input[name="email"]');
+  const messageInput = form.querySelector('textarea[name="message"]');
+
+  nameInput.addEventListener("blur", () => {
+    const value = sanitizeInput(nameInput.value);
+    if (!value) showError(nameInput, "Name is required");
+    else clearError(nameInput);
+  });
+
+  emailInput.addEventListener("blur", () => {
+    const value = sanitizeInput(emailInput.value);
+    if (!value) showError(emailInput, "Email is required");
+    else if (!validateEmail(value)) showError(emailInput, "Please enter a valid email address");
+    else clearError(emailInput);
+  });
+
+  messageInput.addEventListener("blur", () => {
+    const value = sanitizeInput(messageInput.value);
+    if (!value) showError(messageInput, "Message is required");
+    else clearError(messageInput);
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    statusDiv.classList.add("hidden");
+    
+    const name = sanitizeInput(nameInput.value);
+    const email = sanitizeInput(emailInput.value);
+    const message = sanitizeInput(messageInput.value);
+    
+    let hasErrors = false;
+    
+    if (!name) {
+      showError(nameInput, "Name is required");
+      hasErrors = true;
+    } else clearError(nameInput);
+    
+    if (!email) {
+      showError(emailInput, "Email is required");
+      hasErrors = true;
+    } else if (!validateEmail(email)) {
+      showError(emailInput, "Please enter a valid email address");
+      hasErrors = true;
+    } else clearError(emailInput);
+    
+    if (!message) {
+      showError(messageInput, "Message is required");
+      hasErrors = true;
+    } else clearError(messageInput);
+    
+    if (hasErrors) {
+      showStatus("Please correct the errors below", "error");
+      return;
+    }
+    
+    submitButton.disabled = true;
+    submitButton.textContent = "Sending...";
+    
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showStatus("Thank you for your message! We'll get back to you soon.", "success");
+        form.reset();
+      } else {
+        showStatus("Failed to send message. Please try again or email us directly at info@orble-tea.com", "error");
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      showStatus("An error occurred. Please try again later.", "error");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Send Message";
+    }
+  });
+</script>
