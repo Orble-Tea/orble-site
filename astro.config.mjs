@@ -1,5 +1,4 @@
 import { defineConfig } from "astro/config";
-import image from "@astrojs/image";
 import tailwind from "@astrojs/tailwind";
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
@@ -10,12 +9,10 @@ import glsl from "vite-plugin-glsl";
 export default defineConfig({
   // watch: true,
   site: "https://www.orble-tea.com",
+  output: "server",
   integrations: [
     tailwind(),
     mdx(),
-    image({
-      serviceEntryPoint: "@astrojs/image/sharp",
-    }),
     sitemap(),
   ],
   vite: {
