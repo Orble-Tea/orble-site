@@ -1,5 +1,4 @@
 ---
-// ContactForm.astro - Reusable contact form component
 interface Props {
   formId?: string;
   containerClass?: string;
@@ -14,7 +13,7 @@ const {
 <div class={containerClass}>
   <div id="status-message" class="hidden"></div>
   
-  <form class="max-w-md mx-auto flex flex-col gap-4" id={formId}>
+  <form class="max-w-md mx-auto flex flex-col gap-4" id={formId} method="post" action="/api/send-email">
     <div>
       <input 
         type="text" 
@@ -23,7 +22,7 @@ const {
         class="p-3 rounded text-black w-full" 
         required 
       />
-      <p class="error-text hidden text-red-600 text-sm mt-1 text-left"></p>
+      <div class="error-message hidden" data-error-for="name"></div>
     </div>
 
     <div>
@@ -34,7 +33,7 @@ const {
         class="p-3 rounded text-black w-full" 
         required 
       />
-      <p class="error-text hidden text-red-600 text-sm mt-1 text-left"></p>
+      <div class="error-message hidden" data-error-for="email"></div>
     </div>
 
     <div>
@@ -45,7 +44,7 @@ const {
         rows="5" 
         required
       ></textarea>
-      <p class="error-text hidden text-red-600 text-sm mt-1 text-left"></p>
+      <div class="error-message hidden" data-error-for="message"></div>
     </div>
 
     <button 
@@ -79,12 +78,19 @@ const {
     color: #991b1b;
     border: 1px solid #fca5a5;
   }
+
+  .error-message {
+    color: #ef4444; /* Tailwind red-500 */
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
 </style>
 
 <script define:vars={{ formId }}>
   const form = document.getElementById(formId);
   const statusDiv = document.getElementById("status-message");
   const submitButton = form.querySelector('button[type="submit"]');
+  const errorMessages = form.querySelectorAll(".error-message");
 
   function showStatus(message, type) {
     statusDiv.textContent = message;
@@ -93,107 +99,51 @@ const {
     statusDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
-  function showError(input, message) {
-    const errorElement = input.parentElement?.querySelector(".error-text");
-    if (errorElement) {
-      errorElement.textContent = message;
-      errorElement.classList.remove("hidden");
+  function clearFieldErrors() {
+    errorMessages.forEach(el => {
+      el.textContent = "";
+      el.classList.add("hidden");
+    });
+  }
+
+  function showFieldErrors(errors) {
+    for (const [field, messages] of Object.entries(errors)) {
+      const el = form.querySelector(`[data-error-for="${field}"]`);
+      if (el && messages?.length > 0) {
+        el.textContent = messages[0];
+        el.classList.remove("hidden");
+      }
     }
-    input.classList.add("border-2", "border-red-500");
   }
-
-  function clearError(input) {
-    const errorElement = input.parentElement?.querySelector(".error-text");
-    if (errorElement) {
-      errorElement.classList.add("hidden");
-    }
-    input.classList.remove("border-2", "border-red-500");
-  }
-
-  function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  function sanitizeInput(input) {
-    return input.trim().replace(/[<>]/g, "");
-  }
-
-  const nameInput = form.querySelector('input[name="name"]');
-  const emailInput = form.querySelector('input[name="email"]');
-  const messageInput = form.querySelector('textarea[name="message"]');
-
-  nameInput.addEventListener("blur", () => {
-    const value = sanitizeInput(nameInput.value);
-    if (!value) showError(nameInput, "Name is required");
-    else clearError(nameInput);
-  });
-
-  emailInput.addEventListener("blur", () => {
-    const value = sanitizeInput(emailInput.value);
-    if (!value) showError(emailInput, "Email is required");
-    else if (!validateEmail(value)) showError(emailInput, "Please enter a valid email address");
-    else clearError(emailInput);
-  });
-
-  messageInput.addEventListener("blur", () => {
-    const value = sanitizeInput(messageInput.value);
-    if (!value) showError(messageInput, "Message is required");
-    else clearError(messageInput);
-  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    clearFieldErrors();
     statusDiv.classList.add("hidden");
-    
-    const name = sanitizeInput(nameInput.value);
-    const email = sanitizeInput(emailInput.value);
-    const message = sanitizeInput(messageInput.value);
-    
-    let hasErrors = false;
-    
-    if (!name) {
-      showError(nameInput, "Name is required");
-      hasErrors = true;
-    } else clearError(nameInput);
-    
-    if (!email) {
-      showError(emailInput, "Email is required");
-      hasErrors = true;
-    } else if (!validateEmail(email)) {
-      showError(emailInput, "Please enter a valid email address");
-      hasErrors = true;
-    } else clearError(emailInput);
-    
-    if (!message) {
-      showError(messageInput, "Message is required");
-      hasErrors = true;
-    } else clearError(messageInput);
-    
-    if (hasErrors) {
-      showStatus("Please correct the errors below", "error");
-      return;
-    }
-    
     submitButton.disabled = true;
     submitButton.textContent = "Sending...";
-    
+
+    const formData = Object.fromEntries(new FormData(form).entries());
+
     try {
       const response = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message }),
+        body: JSON.stringify(formData),
       });
       
       const result = await response.json();
-      
+
       if (result.success) {
         showStatus("Thank you for your message! We'll get back to you soon.", "success");
         form.reset();
+      } else if (result.errors) {
+        showFieldErrors(result.errors);
+        showStatus("Please correct the highlighted errors and try again.", "error");
       } else {
         showStatus("Failed to send message. Please try again or email us directly at info@orble-tea.com", "error");
       }
     } catch (error) {
-      console.error("Form submission error:", error);
       showStatus("An error occurred. Please try again later.", "error");
     } finally {
       submitButton.disabled = false;
