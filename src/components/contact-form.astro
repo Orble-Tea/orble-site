@@ -1,0 +1,153 @@
+---
+interface Props {
+  formId?: string;
+  containerClass?: string;
+}
+
+const { 
+  formId = "contact-form",
+  containerClass = ""
+} = Astro.props;
+---
+
+<div class={containerClass}>
+  <div id="status-message" class="hidden"></div>
+  
+  <form class="max-w-md mx-auto flex flex-col gap-4" id={formId} method="post" action="/api/send-email">
+    <div>
+      <input 
+        type="text" 
+        name="name" 
+        placeholder="Your Name" 
+        class="p-3 rounded text-black w-full" 
+        required 
+      />
+      <div class="error-message hidden" data-error-for="name"></div>
+    </div>
+
+    <div>
+      <input 
+        type="email" 
+        name="email" 
+        placeholder="Your Email" 
+        class="p-3 rounded text-black w-full" 
+        required 
+      />
+      <div class="error-message hidden" data-error-for="email"></div>
+    </div>
+
+    <div>
+      <textarea 
+        name="message" 
+        placeholder="Your Message" 
+        class="p-3 rounded text-black w-full" 
+        rows="5" 
+        required
+      ></textarea>
+      <div class="error-message hidden" data-error-for="message"></div>
+    </div>
+
+    <button 
+      type="submit" 
+      class="bg-white text-[#B1D9CD] px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      Send Message
+    </button>
+  </form>
+</div>
+
+<style>
+  .status-message {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    max-width: 28rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .status-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+  }
+
+  .status-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+
+  .error-message {
+    color: #ef4444; /* Tailwind red-500 */
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+</style>
+
+<script define:vars={{ formId }}>
+  const form = document.getElementById(formId);
+  const statusDiv = document.getElementById("status-message");
+  const submitButton = form.querySelector('button[type="submit"]');
+  const errorMessages = form.querySelectorAll(".error-message");
+
+  function showStatus(message, type) {
+    statusDiv.textContent = message;
+    statusDiv.className = `status-message status-${type}`;
+    statusDiv.classList.remove("hidden");
+    statusDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function clearFieldErrors() {
+    errorMessages.forEach(el => {
+      el.textContent = "";
+      el.classList.add("hidden");
+    });
+  }
+
+  function showFieldErrors(errors) {
+    for (const [field, messages] of Object.entries(errors)) {
+      const el = form.querySelector(`[data-error-for="${field}"]`);
+      if (el && messages?.length > 0) {
+        el.textContent = messages[0];
+        el.classList.remove("hidden");
+      }
+    }
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    clearFieldErrors();
+    statusDiv.classList.add("hidden");
+    submitButton.disabled = true;
+    submitButton.textContent = "Sending...";
+
+    const formData = Object.fromEntries(new FormData(form).entries());
+
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      
+      const result = await response.json();
+
+      if (result.success) {
+        showStatus("Thank you for your message! We'll get back to you soon.", "success");
+        form.reset();
+      } else if (result.errors) {
+        showFieldErrors(result.errors);
+        showStatus("Please correct the highlighted errors and try again.", "error");
+      } else {
+        showStatus("Failed to send message. Please try again or email us directly at info@orble-tea.com", "error");
+      }
+    } catch (error) {
+      showStatus("An error occurred. Please try again later.", "error");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Send Message";
+    }
+  });
+</script>
