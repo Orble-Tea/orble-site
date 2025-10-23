@@ -47,6 +47,18 @@ const {
       <div class="error-message hidden" data-error-for="message"></div>
     </div>
 
+    <!-- Honeypot - hidden from users but visible to bots -->
+    <div class="honeypot-field">
+      <label for="website">Website</label>
+      <input 
+        type="text" 
+        name="website" 
+        id="website"
+        tabindex="-1"
+        autocomplete="off"
+      />
+    </div>
+
     <button 
       type="submit" 
       class="bg-white text-[#B1D9CD] px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -80,9 +92,17 @@ const {
   }
 
   .error-message {
-    color: #ef4444; /* Tailwind red-500 */
+    color: #ef4444;
     font-size: 0.875rem;
     margin-top: 0.25rem;
+  }
+
+  /* Hide honeypot from users */
+  .honeypot-field {
+    position: absolute;
+    left: -5000px;
+    opacity: 0;
+    pointer-events: none;
   }
 </style>
 
