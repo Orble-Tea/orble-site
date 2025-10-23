@@ -3,13 +3,15 @@ import tailwind from "@astrojs/tailwind";
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
 import glsl from "vite-plugin-glsl";
-
+import node from "@astrojs/node";
 
 // https://astro.build/config
 export default defineConfig({
-  // watch: true,
   site: "https://www.orble-tea.com",
   output: "server",
+  adapter: node({
+    mode: "standalone",
+  }),
   integrations: [
     tailwind(),
     mdx(),
