@@ -78,7 +78,7 @@ export async function POST({ request }) {
     const { name, email, message, website } = validationResult.data;
 
     // if the honeypot is filled, it's likely a bot
-    if (website && website.trim() !== "") {
+    if (website) {
       console.log("Honeypot triggered - possible bot submission");
       // Return success to not alert the bot
       return new Response(
