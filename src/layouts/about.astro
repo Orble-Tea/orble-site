@@ -21,7 +21,7 @@ const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg
     {
       teamMembers.map(({ name, title, image, bio }) => (
         <div class="flex flex-col justify-center items-center">
-          <Image class="headshot" src={image} alt={name} width={150} />
+          <Image class="headshot" src={image} alt={name} width={300} height={300} quality={90} />
           <p class="text-center font-bold">{name}</p>
           <p class="py-1 text-center text-offset text-xs">{title}</p>
           <p class="py-1 text-center text-offset text-xs">{bio}</p>
@@ -34,6 +34,9 @@ const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg
 <style>
   .headshot {
     clip-path: circle();
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
   }
 
   .orble-tea-bg-one{
