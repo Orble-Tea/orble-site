@@ -70,7 +70,7 @@ const {
 </div>
 
 <script define:vars={{ formId }}>
-  function preventSpam(form, { honeypotField = 'honeypot', honeypotDuration = 10000 } = {}) {
+  function preventSpam(form, { honeypotField = 'honeypot', honeypotDuration = 2000 } = {}) {
     const startTime = Date.now();
     let hasInteraction = false;
 
