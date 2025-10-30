@@ -23,7 +23,10 @@ const contactFormSchema = z.object({
     .trim()
     .min(1, "Message is required")
     .min(10, "Message must be at least 10 characters")
-    .max(5000, "Message must be less than 5000 characters")
+    .max(5000, "Message must be less than 5000 characters"),
+  
+  // Honeypot - should always be empty
+  website: z.string().optional()
 });
 
 // Retry helper function with exponential backoff
@@ -65,14 +68,27 @@ export async function POST({ request }) {
         JSON.stringify({ 
           success: false, 
           message: "Validation failed",
-          errors: errors // Send field-specific errors
+          errors: errors
         }), 
         { status: 400 }
       );
     }
 
     // Data is now validated and typed
-    const { name, email, message } = validationResult.data;
+    const { name, email, message, website } = validationResult.data;
+
+    // if the honeypot is filled, it's likely a bot
+    if (website) {
+      console.log("Honeypot triggered - possible bot submission");
+      // Return success to not alert the bot
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "Email sent successfully" 
+        }), 
+        { status: 200 }
+      );
+    }
 
     if (!process.env.MAILGUN_API_KEY) {
       throw new Error("Invalid mailgun API");
