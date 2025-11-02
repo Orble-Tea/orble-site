@@ -13,6 +13,8 @@ module.exports = {
         primary: "var(--color-primary)",
         secondary: "var(--color-secondary)",
         accent: "var(--color-accent)",
+        'teal-theme': '#b1d9cd',
+        'tan-theme': '#fff9ef', 
       },
       textColor: {
         default: "var(--color-text)",

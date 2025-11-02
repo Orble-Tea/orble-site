@@ -15,16 +15,59 @@ import * as about from "$content/sections/about.mdx";
 import siteInfo from "$content/site";
 
 import orblelogo from "~/assets/images/orble-page-logo.png";
+import orblebetalogo from "~/assets/images/orble-beta-logo.png";
+import orblebeta from "~/assets/images/orble-beta-ai.png";
 
 import tealbar from "~/assets/images/teal-bar.png";
 import orblewhite from "~/assets/images/orble-white.png";
 import cad from "~/assets/images/cad-render.png";
-import twomachines from "~/assets/images/two-machine-render.png";
-import pricing from "~/assets/images/pricing.png";
-import getStartedBg from "~/assets/images/bg-design/orble-get-started-bg.png";
-import Icon from "astro-icon";
 
 import ContactForm from "~/components/contact-form.astro";
+
+import MenuThemeItem from '~/components/menu-theme-item.astro';
+import LocationItem from '~/components/location-item.astro';
+
+const locations = [
+  {
+    image: "src/assets/images/pin.png",
+    alt: "Office Parks",
+    title: "Office Parks",
+    description: "Refresh employees and boost workplace satisfaction."
+  },
+  {
+    image: "src/assets/images/pin.png",
+    alt: "Shopping Malls",
+    title: "Shopping Malls",
+    description: "Engage shoppers with a convenient beverage option while they browse."
+  },
+  {
+    image: "src/assets/images/pin.png",
+    alt: "Universities",
+    title: "Universities",
+    description: "Give students a quick, tasty study break."
+  }
+];
+
+const menuThemes = [
+  {
+    image: "src/assets/images/boba.png",
+    alt: "Classic Theme",
+    title: "Classic",
+    description: "The original flavors: Black, Thai, and Taro."
+  },
+  {
+    image: "src/assets/images/dumbells.png",
+    alt: "High Protein Menu",
+    title: "High Protein Menu",
+    description: "Packed with protein for a workout boost."
+  },
+  {
+    image: "src/assets/images/caffiene.png",
+    alt: "Caffeine Boost Series",
+    title: "Caffeine Boost Series",
+    description: "Energy-packed drinks for a pick-me-up."
+  }
+];
 
 const sectionData = [
   // what, 
@@ -153,48 +196,97 @@ navItems.push(
       }
     </style>
 
-    <div class="flex justify-left ml-[10%] my-10">
-      <Image src={orblelogo} alt="Orble Logo" width={700} />      
+    <div class="flex justify-left ml-[10%] mt-10">
+      <Image src={orblebetalogo} alt="Orble Beta Logo" width={700} />      
     </div>
 
-  <div class="orble-tea-bg-one font-sans w-full pb-28">
+    <div class="orble-tea-bg-one font-sans w-full pb-28">
+      <div class="grid grid-cols-1 gap-10 mx-[10%] sm:grid-cols-2">
+  
+        <!-- Left column: stacked content -->
+        <div class="flex flex-col gap-10">
+          <div class="mt-28">
+            <h3 class="text-2xl tracking-normal italic text-white max-sm:text-center mb-4 leading-tight">
+              <span>The</span>
+              <span class="font-heading text-6xl sm:text-7xl lg:text-6xl text-munch-blue italic inline align-baseline leading-none">
+                BETA
+              </span>
+              is available now, partnering with select businesses in the Philadelphia area
+            </h3>
+            <h3 class="text-sm tracking-normal text-munch-blue my-6 max-sm:text-center">
+              Orble Beta is our first step towards reimagining how people experience boba — and how businesses can offer it
+              effortlessly. We provide a fully stocked, ready-to-serve vending machine that delivers freshly prepared boba
+              drinks to your customers. Each cup is handcrafted and restocked by our team, so you don't have to worry about
+              inventory, maintenance, or daily operations. By leasing an Orble Beta machine, businesses can earn revenue
+              from boba sales while offering an exciting new amenity.
+            </h3>
+          </div>
 
-  <div class="mx-[10%] py-20 text-center">
-    <h2 class="text-4xl font-semibold text-white mb-4">
-      Orble Beta is available now, partnering with businesses in the Philadelphia area
-    </h2>
-    <p class="text-munch-blue text-sm max-w-2xl mx-auto">
-      Orble Beta is our first step towards reimagining how people experience boba -- and how businesses can offer it
-      effortlessly. We provide a fully stocked, ready-to-serve vending machine that delivers freshly prepared boba
-      drinks to your customers. Each cup is handcrafted and restocked by our team, so you don't have to worry about
-      inventory, maintenance, or daily operations. By leasing an Orble Beta machine, businesses can earn revenue
-      from boba sales while offering an exciting new amenity.
-    </p>
-  </div>
+          <!-- menu section -->
+          <div class="relative mb-20">
+            <div class="absolute inset-0 bg-teal-theme/70 backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
 
-  <div class="grid grid-cols-1 gap-10 mx-[10%] gap-y-2 sm:grid-cols-2">
-    <div class="col-span-1 row-span-1 mt-28">
-      <h3 class="text-2xl tracking-normal italic text-white max-sm:text-center">
-        Your menu, your way
-      </h3>
-      <h3 class="text-sm tracking-normal text-munch-blue my-6 max-sm:text-center">
-        text here
-      </h3>
-    </div>
+            <div class="relative p-8 sm:p-12">
+              <h3 class="text-2xl tracking-normal italic text-white text-center">
+                Your menu, your way
+              </h3>
+              <p class="text-sm text-center text-munch-blue max-w-2xl mx-auto mb-10">
+                Orble enables you to tailor your menu to your consumers.
+              </p>
 
-    <div class="col-span-1 row-span-2 my-12">
-       
+              <ul class="space-y-8">
+                {menuThemes.map((theme) => (
+                  <MenuThemeItem 
+                    image={theme.image}
+                    alt={theme.alt}
+                    title={theme.title}
+                    description={theme.description}
+                  />
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
-        <div class="col-span-1 row-span-1 max-sm:text-center">
-          <span class="text-l tracking-normal text-munch-blue mt-6">With its</span>
-          <span class="text-3xl ml-2 tracking-normal italic text-munch-blue"
-            >sleek and compact design,</span>
-          <h3 class="text-l tracking-normal text-munch-blue">
-            Orble seamlessly integrates into any food service environment,
-            offering customers a delightful boba tea experience at the touch of a
-            button.
+
+        <!-- Beta image -->
+        <div class="flex justify-center items-center pl-10 max-sm:pl-0">
+          <div class="w-full max-w-md h-[600px] overflow-hidden rounded-tl-[80px] rounded-br-[80px] shadow-2xl">
+            <Image 
+              src={orblebeta} 
+              alt="Orble Beta Machine" 
+              class="w-full h-full object-cover" 
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Locations advert -->
+      <div class="my-5 px-8 sm:px-16">
+        <h3 class="text-2xl tracking-normal italic text-munch-blue text-center mb-10">
+          Imagine Orble Beta in your space
+        </h3>
+        <ul class="flex justify-between items-start flex-wrap gap-8 max-sm:flex-col max-sm:items-center">
+          {locations.map((location) => (
+            <LocationItem 
+              image={location.image}
+              alt={location.alt}
+              title={location.title}
+              description={location.description}
+            />
+          ))}
+        </ul>
+      </div>
+
+      <!-- Contact advert -->
+      <div class="relative mt-20 mx-10 px-8 sm:px-16">
+        <div class="absolute inset-0 bg-teal-theme backdrop-blur-md rounded-3xl shadow-xl"></div>
+        <div class="relative flex flex-col items-center text-center p-12">
+          <h3 class="text-2xl tracking-normal italic text-white mb-6">
+            Have questions about Orble Beta pricing and partnerships?
           </h3>
-          <Image src={tealbar} alt="Bar" width={400} class="mt-10 mx-auto" />
+          <a href="#contact" class="bg-munch-blue text-white font-semibold py-3 px-8 rounded-full hover:bg-tan-theme transition-colors">
+            Contact Us
+          </a>
         </div>
       </div>
     </div>

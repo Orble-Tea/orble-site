@@ -1,0 +1,20 @@
+---
+interface Props {
+  image: string;
+  alt: string;
+  title: string;
+  description: string;
+}
+
+const { image, alt, title, description } = Astro.props;
+---
+
+<li class="flex flex-col items-center text-center w-1/4 max-sm:w-full">
+  <div class="w-20 h-20 rounded-full overflow-hidden mb-4">
+    <img src={image} alt={alt} class="w-full h-full object-cover" />
+  </div>
+  <p class="text-sm text-munch-blue">
+    <span class="font-semibold block">{title}</span>
+    {description}
+  </p>
+</li>
