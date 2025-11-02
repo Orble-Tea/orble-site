@@ -3,13 +3,12 @@ import tailwind from "@astrojs/tailwind";
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
 import glsl from "vite-plugin-glsl";
+import netlify from "@astrojs/netlify";
 
-
-// https://astro.build/config
 export default defineConfig({
-  // watch: true,
   site: "https://www.orble-tea.com",
   output: "server",
+  adapter: netlify(),
   integrations: [
     tailwind(),
     mdx(),

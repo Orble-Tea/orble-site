@@ -2,6 +2,11 @@ import corina from '~/assets/images/team-headshots/corina.png'
 import nastassja from '~/assets/images/team-headshots/nastassja.png'
 import ann from '~/assets/images/team-headshots/ann.png'
 import krishna from '~/assets/images/team-headshots/krishna.png' 
+import veronica from '~/assets/images/team-headshots/veronica.png'
+import richard from '~/assets/images/team-headshots/richard.png'
+import ha from '~/assets/images/team-headshots/ha.png'
+import joanne from '~/assets/images/team-headshots/joanne.png'
+import alex from '~/assets/images/team-headshots/alex.png'
 
 export const teamMembers = [
   {
@@ -26,6 +31,36 @@ export const teamMembers = [
     name: "Ann Kang",
     title: "Software Engineer",
     image: ann,
+    bio: "",
+  },
+  {
+    name: "Veronica Guo",
+    title: "Business Development Strategist",
+    image: veronica,
+    bio: "",
+  },
+  {
+    name: "Richard Zhu",
+    title: "Business Development Strategist",
+    image: richard,
+    bio: "",
+  },
+  {
+    name: "Ha Hoang",
+    title: "Business Development Strategist",
+    image: ha,
+    bio: "",
+  },
+  {
+    name: "Joanne Lin",
+    title: "Business Development Strategist",
+    image: joanne,
+    bio: "",
+  },
+  {
+    name: "Alexander Liu",
+    title: "Marketing + Media Coordinator",
+    image: alex,
     bio: "",
   },
 
