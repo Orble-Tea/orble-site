@@ -1,4 +1,5 @@
 ---
+// Props interface
 interface Props {
   image: string;
   alt: string;
@@ -9,12 +10,12 @@ interface Props {
 const { image, alt, title, description } = Astro.props;
 ---
 
-<li class="flex flex-col items-center text-center w-1/4 max-sm:w-full">
-  <div class="w-20 h-20 rounded-full overflow-hidden mb-4">
+<li class="flex flex-row max-sm:flex-col items-start max-sm:items-center gap-4 flex-shrink-0 px-4">
+  <div class="w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
     <img src={image} alt={alt} class="w-full h-full object-cover" />
   </div>
-  <p class="text-sm text-munch-blue">
-    <span class="font-semibold block">{title}</span>
-    {description}
-  </p>
+  <div class="flex flex-col">
+    <span class="font-semibold text-munch-blue">{title}</span>
+    <span class="text-sm text-munch-blue">{description}</span>
+  </div>
 </li>

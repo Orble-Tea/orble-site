@@ -26,26 +26,46 @@ import ContactForm from "~/components/contact-form.astro";
 
 import MenuThemeItem from '~/components/menu-theme-item.astro';
 import LocationItem from '~/components/location-item.astro';
+import DynamicLocationsCarousel from '~/components/carousel.astro';
 
 const locations = [
   {
-    image: "src/assets/images/pin.png",
+    image: "src/assets/images/office.jpeg",
     alt: "Office Parks",
     title: "Office Parks",
-    description: "Refresh employees and boost workplace satisfaction."
+    description: "Energize employees and boost workplace satisfaction."
   },
   {
-    image: "src/assets/images/pin.png",
-    alt: "Shopping Malls",
-    title: "Shopping Malls",
-    description: "Engage shoppers with a convenient beverage option while they browse."
+    image: "src/assets/images/airport.jpg",
+    alt: "Transit Hubs",
+    title: "Transit Hubs",
+    description: "Fuel travellers on the go with a sweet sip."
   },
   {
-    image: "src/assets/images/pin.png",
+    image: "src/assets/images/campus.jpg",
     alt: "Universities",
     title: "Universities",
-    description: "Give students a quick, tasty study break."
-  }
+    description: "Give students a grab-n-go, delicious study break."
+  },
+  {
+    image: "src/assets/images/hospital-hallway.jpg",
+    alt: "Hospitals",
+    title: "Hospitals",
+    description: "Refresh and recharge."
+  },
+  {
+    image: "src/assets/images/gym.png",
+    alt: "Fitness Centers",
+    title: "Fitness Centers",
+    description: "Power workouts with a tasty treat."
+  },
+  {
+    image: "src/assets/images/mall.webp",
+    alt: "Shopping Centers",
+    title: "Shopping Centers",
+    description: "Offer a convenient beverage option for browsing."
+  },
+
 ];
 
 const menuThemes = [
@@ -53,19 +73,19 @@ const menuThemes = [
     image: "src/assets/images/boba.png",
     alt: "Classic Theme",
     title: "Classic",
-    description: "The original flavors: Black, Thai, and Taro."
+    description: "The top selling flavors in every boba shop: Black, Thai, and Taro."
   },
   {
     image: "src/assets/images/dumbells.png",
     alt: "High Protein Menu",
     title: "High Protein Menu",
-    description: "Packed with protein for a workout boost."
+    description: "Packed with protein for a workout boost: Strawberry, Matcha, Jasmine"
   },
   {
-    image: "src/assets/images/caffiene.png",
+    image: "src/assets/images/caffeine.png",
     alt: "Caffeine Boost Series",
     title: "Caffeine Boost Series",
-    description: "Energy-packed drinks for a pick-me-up."
+    description: "Boosted drinks for a pick-me-up: Brown Sugar, Matcha, and Earl Grey"
   }
 ];
 
@@ -207,18 +227,22 @@ navItems.push(
         <div class="flex flex-col gap-10">
           <div class="mt-28">
             <h3 class="text-2xl tracking-normal italic text-white max-sm:text-center mb-4 leading-tight">
-              <span>The</span>
               <span class="font-heading text-6xl sm:text-7xl lg:text-6xl text-munch-blue italic inline align-baseline leading-none">
-                BETA
+                ORBLE BETA
               </span>
               is available now, partnering with select businesses in the Philadelphia area
             </h3>
             <h3 class="text-sm tracking-normal text-munch-blue my-6 max-sm:text-center">
-              Orble Beta is our first step towards reimagining how people experience boba — and how businesses can offer it
-              effortlessly. We provide a fully stocked, ready-to-serve vending machine that delivers freshly prepared boba
-              drinks to your customers. Each cup is handcrafted and restocked by our team, so you don't have to worry about
-              inventory, maintenance, or daily operations. By leasing an Orble Beta machine, businesses can earn revenue
-              from boba sales while offering an exciting new amenity.
+              We bring boba to every corner, but without the overhead or cost. Boba has become a staple for
+              younger consumers, but it's not the most accessible drink option unless you're located
+              next to a physical shop, and still, most places open late and close early. Orble changes that.
+
+              Orble Beta is a fully managed, ready-to-serve vending machine that delivers freshly prepared boba
+              drinks to your customers. Our team handles everything — sourcing, restocking, maintenance, and operations —
+              so you can offer fresh, high-quality boba to your customers anytime.
+
+              Starting with Orble is completely free: we handle the setup and service, while you can enjoy the benefits of higher
+              engagement, happier customers, and a share of boba sales, without any hassle.
             </h3>
           </div>
 
@@ -231,7 +255,8 @@ navItems.push(
                 Your menu, your way
               </h3>
               <p class="text-sm text-center text-munch-blue max-w-2xl mx-auto mb-10">
-                Orble enables you to tailor your menu to your consumers.
+                Whether you’re serving students, office workers, or
+                residents, Orble lets you tailor your drink lineup to match your consumer’s tastes.
               </p>
 
               <ul class="space-y-8">
@@ -261,32 +286,37 @@ navItems.push(
       </div>
 
       <!-- Locations advert -->
-      <div class="my-5 px-8 sm:px-16">
+      <main class="py-10 px-8 sm:px-16">
         <h3 class="text-2xl tracking-normal italic text-munch-blue text-center mb-10">
           Imagine Orble Beta in your space
         </h3>
-        <ul class="flex justify-between items-start flex-wrap gap-8 max-sm:flex-col max-sm:items-center">
-          {locations.map((location) => (
-            <LocationItem 
-              image={location.image}
-              alt={location.alt}
-              title={location.title}
-              description={location.description}
-            />
-          ))}
-        </ul>
-      </div>
+
+        <DynamicLocationsCarousel locations={locations} />
+      </main>
 
       <!-- Contact advert -->
       <div class="relative mt-20 mx-10 px-8 sm:px-16">
         <div class="absolute inset-0 bg-teal-theme backdrop-blur-md rounded-3xl shadow-xl"></div>
         <div class="relative flex flex-col items-center text-center p-12">
           <h3 class="text-2xl tracking-normal italic text-white mb-6">
-            Have questions about Orble Beta pricing and partnerships?
+            Have questions about partnerships?
           </h3>
-          <a href="#contact" class="bg-munch-blue text-white font-semibold py-3 px-8 rounded-full hover:bg-tan-theme transition-colors">
-            Contact Us
-          </a>
+<div class="flex flex-col sm:flex-row gap-4">
+        <a 
+        href="src/assets/images/pilot.pdf" 
+        target="_blank"
+        rel="noopener noreferrer"
+        class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 rounded-full hover:bg-white transition-colors"
+      >
+        Learn More
+      </a>
+      <a 
+        href="#contact" 
+        class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 rounded-full hover:bg-white transition-colors"
+      >
+        Contact Us
+      </a>
+    </div>
         </div>
       </div>
     </div>
@@ -438,5 +468,6 @@ navItems.push(
         </a>
       </div>
     </footer>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
   </body>
 </html>

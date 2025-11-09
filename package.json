@@ -38,6 +38,7 @@
     "astro": "^5.14.5",
     "astro-icon": "^0.8.0",
     "dotenv": "^17.2.3",
+    "flowbite": "^3.1.2",
     "form-data": "^4.0.4",
     "isomorphic-dompurify": "^2.14.0",
     "mailgun.js": "^12.1.1",
