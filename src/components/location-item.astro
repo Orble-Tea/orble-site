@@ -14,7 +14,7 @@ const { image, alt, title, description } = Astro.props;
   <div class="w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
     <img src={image} alt={alt} class="w-full h-full object-cover" />
   </div>
-  <div class="flex flex-col">
+  <div class="flex flex-col max-sm:text-center">
     <span class="font-semibold text-munch-blue">{title}</span>
     <span class="text-sm text-munch-blue">{description}</span>
   </div>

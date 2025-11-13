@@ -39,7 +39,7 @@ const locations = Astro.props.locations;
 
   function updateCarousel() {
     const containerWidth = wrapper.parentElement.offsetWidth;
-    const minItemWidth =  window.innerWidth * 0.25; // minimum item width in px
+    const minItemWidth = window.innerWidth < 640 ? containerWidth : window.innerWidth * 0.25;
     const itemsPerSlide = Math.max(1, Math.floor(containerWidth / minItemWidth));
     const itemWidth = containerWidth / itemsPerSlide;
 

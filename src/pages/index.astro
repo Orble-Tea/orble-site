@@ -15,8 +15,15 @@ import * as about from "$content/sections/about.mdx";
 import siteInfo from "$content/site";
 
 import orblelogo from "~/assets/images/orble-page-logo.png";
-import orblebetalogo from "~/assets/images/orble-beta-logo.png";
-import orblebeta from "~/assets/images/orble-beta-ai.png";
+import logo from "~/assets/images/logo_inkscape.svg";
+
+import ImageCarousel from '$components/image-carousel.astro';
+import orblebeta1 from '~/assets/images/beta-renders/front-left.jpg';
+import orblebeta2 from '~/assets/images/beta-renders/front.jpg';
+import orblebeta3 from '~/assets/images/beta-renders/front-right.jpg';
+import orblebeta4 from '~/assets/images/beta-renders/left.jpg';
+import orblebeta5 from '~/assets/images/beta-renders/top.jpg';
+import orblebeta6 from '~/assets/images/beta-renders/zoom-in.jpg';
 
 import tealbar from "~/assets/images/teal-bar.png";
 import orblewhite from "~/assets/images/orble-white.png";
@@ -25,7 +32,6 @@ import cad from "~/assets/images/cad-render.png";
 import ContactForm from "~/components/contact-form.astro";
 
 import MenuThemeItem from '~/components/menu-theme-item.astro';
-import LocationItem from '~/components/location-item.astro';
 import DynamicLocationsCarousel from '~/components/carousel.astro';
 
 const locations = [
@@ -66,6 +72,15 @@ const locations = [
     description: "Offer a convenient beverage option for browsing."
   },
 
+];
+
+const carouselImages = [
+  { src: orblebeta1, alt: 'front left view of orble beta' },
+  { src: orblebeta2, alt: 'front view of orble beta' },
+  { src: orblebeta3, alt: 'front right view of orble beta' },
+  { src: orblebeta4, alt: 'left view of orble beta' },
+  { src: orblebeta5, alt: 'top view of orble beta' },
+  { src: orblebeta6, alt: 'zoomed in view of orble beta' }
 ];
 
 const menuThemes = [
@@ -168,6 +183,18 @@ navItems.push(
         }
       }
 
+        .orble-tea-bg-long{
+        background-image: url("../assets/images/bg-design/orble-tea-bg-long.png");
+        background-repeat: no-repeat;
+        background-position: 0px 40px;
+        background-size: cover;
+      }
+      @media (max-width: 640px) {
+        .orble-tea-bg-long {
+          clip-path: inset(0 0 80px 0);
+        }
+      }
+
       .features-title {
         color: #FFF;
         text-align: center;
@@ -216,50 +243,59 @@ navItems.push(
       }
     </style>
 
-    <div class="flex justify-left ml-[10%] mt-10">
-      <Image src={orblebetalogo} alt="Orble Beta Logo" width={700} />      
+    <!-- Orble beta logo + header -->
+    <div class="flex items-center justify-left ml-[10%] max-sm:ml-0 max-sm:justify-center mt-10 gap-4">
+      <Image src={logo} alt="Orble Logo" width={140} class="max-sm:w-20" />
+      <div class="flex flex-col">
+        <div class="flex items-baseline gap-2">
+          <h1 class="text-9xl max-sm:text-9xl font-heading leading-none tracking-tight">ORBLE</h1>
+          <span class="text-6xl max-sm:text-4xl italic font-heading leading-none tracking-tight text-[#9DD9C8]">BETA</span>
+        </div>
+        <p class="text-lg max-sm:text-sm font-lato tracking-[0.3em] ml-1 -mt-3 max-sm:-mt-2">the bubble tea ATM</p>
+      </div>
     </div>
 
-    <div class="orble-tea-bg-one font-sans w-full pb-28">
-      <div class="grid grid-cols-1 gap-10 mx-[10%] sm:grid-cols-2">
-  
-        <!-- Left column: stacked content -->
-        <div class="flex flex-col gap-10">
-          <div class="mt-28">
-            <h3 class="text-2xl tracking-normal italic text-white max-sm:text-center mb-4 leading-tight">
-              <span class="font-heading text-6xl sm:text-7xl lg:text-6xl text-munch-blue italic inline align-baseline leading-none">
-                ORBLE BETA
-              </span>
-              is available now, partnering with select businesses in the Philadelphia area
-            </h3>
-            <h3 class="text-sm tracking-normal text-munch-blue my-6 max-sm:text-center">
-              We bring boba to every corner, but without the overhead or cost. Boba has become a staple for
-              younger consumers, but it's not the most accessible drink option unless you're located
-              next to a physical shop, and still, most places open late and close early. Orble changes that.
+    <div class="orble-tea-bg-long font-sans w-full pb-28 pt-20">
+      <div class="mx-[10%]">
+        
+        <div class="mb-10 max-w-[80%] max-sm:max-w-[90%] max-sm:mx-auto">
+          <h3 class="text-2xl tracking-normal italic text-white max-sm:text-center max-sm:text-xl mb-4 leading-tight">
+            <span class="font-heading text-6xl max-sm:text-4xl lg:text-6xl text-munch-blue italic inline align-baseline leading-none">
+              ORBLE BETA
+            </span>
+            is available now, partnering with select businesses in the Philadelphia area
+          </h3>
+          <h3 class="text-sm tracking-normal text-munch-blue my-6 max-sm:text-center">
+            We bring boba to every corner, but without the overhead or cost. Boba has become a staple for
+            younger consumers, but it's not the most accessible drink option unless you're located
+            next to a physical shop, and still, most places open late and close early. Orble changes that.
 
-              Orble Beta is a fully managed, ready-to-serve vending machine that delivers freshly prepared boba
-              drinks to your customers. Our team handles everything — sourcing, restocking, maintenance, and operations —
-              so you can offer fresh, high-quality boba to your customers anytime.
+            Orble Beta is a fully managed, ready-to-serve vending machine that delivers freshly prepared boba
+            drinks to your customers. Our team handles everything — sourcing, restocking, maintenance, and operations —
+            so you can offer fresh, high-quality boba to your customers anytime.
 
-              Starting with Orble is completely free: we handle the setup and service, while you can enjoy the benefits of higher
-              engagement, happier customers, and a share of boba sales, without any hassle.
-            </h3>
-          </div>
+            Starting with Orble is completely free: we handle the setup and service, while you can enjoy the benefits of higher
+            engagement, happier customers, and a share of boba sales, without any hassle.
+          </h3>
+        </div>
 
-          <!-- menu section -->
-          <div class="relative mb-20">
+        <!-- Two column layout for menu and image -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 items-stretch">
+          
+          <!-- Menu section -->
+          <div class="relative">
             <div class="absolute inset-0 bg-teal-theme/70 backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
 
-            <div class="relative p-8 sm:p-12">
+            <div class="relative p-8 sm:p-12 h-full flex flex-col">
               <h3 class="text-2xl tracking-normal italic text-white text-center">
                 Your menu, your way
               </h3>
               <p class="text-sm text-center text-munch-blue max-w-2xl mx-auto mb-10">
-                Whether you’re serving students, office workers, or
-                residents, Orble lets you tailor your drink lineup to match your consumer’s tastes.
+                Whether you're serving students, office workers, or
+                residents, Orble lets you tailor your drink lineup to match your consumer's tastes.
               </p>
 
-              <ul class="space-y-8">
+              <ul class="space-y-8 flex-grow">
                 {menuThemes.map((theme) => (
                   <MenuThemeItem 
                     image={theme.image}
@@ -271,52 +307,45 @@ navItems.push(
               </ul>
             </div>
           </div>
-        </div>
 
-        <!-- Beta image -->
-        <div class="flex justify-center items-center pl-10 max-sm:pl-0">
-          <div class="w-full max-w-md h-[600px] overflow-hidden rounded-tl-[80px] rounded-br-[80px] shadow-2xl">
-            <Image 
-              src={orblebeta} 
-              alt="Orble Beta Machine" 
-              class="w-full h-full object-cover" 
-            />
-          </div>
+          <!-- Beta image -->
+          <ImageCarousel images={carouselImages} />
+
         </div>
       </div>
-
-      <!-- Locations advert -->
-      <main class="py-10 px-8 sm:px-16">
-        <h3 class="text-2xl tracking-normal italic text-munch-blue text-center mb-10">
-          Imagine Orble Beta in your space
-        </h3>
-
-        <DynamicLocationsCarousel locations={locations} />
-      </main>
-
-      <!-- Contact advert -->
-      <div class="relative mt-20 mx-10 px-8 sm:px-16">
-        <div class="absolute inset-0 bg-teal-theme backdrop-blur-md rounded-3xl shadow-xl"></div>
-        <div class="relative flex flex-col items-center text-center p-12">
-          <h3 class="text-2xl tracking-normal italic text-white mb-6">
-            Have questions about partnerships?
-          </h3>
-<div class="flex flex-col sm:flex-row gap-4">
-        <a 
-        href="src/assets/images/pilot.pdf" 
-        target="_blank"
-        rel="noopener noreferrer"
-        class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 rounded-full hover:bg-white transition-colors"
-      >
-        Learn More
-      </a>
-      <a 
-        href="#contact" 
-        class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 rounded-full hover:bg-white transition-colors"
-      >
-        Contact Us
-      </a>
     </div>
+
+    <!-- Locations advert -->
+    <main class="py-10 px-8 sm:px-16">
+      <h3 class="text-2xl tracking-normal italic text-munch-blue text-center mb-10">
+        Imagine Orble Beta in your space
+      </h3>
+
+      <DynamicLocationsCarousel locations={locations} />
+    </main>
+
+    <!-- Contact advert -->
+    <div class="relative mt-20 mx-10 max-sm:mx-4 px-8 sm:px-16 max-sm:px-4">
+      <div class="absolute inset-0 bg-teal-theme backdrop-blur-md rounded-3xl shadow-xl"></div>
+      <div class="relative flex flex-col items-center text-center p-12 max-sm:p-6">
+        <h3 class="text-2xl max-sm:text-xl tracking-normal italic text-white mb-6 max-sm:mb-4">
+          Have questions about partnerships?
+        </h3>
+        <div class="flex flex-col sm:flex-row gap-4 max-sm:gap-3 max-sm:w-full">
+          <a 
+          href="src/assets/images/pilot.pdf" 
+          target="_blank"
+          rel="noopener noreferrer"
+          class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 max-sm:py-2.5 max-sm:px-6 rounded-full hover:bg-white transition-colors max-sm:text-sm"
+        >
+          Learn More
+        </a>
+        <a 
+          href="#contact" 
+          class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 max-sm:py-2.5 max-sm:px-6 rounded-full hover:bg-white transition-colors max-sm:text-sm"
+        >
+          Contact Us
+        </a>
         </div>
       </div>
     </div>
