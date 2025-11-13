@@ -1,0 +1,86 @@
+---
+import LocationItem from './location-item.astro';
+
+const locations = Astro.props.locations;
+---
+
+<div id="dynamic-locations-carousel" class="relative w-full">
+  <div class="overflow-hidden mx-12">
+    <div id="carousel-wrapper" class="flex transition-transform duration-500 ease-in-out scroll-snap-x scroll-snap-mandatory">
+      {locations.map(location => (
+        <LocationItem {...location} />
+      ))}
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <button type="button" class="absolute left-0 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-10 h-10 rounded-full bg-white/30 hover:bg-white/50 shadow" id="carousel-prev">
+    <svg class="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  </button>
+
+  <button type="button" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-10 h-10 rounded-full bg-white/30 hover:bg-white/50 shadow" id="carousel-next">
+    <svg class="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  </button>
+</div>
+
+
+
+<script type="module">
+  const wrapper = document.getElementById('carousel-wrapper');
+  const items = wrapper.children;
+  const prevBtn = document.getElementById('carousel-prev');
+  const nextBtn = document.getElementById('carousel-next');
+
+  let currentIndex = 0;
+
+  function updateCarousel() {
+    const containerWidth = wrapper.parentElement.offsetWidth;
+    const minItemWidth = window.innerWidth < 640 ? containerWidth : window.innerWidth * 0.25;
+    const itemsPerSlide = Math.max(1, Math.floor(containerWidth / minItemWidth));
+    const itemWidth = containerWidth / itemsPerSlide;
+
+    // Apply width style to all items
+    for (const item of items) {
+      item.style.width = `${itemWidth}px`;
+    }
+
+    const maxIndex = Math.ceil(items.length / itemsPerSlide) - 1;
+
+    wrapper.dataset.itemsPerSlide = itemsPerSlide;
+    wrapper.dataset.maxIndex = maxIndex;
+  }
+
+  function goToSlide(index) {
+    const itemsPerSlide = parseInt(wrapper.dataset.itemsPerSlide) || 1;
+    const containerWidth = wrapper.parentElement.offsetWidth;
+    const offset = index * containerWidth;
+    wrapper.style.transform = `translateX(-${offset}px)`;
+    currentIndex = index;
+  }
+
+  prevBtn.addEventListener('click', () => {
+    const maxIndex = parseInt(wrapper.dataset.maxIndex);
+    currentIndex = (currentIndex - 1 + maxIndex + 1) % (maxIndex + 1);
+    goToSlide(currentIndex);
+  });
+
+  nextBtn.addEventListener('click', () => {
+    const maxIndex = parseInt(wrapper.dataset.maxIndex);
+    currentIndex = (currentIndex + 1) % (maxIndex + 1);
+    goToSlide(currentIndex);
+  });
+
+  window.addEventListener('resize', () => {
+    updateCarousel();
+    goToSlide(currentIndex);
+  });
+
+  // Initialize
+  updateCarousel();
+  goToSlide(0);
+</script>
+
