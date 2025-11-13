@@ -17,15 +17,19 @@ const { images, id = 'carousel', height = 'h-[600px]' } = Astro.props;
   <div id={id} class="relative w-full max-w-md" data-carousel="slide">
     <!-- Carousel wrapper -->
     <div class={`relative ${height} overflow-hidden rounded-tl-[80px] rounded-br-[80px] shadow-2xl`}>
-      {images.map((image, index) => (
-        <div class="hidden duration-700 ease-in-out" data-carousel-item>
-          <Image 
-            src={image.src} 
-            alt={image.alt} 
-            class="absolute block w-full h-full object-cover -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2" 
-          />
-        </div>
-      ))}
+{images.map((image, index) => (
+  <div 
+    class={`duration-700 ease-in-out ${index === 0 ? '' : 'hidden'}`} 
+    data-carousel-item
+  >
+    <Image 
+      src={image.src} 
+      alt={image.alt} 
+      class="absolute block w-full h-full object-cover -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2" 
+    />
+  </div>
+))}
+
     </div>
     
     <!-- Slider indicators -->
