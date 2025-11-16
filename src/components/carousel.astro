@@ -4,8 +4,8 @@ import LocationItem from './location-item.astro';
 const locations = Astro.props.locations;
 ---
 
-<div id="dynamic-locations-carousel" class="relative w-full h-full">
-  <div class="overflow-hidden h-full">
+<div id="dynamic-locations-carousel" class="relative w-full">
+  <div class="overflow-hidden mx-12">
     <div id="carousel-wrapper" class="flex transition-transform duration-500 ease-in-out scroll-snap-x scroll-snap-mandatory">
       {locations.map(location => (
         <LocationItem {...location} />
@@ -64,13 +64,13 @@ const locations = Astro.props.locations;
 
   prevBtn.addEventListener('click', () => {
     const maxIndex = parseInt(wrapper.dataset.maxIndex);
-    currentIndex = currentIndex === 0 ? maxIndex : currentIndex - 1;
+    currentIndex = (currentIndex - 1 + maxIndex + 1) % (maxIndex + 1);
     goToSlide(currentIndex);
   });
 
   nextBtn.addEventListener('click', () => {
     const maxIndex = parseInt(wrapper.dataset.maxIndex);
-    currentIndex = currentIndex === maxIndex ? 0 : currentIndex + 1;
+    currentIndex = (currentIndex + 1) % (maxIndex + 1);
     goToSlide(currentIndex);
   });
 
