@@ -1,14 +1,10 @@
 import {
-  Post,
   Renderer,
   Camera,
   Transform,
   Texture,
   Program,
   GLTFLoader,
-  Vec2,
-  Vec4,
-  Euler,
   RendererSortable,
   Mesh,
   Orbit,
@@ -17,12 +13,7 @@ import {
 } from "ogl";
 
 import vert from "./standard.vert";
-import frag from "./plastic.frag";
 import pbr from "./pbr.frag";
-
-function degrees(...angles: number[]): number[] {
-  return angles.map((r) => (r * Math.PI) / 180);
-}
 
 // See https://stackoverflow.com/a/66180709
 const loadImage = (src: string) =>
@@ -81,8 +72,12 @@ controls.target = new Vec3(0, 1.4, 0);
 
 // TODO: do this 'properly'
 function resize() {
-  renderer.setSize(el?.clientWidth!, el?.clientHeight!);
-  const aspect = gl.canvas.width / gl.canvas.height;
+  if (el) {
+    renderer.setSize(el.clientWidth, el.clientHeight);
+    camera.perspective({
+      aspect: gl.canvas.width / gl.canvas.height,
+    });
+  }
   camera.perspective({
     aspect: gl.canvas.width / gl.canvas.height,
   });
@@ -92,17 +87,6 @@ window.addEventListener("resize", resize, false);
 resize();
 
 const scene = new Transform();
-
-// const solid = (colour: Vec4) =>
-//   new Program(gl, {
-//     vertex: vertex,
-//     fragment: solid_frag,
-//     uniforms: {
-//       uColour: { value: colour },
-//     },
-//     transparent: true,
-//     cullFace: false,
-//   });
 
 const plasticMat = new Program(gl, {
   vertex: vert,
@@ -178,7 +162,7 @@ scene.rotation.y -= 90;
 //   console.log(radians(...scene.rotation.toArray()));
 // }
 
-function update(time: number) {
+function update() {
   requestAnimationFrame(update);
   // outlineProgram.uniforms.uTime.value = time * 0.001;
 
