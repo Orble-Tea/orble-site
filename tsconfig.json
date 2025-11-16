@@ -1,5 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"],
   "compilerOptions": {
     "target": "es2020",
     "module": "es2020",
@@ -11,6 +13,6 @@
       "$layouts/*": ["src/layouts/*"],
       "$content/*": ["src/content/*"]
     },
-    "types": ["vite-plugin-glsl/ext", "vite/client"]
+    "types": ["astro/client", "vite-plugin-glsl/ext", "vite/client"]
   }
 }

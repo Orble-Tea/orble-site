@@ -45,6 +45,8 @@ import ContactForm from "~/components/contact-form.astro";
 import MenuThemeItem from '~/components/menu-theme-item.astro';
 import DynamicLocationsCarousel from '~/components/carousel.astro';
 
+import pdf from "~/assets/images/pilot.pdf"
+
 const locations = [
   {
     image: office,
@@ -194,8 +196,8 @@ navItems.push(
         }
       }
 
-        .orble-tea-bg-long{
-        background-image: url("../assets/images/bg-design/orble-tea-bg-long.png");
+      .orble-tea-bg-long{
+        background-image: url("../assets/images/bg-design/orble-tea-bg-long.svg");
         background-repeat: no-repeat;
         background-position: 0px 40px;
         background-size: cover;
@@ -289,24 +291,24 @@ navItems.push(
             engagement, happier customers, and a share of boba sales, without any hassle.
           </h3>
         </div>
-
+  
         <!-- Two column layout for menu and image -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 items-stretch">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 items-start">
           
           <!-- Menu section -->
           <div class="relative">
             <div class="absolute inset-0 bg-teal-theme/70 backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
 
-            <div class="relative p-8 sm:p-12 h-full flex flex-col">
+            <div class="relative sm:p-8 flex flex-col pb-0">
               <h3 class="text-2xl tracking-normal italic text-white text-center">
                 Your menu, your way
               </h3>
-              <p class="text-sm text-center text-munch-blue max-w-2xl mx-auto mb-10">
+              <p class="text-sm text-center text-munch-blue max-w-2xl mx-auto mb-5">
                 Whether you're serving students, office workers, or
                 residents, Orble lets you tailor your drink lineup to match your consumer's tastes.
               </p>
 
-              <ul class="space-y-8 flex-grow">
+              <ul class="space-y-4">
                 {menuThemes.map((theme) => (
                   <MenuThemeItem 
                     image={theme.image}
@@ -323,6 +325,7 @@ navItems.push(
           <ImageCarousel images={carouselImages} />
 
         </div>
+
       </div>
     </div>
 
@@ -344,7 +347,7 @@ navItems.push(
         </h3>
         <div class="flex flex-col sm:flex-row gap-4 max-sm:gap-3 max-sm:w-full">
           <a 
-          href="src/assets/images/pilot.pdf" 
+          href={pdf} 
           target="_blank"
           rel="noopener noreferrer"
           class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 max-sm:py-2.5 max-sm:px-6 rounded-full hover:bg-white transition-colors max-sm:text-sm"
