@@ -21,9 +21,7 @@ import ImageCarousel from '$components/image-carousel.astro';
 import orblebeta1 from '~/assets/images/beta-renders/front-left.jpg';
 import orblebeta2 from '~/assets/images/beta-renders/front.jpg';
 import orblebeta3 from '~/assets/images/beta-renders/front-right.jpg';
-import orblebeta4 from '~/assets/images/beta-renders/left.jpg';
-import orblebeta5 from '~/assets/images/beta-renders/top.jpg';
-import orblebeta6 from '~/assets/images/beta-renders/zoom-in.jpg';
+import orblebeta4 from '~/assets/images/beta-renders/zoom-in.jpg';
 
 import office from '~/assets/images/office.jpeg'
 import airport from '~/assets/images/airport.jpg'
@@ -44,8 +42,6 @@ import ContactForm from "~/components/contact-form.astro";
 
 import MenuThemeItem from '~/components/menu-theme-item.astro';
 import DynamicLocationsCarousel from '~/components/carousel.astro';
-
-import pdf from "~/assets/images/pilot.pdf"
 
 const locations = [
   {
@@ -91,9 +87,7 @@ const carouselImages = [
   { src: orblebeta1, alt: 'front left view of orble beta' },
   { src: orblebeta2, alt: 'front view of orble beta' },
   { src: orblebeta3, alt: 'front right view of orble beta' },
-  { src: orblebeta4, alt: 'left view of orble beta' },
-  { src: orblebeta5, alt: 'top view of orble beta' },
-  { src: orblebeta6, alt: 'zoomed in view of orble beta' }
+  { src: orblebeta4, alt: 'zoomed in view of orble beta' }
 ];
 
 const menuThemes = [
@@ -293,40 +287,101 @@ navItems.push(
         </div>
   
         <!-- Two column layout for menu and image -->
-<div class="grid grid-cols-1 sm:grid-cols-5 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+          
+          <!-- Left column: Menu + Specifications stacked -->
+          <div class="space-y-6">
+            
+            <!-- Menu section -->
+            <div class="relative">
+              <div class="absolute inset-0 bg-transparent backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
+
+              <div class="relative p-6 sm:p-8 flex flex-col">
+                <h3 class="font-heading text-xl tracking-normal italic text-white text-center">
+                  Your menu, your way
+                </h3>
+                <p class="text-xs text-center text-munch-blue max-w-2xl mx-auto mb-5">
+                  Whether you're serving students, office workers, or
+                  residents, Orble lets you tailor your drink lineup to match your consumer's tastes.
+                </p>
+
+                <ul class="space-y-4">
+                  {menuThemes.map((theme) => (
+                    <MenuThemeItem 
+                      image={theme.image}
+                      alt={theme.alt}
+                      title={theme.title}
+                      description={theme.description}
+                    />
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <!-- Specifications section -->
+<div class="relative">
+  <div class="absolute inset-0 bg-transparent backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
   
-  <!-- Menu section (2/5) -->
-  <div class="col-span-2 relative">
-    <div class="absolute inset-0 bg-teal-theme/70 backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
+  <div class="relative p-3 sm:p-4">
+    <h3 class="font-heading text-xl italic text-white text-center mb-2 tracking-wide">
+      SPECIFICATIONS
+    </h3>
+    
+    <div class="space-y-1"> <!-- reduced vertical spacing -->
+      <div class="grid grid-cols-3 gap-1"> <!-- smaller horizontal gap -->
+        <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+          <p class="font-heading text-gray-800 text-xs">DIMENSIONS</p>
+        </div>
+        <div class="col-span-2 bg-blue-100/90 rounded-lg px-2 py-1 text-center">
+          <p class="text-gray-800 text-xs">76.5" (90" with sign) x 40" x 31"</p>
+        </div>
+      </div>
 
-    <div class="relative sm:p-8 flex flex-col pb-0">
-      <h3 class="text-xl tracking-normal italic text-white text-center">
-        Your menu, your way
-      </h3>
-      <p class="text-sm text-center text-munch-blue max-w-2xl mx-auto mb-5">
-        Whether you're serving students, office workers, or
-        residents, Orble lets you tailor your drink lineup to match your consumer's tastes.
-      </p>
+      <div class="grid grid-cols-3 gap-1">
+        <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+          <p class="font-heading text-gray-800 text-xs">ELECTRICITY</p>
+        </div>
+        <div class="col-span-2 bg-blue-100/90 rounded-lg px-2 py-1 text-center">
+          <p class="text-gray-800 text-xs">AC 110V~240V 50-60Hz</p>
+        </div>
+      </div>
 
-      <ul class="space-y-4">
-        {menuThemes.map((theme) => (
-          <MenuThemeItem 
-            image={theme.image}
-            alt={theme.alt}
-            title={theme.title}
-            description={theme.description}
-          />
-        ))}
-      </ul>
+      <div class="grid grid-cols-3 gap-1">
+        <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+          <p class="font-heading text-gray-800 text-xs">WEIGHT</p>
+        </div>
+        <div class="col-span-2 bg-blue-100/90 rounded-lg px-2 py-1 text-center">
+          <p class="text-gray-800 text-xs">650 lb (empty) / 870 lb (full)</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-1">
+        <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+          <p class="font-heading text-gray-800 text-xs">PAYMENT</p>
+        </div>
+        <div class="col-span-2 bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+          <p class="text-gray-800 text-xs">Card & Tap to Pay</p>
+        </div>
+      </div>
+
+      <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+        <p class="text-gray-800 text-xs">Refrigerated at 4°C / 39.2°F</p>
+      </div>
     </div>
   </div>
-
-  <!-- Image carousel (3/5) -->
-  <div class="col-span-3">
-    <ImageCarousel images={carouselImages} />
-  </div>
-
 </div>
+
+
+          </div>
+
+          <!-- Right column: Image carousel -->
+          <div class="lg:h-full flex items-stretch">
+            <div class="w-full">
+              <ImageCarousel images={carouselImages} />
+            </div>
+          </div>
+
+        </div>
 
 
       </div>
@@ -342,21 +397,13 @@ navItems.push(
     </main>
 
     <!-- Contact advert -->
-    <div class="relative mt-20 mx-10 max-sm:mx-4 px-8 sm:px-16 max-sm:px-4">
+    <div class="relative mt-15 mx-10 max-sm:mx-4 px-8 sm:px-16 max-sm:px-4">
       <div class="absolute inset-0 bg-teal-theme backdrop-blur-md rounded-3xl shadow-xl"></div>
       <div class="relative flex flex-col items-center text-center p-12 max-sm:p-6">
         <h3 class="text-2xl max-sm:text-xl tracking-normal italic text-white mb-6 max-sm:mb-4">
           Have questions about partnerships?
         </h3>
         <div class="flex flex-col sm:flex-row gap-4 max-sm:gap-3 max-sm:w-full">
-          <a 
-          href={pdf} 
-          target="_blank"
-          rel="noopener noreferrer"
-          class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 max-sm:py-2.5 max-sm:px-6 rounded-full hover:bg-white transition-colors max-sm:text-sm"
-        >
-          Learn More
-        </a>
         <a 
           href="#contact" 
           class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 max-sm:py-2.5 max-sm:px-6 rounded-full hover:bg-white transition-colors max-sm:text-sm"

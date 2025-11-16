@@ -17,8 +17,8 @@ const { image, alt, title, description } = Astro.props;
     <Image src={image} alt={alt} class="w-full h-full object-cover" />
   </div>
   <div class="flex-1 text-left max-sm:text-center">
-    <p class="text-sm text-munch-blue">
-      <span class="font-semibold text-white block">{title}</span>
+    <p class="text-xs text-munch-blue"> <!-- description size -->
+      <span class="font-heading text-white text-sm block">{title}</span> <!-- title size -->
       {description}
     </p>
   </div>
