@@ -107,13 +107,13 @@ const menuThemes = [
     image: dumbells,
     alt: "High Protein Menu",
     title: "High Protein Menu",
-    description: "Packed with protein for a workout boost: Strawberry, Matcha, Jasmine"
+    description: "Packed with protein: Strawberry, Matcha, Jasmine"
   },
   {
     image: coffee,
     alt: "Caffeine Boost Series",
     title: "Caffeine Boost Series",
-    description: "Boosted drinks for a pick-me-up: Brown Sugar, Matcha, and Earl Grey"
+    description: "Boostd pick-me-ups: Brown Sugar, Matcha, and Earl Grey"
   }
 ];
 
@@ -293,38 +293,41 @@ navItems.push(
         </div>
   
         <!-- Two column layout for menu and image -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-10 items-start">
-          
-          <!-- Menu section -->
-          <div class="relative">
-            <div class="absolute inset-0 bg-teal-theme/70 backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
+<div class="grid grid-cols-1 sm:grid-cols-5 items-start">
+  
+  <!-- Menu section (2/5) -->
+  <div class="col-span-2 relative">
+    <div class="absolute inset-0 bg-teal-theme/70 backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
 
-            <div class="relative sm:p-8 flex flex-col pb-0">
-              <h3 class="text-2xl tracking-normal italic text-white text-center">
-                Your menu, your way
-              </h3>
-              <p class="text-sm text-center text-munch-blue max-w-2xl mx-auto mb-5">
-                Whether you're serving students, office workers, or
-                residents, Orble lets you tailor your drink lineup to match your consumer's tastes.
-              </p>
+    <div class="relative sm:p-8 flex flex-col pb-0">
+      <h3 class="text-xl tracking-normal italic text-white text-center">
+        Your menu, your way
+      </h3>
+      <p class="text-sm text-center text-munch-blue max-w-2xl mx-auto mb-5">
+        Whether you're serving students, office workers, or
+        residents, Orble lets you tailor your drink lineup to match your consumer's tastes.
+      </p>
 
-              <ul class="space-y-4">
-                {menuThemes.map((theme) => (
-                  <MenuThemeItem 
-                    image={theme.image}
-                    alt={theme.alt}
-                    title={theme.title}
-                    description={theme.description}
-                  />
-                ))}
-              </ul>
-            </div>
-          </div>
+      <ul class="space-y-4">
+        {menuThemes.map((theme) => (
+          <MenuThemeItem 
+            image={theme.image}
+            alt={theme.alt}
+            title={theme.title}
+            description={theme.description}
+          />
+        ))}
+      </ul>
+    </div>
+  </div>
 
-          <!-- Beta image -->
-          <ImageCarousel images={carouselImages} />
+  <!-- Image carousel (3/5) -->
+  <div class="col-span-3">
+    <ImageCarousel images={carouselImages} />
+  </div>
 
-        </div>
+</div>
+
 
       </div>
     </div>
