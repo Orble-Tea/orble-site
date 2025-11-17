@@ -1,46 +1,71 @@
 ---
-import LocationItem from './location-item.astro';
+import LocationItem from "./location-item.astro";
 
 const locations = Astro.props.locations;
 ---
 
 <div id="dynamic-locations-carousel" class="relative w-full">
-  <div class="overflow-hidden mx-12">
-    <div id="carousel-wrapper" class="flex transition-transform duration-500 ease-in-out scroll-snap-x scroll-snap-mandatory">
-      {locations.map(location => (
-        <LocationItem {...location} />
-      ))}
+  <div class="mx-12 overflow-hidden">
+    <div
+      id="carousel-wrapper"
+      class="scroll-snap-x scroll-snap-mandatory flex transition-transform duration-500 ease-in-out"
+    >
+      {locations.map((location) => <LocationItem {...location} />)}
     </div>
   </div>
 
   <!-- Controls -->
-  <button type="button" class="absolute left-0 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-10 h-10 rounded-full bg-white/30 hover:bg-white/50 shadow" id="carousel-prev">
-    <svg class="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+  <button
+    type="button"
+    class="absolute left-0 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/30 shadow hover:bg-white/50"
+    id="carousel-prev"
+  >
+    <svg
+      class="h-4 w-4 text-gray-800"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"
+      ></path>
     </svg>
   </button>
 
-  <button type="button" class="absolute right-0 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center w-10 h-10 rounded-full bg-white/30 hover:bg-white/50 shadow" id="carousel-next">
-    <svg class="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+  <button
+    type="button"
+    class="absolute right-0 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/30 shadow hover:bg-white/50"
+    id="carousel-next"
+  >
+    <svg
+      class="h-4 w-4 text-gray-800"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"
+      ></path>
     </svg>
   </button>
 </div>
 
-
-
 <script type="module">
-  const wrapper = document.getElementById('carousel-wrapper');
+  const wrapper = document.getElementById("carousel-wrapper");
   const items = wrapper.children;
-  const prevBtn = document.getElementById('carousel-prev');
-  const nextBtn = document.getElementById('carousel-next');
+  const prevBtn = document.getElementById("carousel-prev");
+  const nextBtn = document.getElementById("carousel-next");
 
   let currentIndex = 0;
 
   function updateCarousel() {
     const containerWidth = wrapper.parentElement.offsetWidth;
-    const minItemWidth = window.innerWidth < 640 ? containerWidth : window.innerWidth * 0.25;
-    const itemsPerSlide = Math.max(1, Math.floor(containerWidth / minItemWidth));
+    const minItemWidth =
+      window.innerWidth < 640 ? containerWidth : window.innerWidth * 0.25;
+    const itemsPerSlide = Math.max(
+      1,
+      Math.floor(containerWidth / minItemWidth),
+    );
     const itemWidth = containerWidth / itemsPerSlide;
 
     // Apply width style to all items
@@ -62,19 +87,19 @@ const locations = Astro.props.locations;
     currentIndex = index;
   }
 
-  prevBtn.addEventListener('click', () => {
+  prevBtn.addEventListener("click", () => {
     const maxIndex = parseInt(wrapper.dataset.maxIndex);
     currentIndex = (currentIndex - 1 + maxIndex + 1) % (maxIndex + 1);
     goToSlide(currentIndex);
   });
 
-  nextBtn.addEventListener('click', () => {
+  nextBtn.addEventListener("click", () => {
     const maxIndex = parseInt(wrapper.dataset.maxIndex);
     currentIndex = (currentIndex + 1) % (maxIndex + 1);
     goToSlide(currentIndex);
   });
 
-  window.addEventListener('resize', () => {
+  window.addEventListener("resize", () => {
     updateCarousel();
     goToSlide(currentIndex);
   });
@@ -83,4 +108,3 @@ const locations = Astro.props.locations;
   updateCarousel();
   goToSlide(0);
 </script>
-

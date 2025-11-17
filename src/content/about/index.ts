@@ -1,12 +1,14 @@
-import corina from '~/assets/images/team-headshots/corina.png' 
-import nastassja from '~/assets/images/team-headshots/nastassja.png'
-import ann from '~/assets/images/team-headshots/ann.png'
-import krishna from '~/assets/images/team-headshots/krishna.png' 
-import veronica from '~/assets/images/team-headshots/veronica.png'
-import richard from '~/assets/images/team-headshots/richard.png'
-import ha from '~/assets/images/team-headshots/ha.png'
-import joanne from '~/assets/images/team-headshots/joanne.png'
-import alex from '~/assets/images/team-headshots/alex.png'
+import corina from "~/assets/images/team-headshots/corina.png";
+import nastassja from "~/assets/images/team-headshots/nastassja.png";
+import ann from "~/assets/images/team-headshots/ann.png";
+import krishna from "~/assets/images/team-headshots/krishna.png";
+import veronica from "~/assets/images/team-headshots/veronica.png";
+import richard from "~/assets/images/team-headshots/richard.png";
+import ha from "~/assets/images/team-headshots/ha.png";
+import joanne from "~/assets/images/team-headshots/joanne.png";
+import alex from "~/assets/images/team-headshots/alex.png";
+import ridhima from "~/assets/images/team-headshots/ridhima.png";
+import chelsea from "~/assets/images/team-headshots/chelsea.png";
 
 export const teamMembers = [
   {
@@ -58,11 +60,21 @@ export const teamMembers = [
     bio: "",
   },
   {
+    name: "Chelsea Yan",
+    title: "Business Development Strategist",
+    image: chelsea,
+    bio: "",
+  },
+  {
     name: "Alexander Liu",
     title: "Marketing + Media Coordinator",
     image: alex,
     bio: "",
   },
-
-
+  {
+    name: "Ridhima Motewar",
+    title: "Marketing + Media Coordinator",
+    image: ridhima,
+    bio: "",
+  },
 ];

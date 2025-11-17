@@ -7,49 +7,54 @@ dotenv.config();
 
 // Define validation schema
 const contactFormSchema = z.object({
-  name: z.string()
+  name: z
+    .string()
     .trim()
     .min(1, "Name is required")
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be less than 100 characters"),
-  
-  email: z.string()
+
+  email: z
+    .string()
     .trim()
     .min(1, "Email is required")
     .email("Please enter a valid email address")
     .max(255, "Email must be less than 255 characters"),
-  
-  message: z.string()
+
+  message: z
+    .string()
     .trim()
     .min(1, "Message is required")
     .min(10, "Message must be at least 10 characters")
     .max(5000, "Message must be less than 5000 characters"),
-  
+
   // Honeypot - should always be empty
-  website: z.string().optional()
+  website: z.string().optional(),
 });
 
 // Retry helper function with exponential backoff
 async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
   let lastError;
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error;
-      
+
       if (attempt === maxRetries - 1) {
         throw lastError;
       }
-      
+
       const delay = initialDelay * Math.pow(2, attempt);
-      console.log(`Email send attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
+      console.log(
+        `Email send attempt ${attempt + 1} failed, retrying in ${delay}ms...`,
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
-  
+
   throw lastError;
 }
 
@@ -59,18 +64,18 @@ export async function POST({ request }) {
 
     // Validate with Zod
     const validationResult = contactFormSchema.safeParse(body);
-    
+
     if (!validationResult.success) {
       // Extract validation errors
       const errors = validationResult.error.flatten().fieldErrors;
-      
+
       return new Response(
-        JSON.stringify({ 
-          success: false, 
+        JSON.stringify({
+          success: false,
           message: "Validation failed",
-          errors: errors
-        }), 
-        { status: 400 }
+          errors: errors,
+        }),
+        { status: 400 },
       );
     }
 
@@ -82,11 +87,11 @@ export async function POST({ request }) {
       console.log("Honeypot triggered - possible bot submission");
       // Return success to not alert the bot
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: "Email sent successfully" 
-        }), 
-        { status: 200 }
+        JSON.stringify({
+          success: true,
+          message: "Email sent successfully",
+        }),
+        { status: 200 },
       );
     }
 
@@ -116,30 +121,34 @@ ${message}
 <p><strong>Name:</strong> ${name}</p>
 <p><strong>Email:</strong> ${email}</p>
 <p><strong>Message:</strong></p>
-<p>${message.replace(/\n/g, '<br>')}</p>
+<p>${message.replace(/\n/g, "<br>")}</p>
       `,
       "h:Reply-To": email,
     };
 
-    await retryWithBackoff(async () => {
-      return await mg.messages.create("mg.orble-tea.com", messageData);
-    }, 3, 1000);
+    await retryWithBackoff(
+      async () => {
+        return await mg.messages.create("mg.orble-tea.com", messageData);
+      },
+      3,
+      1000,
+    );
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "Email sent successfully" 
-      }), 
-      { status: 200 }
+      JSON.stringify({
+        success: true,
+        message: "Email sent successfully",
+      }),
+      { status: 200 },
     );
   } catch (error) {
     console.error("Mailgun error after retries:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        message: "Failed to send email", 
+      JSON.stringify({
+        success: false,
+        message: "Failed to send email",
       }),
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

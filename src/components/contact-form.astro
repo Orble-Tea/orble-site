@@ -6,63 +6,64 @@ interface Props {
   containerClass?: string;
 }
 
-const { 
-  formId = "contact-form",
-  containerClass = ""
-} = Astro.props;
+const { formId = "contact-form", containerClass = "" } = Astro.props;
 ---
 
 <div class={containerClass}>
   <div id="status-message" class="hidden"></div>
-  
-  <form class="max-w-md mx-auto flex flex-col gap-4" id={formId} method="post" action="/api/send-email">
+
+  <form
+    class="mx-auto flex max-w-md flex-col gap-4"
+    id={formId}
+    method="post"
+    action="/api/send-email"
+  >
     <div>
-      <input 
-        type="text" 
-        name="name" 
-        placeholder="Your Name" 
-        class="p-3 rounded text-black w-full" 
-        required 
+      <input
+        type="text"
+        name="name"
+        placeholder="Your Name"
+        class="w-full rounded p-3 text-black"
+        required
       />
       <div class="error-message hidden" data-error-for="name"></div>
     </div>
 
     <div>
-      <input 
-        type="email" 
-        name="email" 
-        placeholder="Your Email" 
-        class="p-3 rounded text-black w-full" 
-        required 
+      <input
+        type="email"
+        name="email"
+        placeholder="Your Email"
+        class="w-full rounded p-3 text-black"
+        required
       />
       <div class="error-message hidden" data-error-for="email"></div>
     </div>
 
     <div>
-      <textarea 
-        name="message" 
-        placeholder="Your Message" 
-        class="p-3 rounded text-black w-full" 
-        rows="5" 
-        required
-      ></textarea>
+      <textarea
+        name="message"
+        placeholder="Your Message"
+        class="w-full rounded p-3 text-black"
+        rows="5"
+        required></textarea>
       <div class="error-message hidden" data-error-for="message"></div>
     </div>
 
     <div class="website-field">
       <label for="website">Website</label>
-      <input 
-        type="text" 
-        name="website" 
+      <input
+        type="text"
+        name="website"
         id="website"
         tabindex="-1"
         autocomplete="off"
       />
     </div>
 
-    <button 
-      type="submit" 
-      class="bg-white text-[#B1D9CD] px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+    <button
+      type="submit"
+      class="rounded-full bg-white px-6 py-3 font-semibold text-[#B1D9CD] transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
     >
       Send Message
     </button>
@@ -70,7 +71,10 @@ const {
 </div>
 
 <script define:vars={{ formId }}>
-  function preventSpam(form, { honeypotField = 'honeypot', honeypotDuration = 2000 } = {}) {
+  function preventSpam(
+    form,
+    { honeypotField = "honeypot", honeypotDuration = 2000 } = {},
+  ) {
     const startTime = Date.now();
     let hasInteraction = false;
 
@@ -80,8 +84,8 @@ const {
     }
 
     // Listen for a couple of events to check interaction
-    const events = ['keydown', 'mousemove', 'touchstart', 'click'];
-    events.forEach(event => {
+    const events = ["keydown", "mousemove", "touchstart", "click"];
+    events.forEach((event) => {
       form.addEventListener(event, checkForInteraction, { once: true });
     });
 
@@ -94,7 +98,9 @@ const {
       const noInteraction = !hasInteraction;
 
       // Clean up event listeners after use
-      events.forEach(event => form.removeEventListener(event, checkForInteraction));
+      events.forEach((event) =>
+        form.removeEventListener(event, checkForInteraction),
+      );
 
       return isTooFast || !!hasHoneypotValue || noInteraction;
     };
@@ -105,7 +111,7 @@ const {
   const submitButton = form.querySelector('button[type="submit"]');
   const errorMessages = form.querySelectorAll(".error-message");
 
-  preventSpam(form, { honeypotField: 'website' });
+  preventSpam(form, { honeypotField: "website" });
 
   function showStatus(message, type) {
     statusDiv.textContent = message;
@@ -115,7 +121,7 @@ const {
   }
 
   function clearFieldErrors() {
-    errorMessages.forEach(el => {
+    errorMessages.forEach((el) => {
       el.textContent = "";
       el.classList.add("hidden");
     });
@@ -153,17 +159,26 @@ const {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      
+
       const result = await response.json();
 
       if (result.success) {
-        showStatus("Thank you for your message! We'll get back to you soon.", "success");
+        showStatus(
+          "Thank you for your message! We'll get back to you soon.",
+          "success",
+        );
         form.reset();
       } else if (result.errors) {
         showFieldErrors(result.errors);
-        showStatus("Please correct the highlighted errors and try again.", "error");
+        showStatus(
+          "Please correct the highlighted errors and try again.",
+          "error",
+        );
       } else {
-        showStatus("Failed to send message. Please try again or email us directly at info@orble-tea.com", "error");
+        showStatus(
+          "Failed to send message. Please try again or email us directly at info@orble-tea.com",
+          "error",
+        );
       }
     } catch (error) {
       showStatus("An error occurred. Please try again later.", "error");

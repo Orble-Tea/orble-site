@@ -24,7 +24,7 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
     <Icon
       id="logo"
       name="logo"
-      class="relative h-8 bottom-1 -ml-10 origin-[right_center] scale-0 transition-all duration-500"
+      class="relative bottom-1 -ml-10 h-8 origin-[right_center] scale-0 transition-all duration-500"
     />
     <h1 class="sm:block">{mainTitle}</h1>
   </a>
@@ -114,7 +114,7 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
         (entries) => {
           scrolly?.classList.toggle("opacity-0", !entries[0].isIntersecting);
         },
-        { threshold: 0.5 }
+        { threshold: 0.5 },
       );
       arrowObs.observe(splash);
 
@@ -123,11 +123,11 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
           header.classList.toggle("fixed-header", !entries[0].isIntersecting),
         {
           rootMargin: "-1% 0px",
-        }
+        },
       );
       headerObs.observe(splash);
     },
-    false
+    false,
   );
 
   menu?.addEventListener("click", (event) => {
@@ -147,7 +147,7 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
 
 <style>
   .fixed-header {
-    @apply fixed top-0 bottom-auto;
+    @apply fixed bottom-auto top-0;
     @apply border-default bg-secondary text-default;
   }
 

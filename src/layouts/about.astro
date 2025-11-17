@@ -11,17 +11,26 @@ export interface Props {
 
 const { info } = Astro.props;
 
-const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg,png,gif}");
+const images = await import.meta.glob(
+  "/assets/images/team-headshots/*.{jpeg,jpg,png,gif}",
+);
 
 // src={images["/assets/images/team-headshots/" + image]}
 ---
 
 <ContentSection info={info}>
-  <ul class="mt-4 max-w-6xl grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-24">
+  <ul class="mt-4 grid max-w-6xl grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-24">
     {
       teamMembers.map(({ name, title, image, bio }) => (
-        <div class="flex flex-col justify-center items-center">
-          <Image class="headshot" src={image} alt={name} width={300} height={300} quality={90} />
+        <div class="flex flex-col items-center justify-center">
+          <Image
+            class="headshot"
+            src={image}
+            alt={name}
+            width={300}
+            height={300}
+            quality={90}
+          />
           <p class="text-center font-bold">{name}</p>
           <p class="py-1 text-center text-offset text-xs">{title}</p>
           <p class="py-1 text-center text-offset text-xs">{bio}</p>
@@ -39,10 +48,10 @@ const images = await import.meta.glob("/assets/images/team-headshots/*.{jpeg,jpg
     object-fit: cover;
   }
 
-  .orble-tea-bg-one{
+  .orble-tea-bg-one {
     background-image: url("../images/bg-design/orble-tea-bg.png");
     background-repeat: no-repeat;
     background-size: 100% 97%;
-    background-position: 0px 40px
+    background-position: 0px 40px;
   }
 </style>
