@@ -17,22 +17,22 @@ import siteInfo from "$content/site";
 import orblelogo from "~/assets/images/orble-page-logo.png";
 import logo from "~/assets/images/logo_inkscape.svg";
 
-import ImageCarousel from '$components/image-carousel.astro';
-import orblebeta1 from '~/assets/images/beta-renders/front-left.jpg';
-import orblebeta2 from '~/assets/images/beta-renders/front.jpg';
-import orblebeta3 from '~/assets/images/beta-renders/front-right.jpg';
-import orblebeta4 from '~/assets/images/beta-renders/zoom-in.jpg';
+import ImageCarousel from "$components/image-carousel.astro";
+import orblebeta1 from "~/assets/images/beta-renders/front-left.jpg";
+import orblebeta2 from "~/assets/images/beta-renders/front.jpg";
+import orblebeta3 from "~/assets/images/beta-renders/front-right.jpg";
+import orblebeta4 from "~/assets/images/beta-renders/zoom-in.jpg";
 
-import office from '~/assets/images/office.jpeg'
-import airport from '~/assets/images/airport.jpg'
-import campus from '~/assets/images/campus.jpg'
-import hospital from '~/assets/images/hospital-hallway.jpg'
-import gym from '~/assets/images/gym.png'
-import mall from '~/assets/images/mall.webp'
+import office from "~/assets/images/office.jpeg";
+import airport from "~/assets/images/airport.jpg";
+import campus from "~/assets/images/campus.jpg";
+import hospital from "~/assets/images/hospital-hallway.jpg";
+import gym from "~/assets/images/gym.png";
+import mall from "~/assets/images/mall.webp";
 
-import classic from '~/assets/images/boba.png'
-import dumbells from '~/assets/images/dumbells.png'
-import coffee from '~/assets/images/caffeine.png'
+import classic from "~/assets/images/boba.png";
+import dumbells from "~/assets/images/dumbells.png";
+import coffee from "~/assets/images/caffeine.png";
 
 import tealbar from "~/assets/images/teal-bar.png";
 import orblewhite from "~/assets/images/orble-white.png";
@@ -40,54 +40,53 @@ import cad from "~/assets/images/cad-render.png";
 
 import ContactForm from "~/components/contact-form.astro";
 
-import MenuThemeItem from '~/components/menu-theme-item.astro';
-import DynamicLocationsCarousel from '~/components/carousel.astro';
+import MenuThemeItem from "~/components/menu-theme-item.astro";
+import DynamicLocationsCarousel from "~/components/carousel.astro";
 
 const locations = [
   {
     image: office,
     alt: "Office Parks",
     title: "Office Parks",
-    description: "Energize employees and boost workplace satisfaction."
+    description: "Energize employees and boost workplace satisfaction.",
   },
   {
     image: airport,
     alt: "Transit Hubs",
     title: "Transit Hubs",
-    description: "Fuel travellers on the go with a sweet sip."
+    description: "Fuel travellers on the go with a sweet sip.",
   },
   {
     image: campus,
     alt: "Universities",
     title: "Universities",
-    description: "Give students a grab-n-go, delicious study break."
+    description: "Give students a grab-n-go, delicious study break.",
   },
   {
     image: hospital,
     alt: "Hospitals",
     title: "Hospitals",
-    description: "Refresh and recharge."
+    description: "Refresh and recharge.",
   },
   {
     image: gym,
     alt: "Fitness Centers",
     title: "Fitness Centers",
-    description: "Power workouts with a tasty treat."
+    description: "Power workouts with a tasty treat.",
   },
   {
     image: mall,
     alt: "Shopping Centers",
     title: "Shopping Centers",
-    description: "Offer a convenient beverage option for browsing."
+    description: "Offer a convenient beverage option for browsing.",
   },
-
 ];
 
 const carouselImages = [
-  { src: orblebeta1, alt: 'front left view of orble beta' },
-  { src: orblebeta2, alt: 'front view of orble beta' },
-  { src: orblebeta3, alt: 'front right view of orble beta' },
-  { src: orblebeta4, alt: 'zoomed in view of orble beta' }
+  { src: orblebeta1, alt: "front left view of orble beta" },
+  { src: orblebeta2, alt: "front view of orble beta" },
+  { src: orblebeta3, alt: "front right view of orble beta" },
+  { src: orblebeta4, alt: "zoomed in view of orble beta" },
 ];
 
 const menuThemes = [
@@ -95,25 +94,26 @@ const menuThemes = [
     image: classic,
     alt: "Classic Theme",
     title: "Classic",
-    description: "The top selling flavors in every boba shop: Black, Thai, and Taro."
+    description:
+      "The top selling flavors in every boba shop: Black, Thai, and Taro.",
   },
   {
     image: dumbells,
     alt: "High Protein Menu",
     title: "High Protein Menu",
-    description: "Packed with protein: Strawberry, Matcha, Jasmine"
+    description: "Packed with protein: Strawberry, Matcha, Jasmine",
   },
   {
     image: coffee,
     alt: "Caffeine Boost Series",
     title: "Caffeine Boost Series",
-    description: "Boostd pick-me-ups: Brown Sugar, Matcha, and Earl Grey"
-  }
+    description: "Boostd pick-me-ups: Brown Sugar, Matcha, and Earl Grey",
+  },
 ];
 
 const sectionData = [
-  // what, 
-  about
+  // what,
+  about,
 ];
 
 const { generator, site } = Astro;
@@ -142,12 +142,16 @@ navItems.push(
   {
     id: "#contact",
     title: "Contact Us",
-  }
-)
+  },
+);
 ---
 
-<!DOCTYPE html>
-<html lang="en" class="h-full motion-safe:scroll-smooth font-sans bg-white" data-theme="light">
+<!doctype html>
+<html
+  lang="en"
+  class="h-full bg-white font-sans motion-safe:scroll-smooth"
+  data-theme="light"
+>
   <head>
     <base href={import.meta.env.BASE_URL} />
     <meta charset="utf-8" />
@@ -178,7 +182,7 @@ navItems.push(
     <Splash />
 
     <style>
-      .orble-tea-bg-one{
+      .orble-tea-bg-one {
         background-image: url("../assets/images/bg-design/orble-tea-bg.svg");
         background-repeat: no-repeat;
         background-position: 0px 40px;
@@ -190,7 +194,7 @@ navItems.push(
         }
       }
 
-      .orble-tea-bg-long{
+      .orble-tea-bg-long {
         background-image: url("../assets/images/bg-design/orble-tea-bg-long.svg");
         background-repeat: no-repeat;
         background-position: 0px 40px;
@@ -203,7 +207,7 @@ navItems.push(
       }
 
       .features-title {
-        color: #FFF;
+        color: #fff;
         text-align: center;
         font-size: 32px;
         font-style: italic;
@@ -251,123 +255,185 @@ navItems.push(
     </style>
 
     <!-- Orble beta logo + header -->
-    <div class="flex items-center justify-left ml-[10%] max-sm:ml-0 max-sm:justify-center mt-10 gap-4">
+    <div
+      class="justify-left ml-[10%] mt-10 flex items-center gap-4 max-sm:ml-0 max-sm:justify-center"
+    >
       <Image src={logo} alt="Orble Logo" width={140} class="max-sm:w-20" />
       <div class="flex flex-col">
         <div class="flex items-baseline gap-2">
-          <h1 class="text-9xl max-sm:text-9xl font-heading leading-none tracking-tight">ORBLE</h1>
-          <span class="text-6xl max-sm:text-4xl italic font-heading leading-none tracking-tight text-[#9DD9C8]">BETA</span>
+          <h1
+            class="font-heading leading-none tracking-tight text-9xl max-sm:text-9xl"
+          >
+            ORBLE
+          </h1>
+          <span
+            class="font-heading italic leading-none tracking-tight text-[#9DD9C8] text-6xl max-sm:text-4xl"
+            >BETA</span
+          >
         </div>
-        <p class="text-lg max-sm:text-sm font-lato tracking-[0.1em] ml-1 -mt-3 max-sm:-mt-2">the bubble tea ATM</p>
+        <p
+          class="font-lato -mt-3 ml-1 tracking-[0.1em] text-lg max-sm:-mt-2 max-sm:text-sm"
+        >
+          the bubble tea ATM
+        </p>
       </div>
     </div>
 
-    <div class="orble-tea-bg-long font-sans w-full pb-28 pt-20">
+    <div class="orble-tea-bg-long w-full pb-28 pt-20 font-sans">
       <div class="mx-[10%]">
-        
-        <div class="mb-10 max-w-[80%] max-sm:max-w-[90%] max-sm:mx-auto">
-          <h3 class="text-2xl tracking-normal italic text-white max-sm:text-center max-sm:text-xl mb-4 leading-tight">
-            <span class="font-heading text-6xl max-sm:text-4xl lg:text-6xl text-munch-blue italic inline align-baseline leading-none">
+        <div class="mb-10 max-w-[80%] max-sm:mx-auto max-sm:max-w-[90%]">
+          <h3
+            class="mb-4 italic leading-tight tracking-normal text-white text-2xl max-sm:text-center max-sm:text-xl"
+          >
+            <span
+              class="text-munch-blue inline align-baseline font-heading italic leading-none text-6xl max-sm:text-4xl lg:text-6xl"
+            >
               ORBLE BETA
             </span>
-            is available now, partnering with select businesses in the Philadelphia area
+            is available now, partnering with select businesses in the Philadelphia
+            area
           </h3>
-          <h3 class="text-sm tracking-normal text-munch-blue my-6 max-sm:text-center">
-            We bring boba to every corner without the overhead or cost. Boba is popular among younger consumers, but it’s not
-            easily accessible unless you’re near a shop—and most close early. Orble changes that.
-            Orble Beta is a fully managed, ready-to-serve vending machine delivering fresh boba drinks. We handle sourcing,
-            restocking, maintenance, and operations, so you can offer high-quality boba anytime. Getting started with Orble is free.
-            We manage setup and service, while you enjoy higher engagement, happier customers, and a share of sales—hassle-free.
+          <h3
+            class="text-munch-blue my-6 tracking-normal text-sm max-sm:text-center"
+          >
+            We bring boba to every corner without the overhead or cost. Boba is
+            popular among younger consumers, but it’s not easily accessible
+            unless you’re near a shop—and most close early. Orble changes that.
+            Orble Beta is a fully managed, ready-to-serve vending machine
+            delivering fresh boba drinks. We handle sourcing, restocking,
+            maintenance, and operations, so you can offer high-quality boba
+            anytime. Getting started with Orble is free. We manage setup and
+            service, while you enjoy higher engagement, happier customers, and a
+            share of sales—hassle-free.
           </h3>
         </div>
-  
+
         <!-- Two column layout for menu and image -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          
+        <div class="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
           <!-- Left column: Menu + Specifications stacked -->
           <div class="space-y-6">
-            
             <!-- Menu section -->
             <div class="relative">
-              <div class="absolute inset-0 bg-transparent backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
+              <div
+                class="absolute inset-0 rounded-3xl bg-transparent shadow-2xl shadow-black/50 backdrop-blur-md"
+              >
+              </div>
 
-              <div class="relative p-6 sm:p-8 flex flex-col">
-                <h3 class="font-heading text-xl tracking-normal italic text-white text-center">
+              <div class="relative flex flex-col p-6 sm:p-8">
+                <h3
+                  class="text-center font-heading italic tracking-normal text-white text-xl"
+                >
                   Your menu, your way
                 </h3>
-                <p class="text-xs text-center text-munch-blue max-w-2xl mx-auto mb-5">
-                  Whether you're serving students, office workers, or
-                  residents, Orble lets you tailor your menu to match your consumer's tastes.
+                <p
+                  class="text-munch-blue mx-auto mb-5 max-w-2xl text-center text-xs"
+                >
+                  Whether you're serving students, office workers, or residents,
+                  Orble lets you tailor your menu to match your consumer's
+                  tastes.
                 </p>
 
                 <ul class="space-y-4">
-                  {menuThemes.map((theme) => (
-                    <MenuThemeItem 
-                      image={theme.image}
-                      alt={theme.alt}
-                      title={theme.title}
-                      description={theme.description}
-                    />
-                  ))}
+                  {
+                    menuThemes.map((theme) => (
+                      <MenuThemeItem
+                        image={theme.image}
+                        alt={theme.alt}
+                        title={theme.title}
+                        description={theme.description}
+                      />
+                    ))
+                  }
                 </ul>
               </div>
             </div>
 
             <!-- Specifications section -->
             <div class="relative">
-              <div class="absolute inset-0 bg-transparent backdrop-blur-md rounded-3xl shadow-2xl shadow-black/50"></div>
-              
+              <div
+                class="absolute inset-0 rounded-3xl bg-teal-theme shadow-2xl shadow-black/50 backdrop-blur-md"
+              >
+              </div>
+
               <div class="relative p-3 sm:p-4">
-                <h3 class="font-heading text-xl italic text-white text-center mb-2 tracking-wide">
+                <h3
+                  class="mb-2 text-center font-heading italic tracking-wide text-white text-xl"
+                >
                   SPECIFICATIONS
                 </h3>
-                
+
                 <div class="space-y-1">
                   <div class="grid grid-cols-3 gap-1">
-                    <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
-                      <p class="font-heading text-gray-800 text-xs">DIMENSIONS</p>
+                    <div
+                      class="rounded-lg bg-blue-100/90 px-1 py-1 text-center"
+                    >
+                      <p class="font-heading text-gray-800 text-xs">
+                        DIMENSIONS
+                      </p>
                     </div>
-                    <div class="col-span-2 bg-blue-100/90 rounded-lg px-2 py-1 text-center">
-                      <p class="text-gray-800 text-xs">76.5" (90" with sign) x 40" x 31"</p>
+                    <div
+                      class="col-span-2 rounded-lg bg-blue-100/90 px-2 py-1 text-center"
+                    >
+                      <p class="text-gray-800 text-xs">
+                        76.5" (90" with sign) x 40" x 31"
+                      </p>
                     </div>
                   </div>
 
                   <div class="grid grid-cols-3 gap-1">
-                    <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
-                      <p class="font-heading text-gray-800 text-xs">ELECTRICITY</p>
+                    <div
+                      class="rounded-lg bg-blue-100/90 px-1 py-1 text-center"
+                    >
+                      <p class="font-heading text-gray-800 text-xs">
+                        ELECTRICITY
+                      </p>
                     </div>
-                    <div class="col-span-2 bg-blue-100/90 rounded-lg px-2 py-1 text-center">
+                    <div
+                      class="col-span-2 rounded-lg bg-blue-100/90 px-2 py-1 text-center"
+                    >
                       <p class="text-gray-800 text-xs">AC 110V~240V 50-60Hz</p>
                     </div>
                   </div>
 
                   <div class="grid grid-cols-3 gap-1">
-                    <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+                    <div
+                      class="rounded-lg bg-blue-100/90 px-1 py-1 text-center"
+                    >
                       <p class="font-heading text-gray-800 text-xs">WEIGHT</p>
                     </div>
-                    <div class="col-span-2 bg-blue-100/90 rounded-lg px-2 py-1 text-center">
-                      <p class="text-gray-800 text-xs">650 lb (empty) / 870 lb (full)</p>
+                    <div
+                      class="col-span-2 rounded-lg bg-blue-100/90 px-2 py-1 text-center"
+                    >
+                      <p class="text-gray-800 text-xs">
+                        650 lb (empty) / 870 lb (full)
+                      </p>
                     </div>
                   </div>
 
                   <div class="grid grid-cols-3 gap-1">
-                    <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+                    <div
+                      class="rounded-lg bg-blue-100/90 px-1 py-1 text-center"
+                    >
                       <p class="font-heading text-gray-800 text-xs">PAYMENT</p>
                     </div>
-                    <div class="col-span-2 bg-blue-100/90 rounded-lg px-1 py-1 text-center">
+                    <div
+                      class="col-span-2 rounded-lg bg-blue-100/90 px-1 py-1 text-center"
+                    >
                       <p class="text-gray-800 text-xs">Card & Tap to Pay</p>
                     </div>
                   </div>
 
-                  <div class="bg-blue-100/90 rounded-lg px-1 py-1 text-center">
-                    <p class="text-gray-800 text-xs">Refrigerated at 4°C / 39.2°F</p>
+                  <div class="rounded-lg bg-blue-100/90 px-1 py-1 text-center">
+                    <p class="text-gray-800 text-xs">
+                      Refrigerated at 4°C / 39.2°F
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <!-- Right column: Image carousel -->
-          <div class="lg:h-full flex items-stretch">
+          <div class="flex items-stretch lg:h-full">
             <div class="w-full">
               <ImageCarousel images={carouselImages} />
             </div>
@@ -377,8 +443,10 @@ navItems.push(
     </div>
 
     <!-- Locations advert -->
-    <main class="py-10 px-8 sm:px-16">
-      <h3 class="text-2xl tracking-normal italic text-munch-blue text-center mb-10">
+    <main class="px-8 py-10 sm:px-16">
+      <h3
+        class="text-munch-blue mb-10 text-center italic tracking-normal text-2xl"
+      >
         Imagine Orble Beta in your space
       </h3>
 
@@ -386,35 +454,51 @@ navItems.push(
     </main>
 
     <!-- Contact advert -->
-    <div class="relative mt-15 mx-10 max-sm:mx-4 px-8 sm:px-16 max-sm:px-4">
-      <div class="absolute inset-0 bg-teal-theme backdrop-blur-md rounded-3xl shadow-xl"></div>
-      <div class="relative flex flex-col items-center text-center p-12 max-sm:p-6">
-        <h3 class="text-2xl max-sm:text-xl tracking-normal italic text-white mb-6 max-sm:mb-4">
+    <div class="mt-15 relative mx-10 px-8 max-sm:mx-4 max-sm:px-4 sm:px-16">
+      <div
+        class="absolute inset-0 rounded-3xl bg-teal-theme shadow-xl backdrop-blur-md"
+      >
+      </div>
+      <div
+        class="relative flex flex-col items-center p-12 text-center max-sm:p-6"
+      >
+        <h3
+          class="mb-6 italic tracking-normal text-white text-2xl max-sm:mb-4 max-sm:text-xl"
+        >
           Have questions about partnerships?
         </h3>
-        <div class="flex flex-col sm:flex-row gap-4 max-sm:gap-3 max-sm:w-full">
-        <a 
-          href="#contact" 
-          class="bg-tan-theme text-munch-blue font-semibold py-3 px-8 max-sm:py-2.5 max-sm:px-6 rounded-full hover:bg-white transition-colors max-sm:text-sm"
-        >
-          Contact Us
-        </a>
+        <div class="flex flex-col gap-4 max-sm:w-full max-sm:gap-3 sm:flex-row">
+          <a
+            href="#contact"
+            class="text-munch-blue rounded-full bg-tan-theme px-8 py-3 font-semibold transition-colors hover:bg-white max-sm:px-6 max-sm:py-2.5 max-sm:text-sm"
+          >
+            Contact Us
+          </a>
         </div>
       </div>
     </div>
-    
-    <div class="flex justify-left ml-[10%] my-10">
-      <Image src={orblelogo} alt="Orble Logo" width={700} />      
+
+    <div class="justify-left my-10 ml-[10%] flex">
+      <Image src={orblelogo} alt="Orble Logo" width={700} />
     </div>
-  
-    <div class="orble-tea-bg-one font-sans w-full pb-28">
-      <div class="grid grid-cols-1 gap-10 mx-[10%] gap-y-2 sm:grid-cols-2">
+
+    <div class="orble-tea-bg-one w-full pb-28 font-sans">
+      <div class="mx-[10%] grid grid-cols-1 gap-10 gap-y-2 sm:grid-cols-2">
         <div class="col-span-1 row-span-1 mt-28">
-          <Image src={orblewhite} alt="Orble" width={200} class="max-sm:mx-auto" />
-          <h3 class="text-2xl tracking-normal italic text-white max-sm:text-center">
+          <Image
+            src={orblewhite}
+            alt="Orble"
+            width={200}
+            class="max-sm:mx-auto"
+          />
+          <h3
+            class="italic tracking-normal text-white text-2xl max-sm:text-center"
+          >
             is a revolutionary boba tea machine
           </h3>
-          <h3 class="text-sm tracking-normal text-munch-blue my-6 max-sm:text-center">
+          <h3
+            class="text-munch-blue my-6 tracking-normal text-sm max-sm:text-center"
+          >
             designed to deliver freshly brewed bubble tea with unparalleled
             convenience and customization.
           </h3>
@@ -429,30 +513,33 @@ navItems.push(
           </video>
         </div>
         <div class="col-span-1 row-span-1 max-sm:text-center">
-          <span class="text-l tracking-normal text-munch-blue mt-6">With its</span>
-          <span class="text-3xl ml-2 tracking-normal italic text-munch-blue"
-            >sleek and compact design,</span>
-          <h3 class="text-l tracking-normal text-munch-blue">
+          <span class="text-l text-munch-blue mt-6 tracking-normal"
+            >With its</span
+          >
+          <span class="text-munch-blue ml-2 italic tracking-normal text-3xl"
+            >sleek and compact design,</span
+          >
+          <h3 class="text-l text-munch-blue tracking-normal">
             Orble seamlessly integrates into any food service environment,
-            offering customers a delightful boba tea experience at the touch of a
-            button.
+            offering customers a delightful boba tea experience at the touch of
+            a button.
           </h3>
-          <Image src={tealbar} alt="Bar" width={400} class="mt-10 mx-auto" />
+          <Image src={tealbar} alt="Bar" width={400} class="mx-auto mt-10" />
         </div>
       </div>
     </div>
-  
-    <div id="features" class="flex justify-center sm:mt-8 font-sans z-10">
+
+    <div id="features" class="z-10 flex justify-center font-sans sm:mt-8">
       <div
-        class="w-[90%] h-auto p-12 bg-[#B1D9CD] rounded-[80px] flex flex-col items-center"
+        class="flex h-auto w-[90%] flex-col items-center rounded-[80px] bg-[#B1D9CD] p-12"
       >
-        <div class="features-title underline-offset-4 mb-[47px]">
+        <div class="features-title mb-[47px] underline-offset-4">
           Unique Features
         </div>
         <div class="flex flex-row flex-wrap justify-center gap-10">
           <div class="flex flex-col items-center">
             <div
-              class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+              class="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-white"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -467,7 +554,7 @@ navItems.push(
               </svg>
             </div>
             <div
-              class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+              class="features-content mt-[40px] flex h-[112px] w-[331px] items-center justify-center rounded-[100px] bg-white"
             >
               <p class="w-[241px]">
                 <span class="font-bold"
@@ -478,7 +565,7 @@ navItems.push(
           </div>
           <div class="flex flex-col items-center">
             <div
-              class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+              class="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-white"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -493,7 +580,7 @@ navItems.push(
               </svg>
             </div>
             <div
-              class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+              class="features-content mt-[40px] flex h-[112px] w-[331px] items-center justify-center rounded-[100px] bg-white"
             >
               <p class="w-[241px]">
                 <span class="font-bold">Modular design</span> allows for easy customization
@@ -503,7 +590,7 @@ navItems.push(
           </div>
           <div class="flex flex-col items-center">
             <div
-              class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+              class="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-white"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -518,38 +605,41 @@ navItems.push(
               </svg>
             </div>
             <div
-              class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+              class="features-content mt-[40px] flex h-[112px] w-[331px] items-center justify-center rounded-[100px] bg-white"
             >
               <p class="w-[241px]">
-                <span class="font-bold">Real-time monitoring and analytics</span> enable
-                proactive maintenance and inventory management.
+                <span class="font-bold">Real-time monitoring and analytics</span
+                > enable proactive maintenance and inventory management.
               </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  
-    <div class="space-y-10 px-6 py-16 sm:space-y-24 sm:px-8 mt-12">
+
+    <div class="mt-12 space-y-10 px-6 py-16 sm:space-y-24 sm:px-8">
       {sections.map((S) => <S.Layout info={S.info} />)}
     </div>
 
-    <div id="contact" class="bg-[#B1D9CD] py-20 mt-20 text-center text-white">
-      <h2 class="text-3xl font-semibold mb-4">Contact Us</h2>
-      <p class="text-lg mb-6">
+    <div id="contact" class="mt-20 bg-[#B1D9CD] py-20 text-center text-white">
+      <h2 class="mb-4 font-semibold text-3xl">Contact Us</h2>
+      <p class="mb-6 text-lg">
         Have questions or want to partner with us? We'd love to hear from you!
       </p>
-      
+
       <ContactForm />
     </div>
 
     <footer>
-      <div class="flex justify-center items-center h-16 bg-gray-800 text-white">
+      <div class="flex h-16 items-center justify-center bg-gray-800 text-white">
         <a href="https://munch-industries.com" class="text-xs sm:text-sm">
           &copy; {new Date().getFullYear()} Munch Industries
         </a>
       </div>
     </footer>
-    <script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+    <script
+      is:inline
+      src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"
+    ></script>
   </body>
 </html>

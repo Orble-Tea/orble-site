@@ -1,6 +1,6 @@
 ---
-import { Image } from 'astro:assets';
-import type { ImageMetadata } from 'astro';
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
 
 interface Props {
   image: ImageMetadata;
@@ -12,13 +12,19 @@ interface Props {
 const { image, alt, title, description } = Astro.props;
 ---
 
-<li class="flex items-start space-x-6 max-sm:flex-col max-sm:space-x-0 max-sm:space-y-4 max-sm:items-center">
-  <div class="w-12 h-12 max-sm:w-12 max-sm:h-12 rounded-full overflow-hidden border-2 border-white flex-none">
-    <Image src={image} alt={alt} class="w-full h-full object-cover" />
+<li
+  class="flex items-start space-x-6 max-sm:flex-col max-sm:items-center max-sm:space-x-0 max-sm:space-y-4"
+>
+  <div
+    class="h-12 w-12 flex-none overflow-hidden rounded-full border-2 border-white max-sm:h-12 max-sm:w-12"
+  >
+    <Image src={image} alt={alt} class="h-full w-full object-cover" />
   </div>
   <div class="flex-1 text-left max-sm:text-center">
-    <p class="text-xs text-munch-blue"> <!-- description size -->
-      <span class="font-heading text-white text-sm block">{title}</span> <!-- title size -->
+    <p class="text-munch-blue text-xs">
+      <!-- description size -->
+      <span class="block font-heading text-white text-sm">{title}</span>
+      <!-- title size -->
       {description}
     </p>
   </div>

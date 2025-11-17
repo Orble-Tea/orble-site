@@ -18,24 +18,21 @@ const metadata = {
 ---
 
 <Layout metadata={metadata}>
-  <div class="flex justify-left ml-[10%]">
+  <div class="justify-left ml-[10%] flex">
     <Image src={orblelogo} alt="Orble Logo" width={700} />
   </div>
-  <div class="flex justify-end mr-[10%] mt-8">
+  <div class="mr-[10%] mt-8 flex justify-end">
     <Image src={tealbar} alt="Bar" width={450} />
   </div>
-
-
-
 
   <div class="orble-tea-bg-one font-serif">
     <div class="twobythree max-sm:grid-cols-1">
       <div class="col-span-1 row-span-1 mt-28">
         <Image src={orblewhite} alt="Orble" width={200} />
-        <h3 class="text-3xl tracking-normal italic text-white">
+        <h3 class="italic tracking-normal text-white text-3xl">
           is a revolutionary boba tea machine
         </h3>
-        <h3 class="text-l tracking-normal text-munch-blue mt-6">
+        <h3 class="text-l text-munch-blue mt-6 tracking-normal">
           designed to deliver freshly brewed bubble tea with unparalleled
           convenience and customization.
         </h3>
@@ -50,22 +47,19 @@ const metadata = {
         </video>
       </div>
       <div class="col-span-1 row-span-1">
-        <span class="text-l tracking-normal text-munch-blue mt-6">With its</span
+        <span class="text-l text-munch-blue mt-6 tracking-normal">With its</span
         >
-        <span class="text-3xl ml-2 tracking-normal italic text-munch-blue"
+        <span class="text-munch-blue ml-2 italic tracking-normal text-3xl"
           >sleek and compact design,</span
         >
-        <h3 class="text-l tracking-normal text-munch-blue">
+        <h3 class="text-l text-munch-blue tracking-normal">
           Orble seamlessly integrates into any food service environment,
           offering customers a delightful boba tea experience at the touch of a
           button.
         </h3>
-        <Image src={tealbar} alt="Bar" width={400} class="mt-10 mb-10" />
+        <Image src={tealbar} alt="Bar" width={400} class="mb-10 mt-10" />
       </div>
     </div>
-
-
-
 
     <div class="twobyone">
       <div>
@@ -73,16 +67,16 @@ const metadata = {
       </div>
       <div>
         <h3
-          class="text-3xl ml-2 tracking-normal underline italic text-munch-blue mt-[46px]"
+          class="text-munch-blue ml-2 mt-[46px] italic tracking-normal underline text-3xl"
         >
           Specifications
         </h3>
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+        <h3 class="text-l text-munch-blue mt-8 tracking-normal">
           <span class="font-bold">Dimensions:</span><br />
           70 inches (H) x 35.5 inches (W) x 35.5 inches (D)
         </h3>
 
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+        <h3 class="text-l text-munch-blue mt-8 tracking-normal">
           <span class="font-bold"></span>Weight:
         </h3>
         <br />
@@ -90,13 +84,13 @@ const metadata = {
         716 lb. (empty weight) <br />
         Additional 150 lb. for ice maker
 
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+        <h3 class="text-l text-munch-blue mt-8 tracking-normal">
           <span class="font-bold">Capacity:</span>
           <br />
           Up to 12 different flavors of tea and toppings
         </h3>
 
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+        <h3 class="text-l text-munch-blue mt-8 tracking-normal">
           <span class="font-bold">Power:</span>
           <br />
           Requires a dedicated 15A outlet, 120V circuit <br />
@@ -108,15 +102,15 @@ const metadata = {
     <div class="threebyonelesspadding">
       <div></div>
       <div class="col-span-2">
-        <h3 class="text-l tracking-normal text-munch-blue mt-8">
+        <h3 class="text-l text-munch-blue mt-8 tracking-normal">
           <span class="font-bold">Interface:</span> Intuitive touchscreen display
           for easy operation
         </h3>
-        <h3 class="text-l tracking-normal text-munch-blue mt-12">
+        <h3 class="text-l text-munch-blue mt-12 tracking-normal">
           <span class="font-bold">Customization:</span> Adjustable sugar levels,
           ice levels, and topping combinations
         </h3>
-        <h3 class="text-l tracking-normal text-munch-blue mt-12 mb-14">
+        <h3 class="text-l text-munch-blue mb-14 mt-12 tracking-normal">
           <span class="font-bold">Cleaning:</span> Self-cleaning system for hassle-free
           maintenance
         </h3>
@@ -128,17 +122,17 @@ const metadata = {
     <Image src={pricing} alt="Orble Pricing" width={1000} />
   </div>
 
-  <div class="flex justify-center mt-[31.62px] font-serif z-10">
+  <div class="z-10 mt-[31.62px] flex justify-center font-serif">
     <div
-      class="w-full h-[422px] bg-[#B1D9CD] rounded-[80px] flex flex-col items-center"
+      class="flex h-[422px] w-full flex-col items-center rounded-[80px] bg-[#B1D9CD]"
     >
-      <div class="features-title underline-offset-4 mt-[31px] mb-[47px]">
+      <div class="features-title mb-[47px] mt-[31px] underline-offset-4">
         Unique Features
       </div>
       <div class="flex flex-row flex-wrap">
         <div class="flex flex-col items-center">
           <div
-            class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+            class="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-white"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -153,7 +147,7 @@ const metadata = {
             </svg>
           </div>
           <div
-            class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+            class="features-content mt-[40px] flex h-[112px] w-[331px] items-center justify-center rounded-[100px] bg-white"
           >
             <p class="w-[241px]">
               <span class="font-bold"
@@ -162,9 +156,9 @@ const metadata = {
             </p>
           </div>
         </div>
-        <div class="flex flex-col items-center ml-[37px] mr-[33px]">
+        <div class="ml-[37px] mr-[33px] flex flex-col items-center">
           <div
-            class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+            class="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-white"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -179,7 +173,7 @@ const metadata = {
             </svg>
           </div>
           <div
-            class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+            class="features-content mt-[40px] flex h-[112px] w-[331px] items-center justify-center rounded-[100px] bg-white"
           >
             <p class="w-[241px]">
               <span class="font-bold">Modular design</span> allows for easy customization
@@ -189,7 +183,7 @@ const metadata = {
         </div>
         <div class="flex flex-col items-center">
           <div
-            class="rounded-full bg-white flex justify-center items-center h-[76px] w-[76px]"
+            class="flex h-[76px] w-[76px] items-center justify-center rounded-full bg-white"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -204,7 +198,7 @@ const metadata = {
             </svg>
           </div>
           <div
-            class="features-content mt-[40px] w-[331px] h-[112px] bg-white rounded-[100px] flex justify-center items-center"
+            class="features-content mt-[40px] flex h-[112px] w-[331px] items-center justify-center rounded-[100px] bg-white"
           >
             <p class="w-[241px]">
               <span class="font-bold">Real-time monitoring and analytics</span> enable
@@ -220,13 +214,16 @@ const metadata = {
     <!-- <form action="/contact"> -->
     <a href="mailto:info@orble-tea.com" class="no-underline hover:no-underline">
       <button
-        class="get-started w-[80%] m-auto sm:w-[482px] h-[92px] sm:ml-[273px] mt-[134px] bg-[#B1D9CD] border-[3px] border-black rounded-[11px] flex justify-center items-center font-serif"
+        class="get-started m-auto mt-[134px] flex h-[92px] w-[80%] items-center justify-center rounded-[11px] border-[3px] border-black bg-[#B1D9CD] font-serif sm:ml-[273px] sm:w-[482px]"
         >GET STARTED WITH ORBLE</button
       >
     </a>
     <!-- </form> -->
-    <div class="bg-[#B1D9CD] h-[4px] w-[80%] sm:w-[755px] mt-[50px] rounded-full sm:block hidden"></div>
-    <div class="flex justify-center mt-[-271px]">
+    <div
+      class="mt-[50px] hidden h-[4px] w-[80%] rounded-full bg-[#B1D9CD] sm:block sm:w-[755px]"
+    >
+    </div>
+    <div class="mt-[-271px] flex justify-center">
       <Image
         src={getStartedBg}
         alt="Background"

@@ -18,7 +18,7 @@ const points = await Promise.all(
     heading: p.data.heading,
     icon: p.data.icon,
     Body: (await p.render()).Content,
-  }))
+  })),
 );
 
 points.sort((a, b) => a.order - b.order);

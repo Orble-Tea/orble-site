@@ -16,15 +16,36 @@ import vert from "./standard.vert";
 import pbr from "./pbr.frag";
 
 // See https://stackoverflow.com/a/66180709
-const loadImage = (src: string) =>
+/**
+ * Load an image and return a promise that resolves with the HTMLImageElement.
+ * @param src - URL or path to the image
+ * @returns Promise<HTMLImageElement>
+ */
+const loadImage = (src: string): Promise<HTMLImageElement> =>
   new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
+    /**
+     * Called when the image loads successfully.
+     * @returns {void} Nothing is returned; resolves the parent promise.
+     */
+    img.onload = (): void => resolve(img);
+
+    /**
+     * Called if the image fails to load.
+     * @param {Event | string} err - The error event or message.
+     * @returns {void} Nothing is returned; rejects the parent promise.
+     */
+    img.onerror = (err: Event | string): void => reject(err);
     img.src = src;
   });
 
-function getTexture(src: string, opts?: Partial<TextureOptions>) {
+/**
+ * Create an OGL Texture and asynchronously load the image into it.
+ * @param src - image path
+ * @param opts - optional TextureOptions
+ * @returns Texture
+ */
+function getTexture(src: string, opts?: Partial<TextureOptions>): Texture {
   const texture = new Texture(gl, opts);
   texture.flipY = false;
   loadImage(src).then((img) => (texture.image = img));
@@ -47,7 +68,7 @@ gl.clearColor(1.0, 1.0, 1.0, 0.0);
 
 const uniforms = {
   t_baseColour: {
-    value: getTexture("/cup_tex.png", { format: gl.LUMINANCE_ALPHA })
+    value: getTexture("/cup_tex.png", { format: gl.LUMINANCE_ALPHA }),
   },
   t_LUT: {
     value: getTexture("/lut.png", { generateMipmaps: false }),
@@ -55,13 +76,13 @@ const uniforms = {
   t_envDiffuse: {
     value: getTexture("/waterfall-diffuse-RGBM.png", {
       generateMipmaps: false,
-    })
+    }),
   },
   t_envSpecular: {
     value: getTexture("/waterfall-specular-RGBM.png", {
       generateMipmaps: false,
-    })
-  }
+    }),
+  },
 };
 
 const camera = new Camera(gl, { near: 1, far: 1000 });
@@ -71,7 +92,11 @@ controls.target = new Vec3(0, 1.4, 0);
 // controls.enabled = false;
 
 // TODO: do this 'properly'
-function resize() {
+/**
+ * Resize the renderer and update the camera perspective.
+ * This should be called on window resize events.
+ */
+function resize(): void {
   if (el) {
     renderer.setSize(el.clientWidth, el.clientHeight);
     camera.perspective({
@@ -111,7 +136,11 @@ interface BobaScene {
 
 let bs: BobaScene;
 
-async function loadInitial() {
+/**
+ * Load the initial GLTF model and set up scene materials.
+ * @returns Promise<void>
+ */
+async function loadInitial(): Promise<void> {
   const modelPath = "/boba_opt.glb";
   const gltf = await GLTFLoader.load(gl, modelPath);
   console.log(gltf);
@@ -122,10 +151,6 @@ async function loadInitial() {
     acc[node.name] = node;
     return acc;
   }, {} as BobaScene);
-
-  // sideObjects.forEach(
-  //   (m) => ((m.children[0] as RendererSortable).program = outlineProgram)
-  // );
 
   (bs.cup.children[0] as RendererSortable).program = plasticMat;
   (bs.lid.children[0] as RendererSortable).program = plasticMat;
@@ -139,37 +164,11 @@ async function loadInitial() {
 loadInitial();
 scene.rotation.y -= 90;
 
-// const controls = new Orbit(camera);
-// const grid = new GridHelper(gl, { size: 10, divisions: 10 });
-// grid.position.y = -0.001; // shift down a little to avoid z-fighting with axes helper
-// grid.setParent(scene);
-
-// const axes = new AxesHelper(gl, { size: 6, symmetric: true });
-// axes.setParent(scene);
-
-// camera.position.set(-1.5, 0.35, 2.5);
-// camera.rotation.set(new Euler(...degrees(-10, -30, 0)));
-
-// scene.rotation.set(new Euler(...degrees(8.5, 22.3, 3)));
-// scene.position.set(0, -0.1, -0.3);
-
-// ["x", "y", "z"].forEach(id =>
-//   document.getElementById(id)?.addEventListener("input", setRot)
-// );
-
-// function setRot(ev: Event): void {
-//   scene.rotation[ev.target.id] = degrees(ev.target.value)[0];
-//   console.log(radians(...scene.rotation.toArray()));
-// }
-
-function update() {
+/**
+ * Frame loop: update controls and render the scene.
+ */
+function update(): void {
   requestAnimationFrame(update);
-  // outlineProgram.uniforms.uTime.value = time * 0.001;
-
-  // bs.cup.rotation.y -= 0.02;
-  // mesh.rotation.x += 0.03;
-  // console.log(camera.position);
-  // console.log(camera.rotation.x + " " + camera.rotation.y + " " + camera.rotation.z);
   controls.update();
   renderer.render({ scene, camera, sort: true });
 }

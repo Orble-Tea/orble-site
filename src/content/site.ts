@@ -1,7 +1,8 @@
 // Put the data in here.
 const info: SiteInfo = {
   title: "Orble Tea",
-  description: "Orble is a commercial automated bubble tea machine that can be installed anywhere.",
+  description:
+    "Orble is a commercial automated bubble tea machine that can be installed anywhere.",
   preview_image: "machine_render.png",
 };
 

@@ -28,7 +28,6 @@ export interface FooterLink {
   url: string;
 }
 
-
 export interface ShowcaseSite {
   title: string;
   image: ImageMetadata;
