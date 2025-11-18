@@ -1,43 +1,39 @@
 ---
-import { Image, Picture } from "astro:assets";
+import { Image } from "astro:assets";
 import { Icon } from "astro-icon";
 import machineImage from "$assets/machine_render.png";
-import Boba3D from "$components/boba-3d.astro";
+import betaImage from "$assets/beta-render.png";
 ---
 
 <section class="relative h-full bg-slate-50">
-  <!-- <Starfield /> -->
-  <!-- <div id="splash-bg-fallback" class="absolute inset-0 hidden opacity-40"> -->
-  <!-- <HeroImage /> -->
-  <!-- </div> -->
   <div
-    class="flex h-[calc(100%-4rem)] flex-col place-items-center justify-evenly sm:flex-row"
+    class="flex h-[calc(100%-4rem)] flex-col sm:flex-row items-center justify-center gap-20"
     id="splash"
   >
-    <h2 class="">
+    <!-- left render -->
+    <Image
+      class="h-auto max-h-[45%] w-auto max-w-[80%] sm:max-h-[70%]"
+      src={betaImage}
+      alt="Left 3D render"
+    />
+
+    <!-- text -->
+    <h2 class="sm:mx-16 text-center flex flex-col items-center">
       <Icon name="logo" class="m-auto h-24 pb-4 md:h-32" />
-      <div class="text-center font-heading text-3xl sm:text-5xl">
+      <div class="font-heading text-3xl sm:text-5xl leading-tight">
         Your fully<br />
         au<span class="text-primary">tea</span>matic <br />
         boba machine.
       </div>
     </h2>
-    <!-- <Boba3D /> -->
-    <!-- <div class="h-full"> -->
+
+    <!-- right render -->
     <Image
       class="h-auto max-h-[45%] w-auto max-w-[80%] sm:max-h-[70%]"
       src={machineImage}
       loading="eager"
       alt="3D render of the Orble Boba Tea Machine"
     />
-    <!-- </div> -->
   </div>
 </section>
 
-<noscript>
-  <style>
-    #splash-bg-fallback {
-      display: block;
-    }
-  </style>
-</noscript>
