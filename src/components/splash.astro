@@ -7,18 +7,18 @@ import betaImage from "$assets/beta-render.png";
 
 <section class="relative h-full bg-slate-50">
   <div
-    class="flex h-[calc(100%-4rem)] flex-col sm:flex-row items-center justify-center gap-20"
+    class="flex h-[calc(100%-4rem)] flex-col sm:flex-row items-center justify-center gap-8 sm:gap-20 py-8 sm:py-0"
     id="splash"
   >
     <!-- left render -->
     <Image
-      class="h-auto max-h-[45%] w-auto max-w-[80%] sm:max-h-[70%]"
+      class="h-auto w-auto max-w-[70%] sm:max-w-[80%] max-h-[25vh] sm:max-h-[70%]"
       src={betaImage}
       alt="Left 3D render"
     />
 
     <!-- text -->
-    <h2 class="sm:mx-16 text-center flex flex-col items-center">
+    <h2 class="sm:mx-16 text-center flex flex-col items-center flex-shrink-0">
       <Icon name="logo" class="m-auto h-24 pb-4 md:h-32" />
       <div class="font-heading text-3xl sm:text-5xl leading-tight">
         Your fully<br />
@@ -29,11 +29,10 @@ import betaImage from "$assets/beta-render.png";
 
     <!-- right render -->
     <Image
-      class="h-auto max-h-[45%] w-auto max-w-[80%] sm:max-h-[70%]"
+      class="h-auto w-auto max-w-[70%] sm:max-w-[80%] max-h-[25vh] sm:max-h-[70%]"
       src={machineImage}
       loading="eager"
       alt="3D render of the Orble Boba Tea Machine"
     />
   </div>
 </section>
-
