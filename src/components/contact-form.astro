@@ -23,7 +23,7 @@ const { formId = "contact-form", containerClass = "" } = Astro.props;
         type="text"
         name="name"
         placeholder="Your Name"
-        class="w-full rounded p-3 text-black"
+        class="w-full rounded-3xl p-3 text-gray-600 border border-white"
         required
       />
       <div class="error-message hidden" data-error-for="name"></div>
@@ -34,7 +34,7 @@ const { formId = "contact-form", containerClass = "" } = Astro.props;
         type="email"
         name="email"
         placeholder="Your Email"
-        class="w-full rounded p-3 text-black"
+        class="w-full rounded-3xl p-3 text-gray-600 border border-white"
         required
       />
       <div class="error-message hidden" data-error-for="email"></div>
@@ -44,7 +44,7 @@ const { formId = "contact-form", containerClass = "" } = Astro.props;
       <textarea
         name="message"
         placeholder="Your Message"
-        class="w-full rounded p-3 text-black"
+        class="w-full rounded-3xl p-3 text-gray-600 border border-white"
         rows="5"
         required></textarea>
       <div class="error-message hidden" data-error-for="message"></div>

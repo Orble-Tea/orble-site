@@ -6,6 +6,7 @@ import astro from "eslint-plugin-astro";
 import globals from "globals";
 import jsdoc from "eslint-plugin-jsdoc";
 import importPlugin from "eslint-plugin-import";
+import unusedImports from "eslint-plugin-unused-imports";
 
 export default [
   // Lint .astro files
@@ -77,6 +78,7 @@ export default [
       "@typescript-eslint": ts,
       jsdoc: jsdoc,
       import: importPlugin,
+      "unused-imports": unusedImports,
     },
     rules: {
       ...ts.configs.recommended.rules,
