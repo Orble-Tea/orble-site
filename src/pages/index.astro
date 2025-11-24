@@ -41,7 +41,8 @@ import cad from "~/assets/images/cad-render.png";
 import ContactForm from "~/components/contact-form.astro";
 
 import MenuThemeItem from "~/components/menu-theme-item.astro";
-import DynamicLocationsCarousel from "~/components/carousel.astro";
+import DynamicCarousel from "~/components/carousel.astro";
+import LocationItem from "~/components/location-item.astro";
 
 const locations = [
   {
@@ -450,7 +451,7 @@ navItems.push(
         Imagine Orble Beta in your space
       </h3>
 
-      <DynamicLocationsCarousel locations={locations} />
+      <DynamicCarousel items={locations} ItemComponent={LocationItem} />
     </main>
 
     <!-- Contact advert -->
@@ -478,19 +479,39 @@ navItems.push(
       </div>
     </div>
 
-    <div class="justify-left my-10 ml-[10%] flex">
-      <Image src={orblelogo} alt="Orble Logo" width={700} />
+    <!-- Orble next gen logo -->
+    <div
+      class="justify-left ml-[10%] mt-10 flex items-center gap-4 max-sm:ml-0 max-sm:justify-center"
+    >
+      <Image src={logo} alt="Orble Logo" width={140} class="max-sm:w-20" />
+      <div class="flex flex-col">
+        <div class="flex items-baseline gap-2">
+          <h1
+            class="font-heading leading-none tracking-tight text-9xl max-sm:text-9xl"
+          >
+            ORBLE
+          </h1>
+          <span
+            class="font-heading italic leading-none tracking-tight text-[#9DD9C8] text-6xl max-sm:text-4xl"
+            >NEXT GEN</span
+          >
+        </div>
+        <p
+          class="font-lato -mt-3 ml-1 tracking-[0.1em] text-lg max-sm:-mt-2 max-sm:text-sm"
+        >
+          a fully au<span class="italic font-bold">tea</span>matic boba machine
+        </p>
+      </div>
     </div>
 
     <div class="orble-tea-bg-one w-full pb-28 font-sans">
       <div class="mx-[10%] grid grid-cols-1 gap-10 gap-y-2 sm:grid-cols-2">
         <div class="col-span-1 row-span-1 mt-28">
-          <Image
-            src={orblewhite}
-            alt="Orble"
-            width={200}
-            class="max-sm:mx-auto"
-          />
+          <span
+              class="text-white inline align-baseline font-heading leading-none text-6xl max-sm:text-4xl lg:text-6xl"
+            >
+              ORBLE
+            </span>
           <h3
             class="italic tracking-normal text-white text-2xl max-sm:text-center"
           >
@@ -529,6 +550,7 @@ navItems.push(
       </div>
     </div>
 
+    <!-- Features section -->
     <div id="features" class="z-10 flex justify-center font-sans sm:mt-8">
       <div
         class="flex h-auto w-[90%] flex-col items-center rounded-[80px] bg-[#B1D9CD] p-12"

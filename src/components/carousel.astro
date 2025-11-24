@@ -1,16 +1,13 @@
 ---
-import LocationItem from "./location-item.astro";
-
-const locations = Astro.props.locations;
+const { items, ItemComponent } = Astro.props;
 ---
-
-<div id="dynamic-locations-carousel" class="relative w-full">
+<div id="dynamic-carousel" class="relative w-full">
   <div class="mx-12 overflow-hidden">
     <div
       id="carousel-wrapper"
       class="scroll-snap-x scroll-snap-mandatory flex transition-transform duration-500 ease-in-out"
     >
-      {locations.map((location) => <LocationItem {...location} />)}
+      {items.map((item) => <ItemComponent {...item} />)}
     </div>
   </div>
 
