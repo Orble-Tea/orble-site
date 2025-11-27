@@ -3,7 +3,7 @@ import { Image } from "astro:assets";
 
 interface Props {
   mediaType: "image" | "video";
-  src: any;       // ImageMetadata or string
+  src: any; // ImageMetadata or string
   alt?: string;
   className?: string;
 }
@@ -13,6 +13,7 @@ const { mediaType, src, alt = "", className = "" } = Astro.props;
 // Normalize src into a usable string URL
 const url = typeof src === "string" ? src : src.src;
 ---
+
 <div
   class={`overflow-hidden rounded-tl-[80px] rounded-br-[80px] bg-white flex items-center justify-center ${className}`}
 >
@@ -24,14 +25,10 @@ const url = typeof src === "string" ? src : src.src;
         loop
         muted
         playsinline
-        class="h-full w-auto object-cover w-full h-full"
+        class="h-full w-auto w-full object-cover"
       />
     ) : (
-      <Image
-        src={src}
-        alt={alt}
-        class="h-full w-auto object-cover w-full h-full"
-      />
+      <Image src={src} alt={alt} class="h-full w-auto w-full object-cover" />
     )
   }
 </div>

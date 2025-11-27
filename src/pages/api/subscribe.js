@@ -9,7 +9,10 @@ export async function POST({ request }) {
     const { email, name } = await request.json();
 
     if (!email) {
-      return new Response(JSON.stringify({ success: false, message: "Email is required" }), { status: 400 });
+      return new Response(
+        JSON.stringify({ success: false, message: "Email is required" }),
+        { status: 400 },
+      );
     }
 
     const mailgun = new Mailgun(FormData);
@@ -27,9 +30,15 @@ export async function POST({ request }) {
       subscribed: true,
     });
 
-    return new Response(JSON.stringify({ success: true, message: "Subscribed!" }), { status: 200 });
+    return new Response(
+      JSON.stringify({ success: true, message: "Subscribed!" }),
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Mailgun subscription error:", error);
-    return new Response(JSON.stringify({ success: false, message: "Failed to subscribe" }), { status: 500 });
+    return new Response(
+      JSON.stringify({ success: false, message: "Failed to subscribe" }),
+      { status: 500 },
+    );
   }
 }

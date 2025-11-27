@@ -83,7 +83,10 @@ export default [
     rules: {
       ...ts.configs.recommended.rules,
       // Remove prettierRecommended.rules
-      "@typescript-eslint/explicit-function-return-type": ["error", { allowExpressions: false }],
+      "@typescript-eslint/explicit-function-return-type": [
+        "error",
+        { allowExpressions: false },
+      ],
       "@typescript-eslint/explicit-module-boundary-types": "error",
       "jsdoc/require-jsdoc": [
         "warn",
@@ -102,7 +105,14 @@ export default [
       "import/order": [
         "warn",
         {
-          groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+          ],
           "newlines-between": "always",
         },
       ],
