@@ -6,6 +6,7 @@ import astro from "eslint-plugin-astro";
 import globals from "globals";
 import jsdoc from "eslint-plugin-jsdoc";
 import importPlugin from "eslint-plugin-import";
+import unusedImports from "eslint-plugin-unused-imports";
 
 export default [
   // Lint .astro files
@@ -77,11 +78,15 @@ export default [
       "@typescript-eslint": ts,
       jsdoc: jsdoc,
       import: importPlugin,
+      "unused-imports": unusedImports,
     },
     rules: {
       ...ts.configs.recommended.rules,
       // Remove prettierRecommended.rules
-      "@typescript-eslint/explicit-function-return-type": ["error", { allowExpressions: false }],
+      "@typescript-eslint/explicit-function-return-type": [
+        "error",
+        { allowExpressions: false },
+      ],
       "@typescript-eslint/explicit-module-boundary-types": "error",
       "jsdoc/require-jsdoc": [
         "warn",
@@ -100,7 +105,14 @@ export default [
       "import/order": [
         "warn",
         {
-          groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+          ],
           "newlines-between": "always",
         },
       ],

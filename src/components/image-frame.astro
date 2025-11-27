@@ -1,0 +1,34 @@
+---
+import { Image } from "astro:assets";
+
+interface Props {
+  mediaType: "image" | "video";
+  src: any; // ImageMetadata or string
+  alt?: string;
+  className?: string;
+}
+
+const { mediaType, src, alt = "", className = "" } = Astro.props;
+
+// Normalize src into a usable string URL
+const url = typeof src === "string" ? src : src.src;
+---
+
+<div
+  class={`overflow-hidden rounded-tl-[80px] rounded-br-[80px] bg-white flex items-center justify-center ${className}`}
+>
+  {
+    mediaType === "video" ? (
+      <video
+        src={url}
+        autoplay
+        loop
+        muted
+        playsinline
+        class="h-full w-auto w-full object-cover"
+      />
+    ) : (
+      <Image src={src} alt={alt} class="h-full w-auto w-full object-cover" />
+    )
+  }
+</div>

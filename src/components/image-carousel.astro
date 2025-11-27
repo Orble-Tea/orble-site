@@ -1,35 +1,44 @@
 ---
-import { Image } from "astro:assets";
-import { Carousel } from "flowbite";
+import Frame from "$components/image-frame.astro";
 
 interface Props {
-  images: {
-    src: ImageMetadata;
+  items: {
+    src: any;
     alt: string;
+    isVideo?: boolean;
   }[];
   id?: string;
   height?: string;
+  auto?: boolean;
 }
 
-const { images, id = "carousel", height = "h-[600px]" } = Astro.props;
+const {
+  items,
+  id = "carousel",
+  height = "h-[600px]",
+  auto = true,
+} = Astro.props;
 ---
 
 <div class="flex items-center justify-center">
-  <div id={id} class="relative w-full max-w-md" data-carousel="slide">
+  <div
+    id={id}
+    class="relative w-full max-w-md"
+    data-carousel={auto ? "slide" : "static"}
+  >
     <!-- Carousel wrapper -->
-    <div
-      class={`relative ${height} overflow-hidden rounded-tl-[80px] rounded-br-[80px] shadow-2xl`}
-    >
+    <div class={`relative ${height} overflow-hidden`}>
       {
-        images.map((image, index) => (
+        items.map((item, index) => (
           <div
             class={`duration-700 ease-in-out ${index === 0 ? "" : "hidden"}`}
             data-carousel-item
           >
-            <Image
-              src={image.src}
-              alt={image.alt}
-              class="absolute left-1/2 top-1/2 block h-full w-full -translate-x-1/2 -translate-y-1/2 object-cover"
+            <Frame
+              mediaType={item.isVideo ? "video" : "image"}
+              src={item.src}
+              alt={item.alt}
+              className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2"
             />
           </div>
         ))
@@ -41,7 +50,7 @@ const { images, id = "carousel", height = "h-[600px]" } = Astro.props;
       class="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 space-x-3 rtl:space-x-reverse"
     >
       {
-        images.map((_, index) => (
+        items.map((_, index) => (
           <button
             type="button"
             class="h-3 w-3 rounded-full bg-white/50 hover:bg-white"
