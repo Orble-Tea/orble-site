@@ -9,15 +9,13 @@ import type { NavItem, SectionInfo } from "~/types";
 import Header from "$components/header.astro";
 import Splash from "$components/splash.astro";
 
-import * as what from "$content/sections/what-is-it.mdx";
 import * as about from "$content/sections/about.mdx";
 
 import siteInfo from "$content/site";
-
-import orblelogo from "~/assets/images/orble-page-logo.png";
 import logo from "~/assets/images/logo_inkscape.svg";
 
 import ImageCarousel from "$components/image-carousel.astro";
+import Frame from "$components/image-frame.astro";
 import orblebeta1 from "~/assets/images/beta-renders/front-left.jpg";
 import orblebeta2 from "~/assets/images/beta-renders/front.jpg";
 import orblebeta3 from "~/assets/images/beta-renders/front-right.jpg";
@@ -35,14 +33,22 @@ import dumbells from "~/assets/images/dumbells.png";
 import coffee from "~/assets/images/caffeine.png";
 
 import tealbar from "~/assets/images/teal-bar.png";
-import orblewhite from "~/assets/images/orble-white.png";
 import cad from "~/assets/images/cad-render.png";
 
 import ContactForm from "~/components/contact-form.astro";
+import MailingList from '~/components/mailing-list.astro';
 
 import MenuThemeItem from "~/components/menu-theme-item.astro";
 import DynamicCarousel from "~/components/carousel.astro";
 import LocationItem from "~/components/location-item.astro";
+
+
+const next_gen_images = [
+  { src: '/media/next-gen1.png', alt: 'Machine from left view' },
+  { src: '/media/next-gen2.png', alt: 'Group photo' },
+  { src: '/media/next-gen3.mp4', alt: 'Video pan', isVideo: true  },
+];
+
 
 const locations = [
   {
@@ -211,11 +217,8 @@ navItems.push(
         color: #fff;
         text-align: center;
         font-size: 32px;
-        font-style: italic;
         font-weight: 500;
         line-height: normal;
-        letter-spacing: 3.84px;
-        text-decoration-line: underline;
       }
 
       .features-content {
@@ -436,7 +439,7 @@ navItems.push(
           <!-- Right column: Image carousel -->
           <div class="flex items-stretch lg:h-full">
             <div class="w-full">
-              <ImageCarousel images={carouselImages} />
+              <ImageCarousel items={carouselImages} />
             </div>
           </div>
         </div>
@@ -455,7 +458,7 @@ navItems.push(
     </main>
 
     <!-- Contact advert -->
-    <div class="mt-15 relative mx-10 px-8 max-sm:mx-4 max-sm:px-4 sm:px-16">
+    <div class="relative w-[90%] mx-auto px-8 max-sm:px-4 mb-14">
       <div
         class="absolute inset-0 rounded-3xl bg-teal-theme shadow-xl backdrop-blur-md"
       >
@@ -497,21 +500,23 @@ navItems.push(
           >
         </div>
         <p
-          class="font-lato -mt-3 ml-1 tracking-[0.1em] text-lg max-sm:-mt-2 max-sm:text-sm"
+          class="font-lato -mt-3 ml-1 tracking-[0.1em] text-base max-sm:-mt-2 max-sm:text-sm"
         >
-          a fully au<span class="italic font-bold">tea</span>matic boba machine
+          a fully au<span class="italic font-bold">tea</span>matic boba machine (coming soon...)
         </p>
       </div>
     </div>
 
-    <div class="orble-tea-bg-one w-full pb-28 font-sans">
+    <div class="orble-tea-bg-one w-full pb-20 font-sans">
       <div class="mx-[10%] grid grid-cols-1 gap-10 gap-y-2 sm:grid-cols-2">
         <div class="col-span-1 row-span-1 mt-28">
-          <span
-              class="text-white inline align-baseline font-heading leading-none text-6xl max-sm:text-4xl lg:text-6xl"
+          <div class="max-sm:text-center">
+            <span
+              class="text-white inline align-baseline font-heading leading-none text-6xl max-sm:text-6xl lg:text-6xl"
             >
               ORBLE
             </span>
+          </div>
           <h3
             class="italic tracking-normal text-white text-2xl max-sm:text-center"
           >
@@ -520,7 +525,7 @@ navItems.push(
           <h3
             class="text-munch-blue my-6 tracking-normal text-sm max-sm:text-center"
           >
-            designed to deliver freshly brewed bubble tea with unparalleled
+            the only machine that can cook both boba pearls and tea, designed to deliver freshly brewed bubble tea with unparalleled
             convenience and customization.
           </h3>
         </div>
@@ -549,13 +554,51 @@ navItems.push(
         </div>
       </div>
     </div>
+  
+    <!-- Video + media section-->
+    <div id="media" class="flex flex-col items-center w-full gap-8 mt-12 max-sm:mt-2">
+      <div class="px-4 sm:px-0">
+        <div class="w-full max-w-6xl aspect-video rounded-xl overflow-hidden shadow-lg mx-auto">
+          <video
+            src="/media/long-video.mp4"
+            controls
+            autoplay
+            muted
+            loop
+            playsinline
+            webkit-playsinline
+            x5-playsinline
+            class="w-full h-full object-cover"
+          ></video>
+        </div>
+      </div>
+
+      <!-- Desktop grid (shown on sm and up) -->
+      <div class="hidden sm:flex gap-6 w-full justify-center">
+        {next_gen_images.map((item, index) => (
+          <Frame
+            mediaType={index === 2 ? "video" : "image"}
+            src={item.src}
+            alt={item.alt}
+            className="h-64 md:h-96 w-auto max-w-[30%]"
+          />
+        ))}
+      </div>
+
+      <!-- Mobile carousel (shown below sm) -->
+      <div class="sm:hidden w-full relative px-4" id="mobile-carousel">
+        <ImageCarousel items={next_gen_images} auto={false} height="h-[550px]"/>
+      </div>
+    </div>
+  </div>
+
 
     <!-- Features section -->
-    <div id="features" class="z-10 flex justify-center font-sans sm:mt-8">
+    <div id="features" class="z-10 flex justify-center font-sans mt-6 sm:mt-8">
       <div
         class="flex h-auto w-[90%] flex-col items-center rounded-[80px] bg-[#B1D9CD] p-12"
       >
-        <div class="features-title mb-[47px] underline-offset-4">
+        <div class="font-heading features-title mb-[47px] underline-offset-4">
           Unique Features
         </div>
         <div class="flex flex-row flex-wrap justify-center gap-10">
@@ -580,8 +623,8 @@ navItems.push(
             >
               <p class="w-[241px]">
                 <span class="font-bold"
-                  >Patent pending boba cooking technology</span
-                > ensures consistent quality and flavor in every cup.
+                  >Cooks drinks real-time</span
+                > to ensure fresh quality and flavor in every cup.
               </p>
             </div>
           </div>
@@ -605,7 +648,7 @@ navItems.push(
               class="features-content mt-[40px] flex h-[112px] w-[331px] items-center justify-center rounded-[100px] bg-white"
             >
               <p class="w-[241px]">
-                <span class="font-bold">Modular design</span> allows for easy customization
+                <span class="font-bold">Patent-pending modular design</span> allows for easy customization
                 and expansion of flavor options.
               </p>
             </div>
@@ -639,13 +682,16 @@ navItems.push(
       </div>
     </div>
 
-    <div class="mt-12 space-y-10 px-6 py-16 sm:space-y-24 sm:px-8">
+    <!-- Mailing list -->
+    <MailingList />
+
+    <div class="space-y-10 px-6 py-12 sm:space-y-24 sm:px-8">
       {sections.map((S) => <S.Layout info={S.info} />)}
     </div>
 
-    <div id="contact" class="mt-20 bg-[#B1D9CD] py-20 text-center text-white">
+    <div id="contact" class="mt-15 bg-[#B1D9CD] py-20 text-center text-white">
       <h2 class="mb-4 font-semibold text-3xl">Contact Us</h2>
-      <p class="mb-6 text-lg">
+      <p class="mb-6 text-lg max-sm:px-4">
         Have questions or want to partner with us? We'd love to hear from you!
       </p>
 

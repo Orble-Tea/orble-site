@@ -12,12 +12,12 @@ const { formId = "contact-form", containerClass = "" } = Astro.props;
 <div class={containerClass}>
   <div id="status-message" class="hidden"></div>
 
-  <form
-    class="mx-auto flex max-w-md flex-col gap-4"
-    id={formId}
-    method="post"
-    action="/api/send-email"
-  >
+    <form
+      class="mx-auto flex max-w-md flex-col gap-4 max-sm:px-4"
+      id={formId}
+      method="post"
+      action="/api/send-email"
+    >
     <div>
       <input
         type="text"
