@@ -9,11 +9,7 @@ export default defineConfig({
   site: "https://www.orble-tea.com",
   output: "server",
   adapter: netlify(),
-  integrations: [
-    tailwind(),
-    mdx(),
-    sitemap(),
-  ],
+  integrations: [tailwind(), mdx(), sitemap()],
   vite: {
     css: {
       devSourcemap: true,

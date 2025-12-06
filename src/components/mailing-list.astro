@@ -1,0 +1,71 @@
+<div
+  id="mailing-list"
+  class="z-10 mt-12 flex justify-center px-4 pb-10 font-sans sm:mt-16"
+>
+  <div
+    class="flex w-[90%] flex-col items-center gap-6 rounded-3xl border-2 border-[#B1D9CD] bg-white p-6 sm:rounded-[80px] sm:p-12"
+  >
+    <h2 class="text-center font-heading text-teal-theme text-2xl sm:text-4xl">
+      Stay in the loop with Orble
+    </h2>
+    <p class="text-center text-gray-600">
+      Join our mailing list and be the first to know about new features and
+      launches.
+    </p>
+
+    <form
+      id="mailing-form"
+      class="flex w-full max-w-md flex-col gap-3 sm:flex-row"
+    >
+      <input
+        type="email"
+        placeholder="Enter your email"
+        required
+        class="flex-1 rounded-lg border border-gray-300 px-4 py-3 focus:border-[#B1D9CD] focus:outline-none focus:ring-2 focus:ring-[#B1D9CD] focus:ring-opacity-50"
+      />
+      <button
+        type="submit"
+        class="whitespace-nowrap rounded-lg bg-[#B1D9CD] px-6 py-3 font-semibold text-gray-800 transition-all hover:bg-opacity-90"
+      >
+        Subscribe
+      </button>
+    </form>
+
+    <p id="form-message" class="h-5 text-gray-500 text-sm"></p>
+  </div>
+</div>
+
+<script is:inline>
+  const form = document.getElementById("mailing-form");
+  const message = document.getElementById("form-message");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = form.querySelector('input[type="email"]').value;
+
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        message.textContent = "Subscribed successfully!";
+        message.classList.remove("text-red-500");
+        message.classList.add("text-green-500");
+        form.reset();
+      } else {
+        message.textContent = data.message || "Failed to subscribe";
+        message.classList.remove("text-green-500");
+        message.classList.add("text-red-500");
+      }
+    } catch (err) {
+      console.error(err);
+      message.textContent = "Error sending request";
+      message.classList.remove("text-green-500");
+      message.classList.add("text-red-500");
+    }
+  });
+</script>
