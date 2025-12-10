@@ -192,6 +192,15 @@ const { formId = "contact-form", containerClass = "" } = Astro.props;
       const result = await response.json();
 
       if (result.success) {
+        try {
+          umami.track('form_submission', {
+            honeypot_value: formData.website || '',
+            is_spam: form.containsSpam()
+          });
+        } catch (err) {
+          console.warn("Umami tracking failed:", err);
+        }
+
         showStatus(
           "Thank you for your message! We'll get back to you soon.",
           "success",
