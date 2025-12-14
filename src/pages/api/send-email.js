@@ -58,6 +58,48 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
   throw lastError;
 }
 
+// Umami event tracking function
+async function trackUmamiEvent(request, eventName, eventData = {}) {
+  try {
+    if (!process.env.UMAMI_WEBSITE_ID || !process.env.UMAMI_ENDPOINT) {
+      console.warn("Umami environment variables not configured");
+      return;
+    }
+
+    const url = new URL(request.url);
+    
+    const payload = {
+      type: "event",
+      payload: {
+        hostname: url.hostname,
+        language: request.headers.get("accept-language")?.split(",")[0] || "en-US",
+        referrer: request.headers.get("referer") || "",
+        screen: "1920x1080",
+        title: "Contact Form Submission",
+        url: url.pathname,
+        website: process.env.UMAMI_WEBSITE_ID,
+        name: eventName,
+        data: eventData,
+      },
+    };
+
+    const response = await fetch(`${process.env.UMAMI_ENDPOINT}/api/send`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": request.headers.get("user-agent") || "Mozilla/5.0 (Server)",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      console.error(`Umami tracking failed with status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Failed to track Umami event:", error);
+  }
+}
+
 export async function POST({ request }) {
   try {
     const body = await request.json();
@@ -81,6 +123,12 @@ export async function POST({ request }) {
 
     // Data is now validated and typed
     const { name, email, message, website } = validationResult.data;
+
+    // Track the form submission with honeypot status
+    await trackUmamiEvent(request, "form_received", {
+      honeypot_value: website,
+      is_spam: website ? "true" : "false",
+    });
 
     // if the honeypot is filled, it's likely a bot
     if (website) {
