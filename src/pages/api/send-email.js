@@ -158,18 +158,18 @@ export async function POST({ request }) {
       to: "info@orble-tea.com",
       subject: `New Contact Form Submission from ${name}`,
       text: `
-Name: ${name}
-Email: ${email}
+        Name: ${name}
+        Email: ${email}
 
-Message:
-${message}
-      `,
-      html: `
-<h2>New Contact Form Submission</h2>
-<p><strong>Name:</strong> ${name}</p>
-<p><strong>Email:</strong> ${email}</p>
-<p><strong>Message:</strong></p>
-<p>${message.replace(/\n/g, "<br>")}</p>
+        Message:
+        ${message}
+              `,
+              html: `
+        <h2>New Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message.replace(/\n/g, "<br>")}</p>
       `,
       "h:Reply-To": email,
     };
