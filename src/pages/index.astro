@@ -506,54 +506,56 @@ navItems.push(
       </div>
     </div>
 
-    <div class="orble-tea-bg-one w-full pb-20 font-sans">
-      <div class="mx-[10%] grid grid-cols-1 gap-10 gap-y-2 sm:grid-cols-2">
-        <div class="col-span-1 row-span-1 mt-28">
-          <div class="max-sm:text-center">
-            <span
-              class="inline align-baseline font-heading leading-none text-white text-6xl max-sm:text-6xl lg:text-6xl"
-            >
-              ORBLE
-            </span>
-          </div>
-          <h3
-            class="italic tracking-normal text-white text-2xl max-sm:text-center"
-          >
-            is a revolutionary boba tea machine
-          </h3>
-          <h3
-            class="text-munch-blue my-6 tracking-normal text-sm max-sm:text-center"
-          >
-            Orble is the only machine that can cook both tapioca pearls and tea,
-            designed to deliver freshly brewed bubble tea with unparalleled
-            convenience and customization.
-          </h3>
-        </div>
-        <div class="col-span-1 row-span-2">
-          <Image src={cad} alt="Orble Machine 3d render" width={600} />
-        </div>
-        <div class="col-span-1 row-span-2 my-12">
-          <video width="600" autoplay loop muted playsinline id="orble-video">
-            <source src="/media/render-video.mp4" type="video/mp4" />
-            Your browser does not support this video.
-          </video>
-        </div>
-        <div class="col-span-1 row-span-1 max-sm:text-center">
-          <span class="text-l text-munch-blue mt-6 tracking-normal"
-            >With its</span
-          >
-          <span class="text-munch-blue ml-2 italic tracking-normal text-3xl"
-            >sleek and compact design,</span
-          >
-          <h3 class="text-l text-munch-blue tracking-normal">
-            Orble seamlessly integrates into any food service environment,
-            offering customers a delightful boba tea experience at the touch of
-            a button.
-          </h3>
-          <Image src={tealbar} alt="Bar" width={400} class="mx-auto mt-10" />
-        </div>
+<div class="orble-tea-bg-one w-full pb-20 font-sans">
+  <div class="mx-[10%] grid grid-cols-1 gap-10 gap-y-2 sm:grid-cols-2">
+    <div class="col-span-1 row-span-1 mt-20">
+      <div class="max-sm:text-center">
+        <span
+          class="inline align-baseline font-heading leading-none text-white text-6xl max-sm:text-6xl lg:text-6xl"
+        >
+          ORBLE
+        </span>
       </div>
+      <h3
+        class="italic tracking-normal text-white text-2xl max-sm:text-center"
+      >
+        is a revolutionary boba tea machine
+      </h3>
+      <h3
+        class="text-munch-blue my-6 tracking-normal text-sm max-sm:text-center"
+      >
+        Orble is the only machine that can cook both tapioca pearls and tea,
+        designed to deliver freshly brewed bubble tea with unparalleled
+        convenience and customization.
+      </h3>
     </div>
+    <div class="col-span-1 row-span-2 flex items-center justify-center">
+      <Image src={cad} alt="Orble Machine 3d render" width={600} class="w-full max-w-[600px] h-auto" />
+    </div>
+    <div class="col-span-1 row-span-2 my-12 flex items-start justify-center">
+      <video width="500" autoplay loop muted playsinline id="orble-video" class="w-full max-w-[500px] h-auto">
+        <source src="/media/next-gen-render-video.mp4" type="video/mp4" />
+        Your browser does not support this video.
+      </video>
+    </div>
+    <div class="col-span-1 row-span-1 max-sm:text-center flex flex-col justify-center">
+      <div>
+        <span class="text-l text-munch-blue mt-6 tracking-normal"
+          >With its</span
+        >
+        <span class="text-munch-blue ml-2 italic tracking-normal text-3xl"
+          >sleek and compact design,</span
+        >
+        <h3 class="text-l text-munch-blue tracking-normal">
+          Orble seamlessly integrates into any food service environment,
+          offering customers a delightful boba tea experience at the touch of
+          a button.
+        </h3>
+      </div>
+      <Image src={tealbar} alt="Bar" width={400} class="mx-auto mt-10" />
+    </div>
+  </div>
+</div>
 
     <!-- Video + media section-->
     <div
