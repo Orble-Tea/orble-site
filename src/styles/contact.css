@@ -30,6 +30,6 @@
   position: absolute;
   left: -5000px;
   opacity: 0;
-  display: None;
+  display: none;
   pointer-events: none;
 }

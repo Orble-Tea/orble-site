@@ -47,7 +47,7 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
       }
 
       const delay = initialDelay * Math.pow(2, attempt);
-      console.log(
+      console.debug(
         `Email send attempt ${attempt + 1} failed, retrying in ${delay}ms...`,
       );
 
@@ -56,6 +56,44 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
   }
 
   throw lastError;
+}
+
+// Umami event tracking function
+async function trackUmamiEvent(request, eventName, eventData = {}) {
+  try {
+    if (!process.env.UMAMI_WEBSITE_ID || !process.env.UMAMI_ENDPOINT) {
+      console.warn("Umami environment variables not configured");
+      return;
+    }
+    
+    const payload = {
+      type: "event",
+      payload: {
+        website: process.env.UMAMI_WEBSITE_ID,
+        name: eventName,
+        data: eventData,
+      },
+    };
+
+    const response = await fetch(`${process.env.UMAMI_ENDPOINT}/api/send`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent":
+          request.headers.get("user-agent") || "Mozilla/5.0 (Server)",
+      },
+      body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) {
+      console.error(`Umami tracking failed with status: ${response.status}`);
+      console.error(`Response body:`, responseText);
+    } else {
+      console.debug(`Umami tracking success!`);
+    }
+  } catch (error) {
+    console.error("Error message:", error.message);
+  }
 }
 
 export async function POST({ request }) {
@@ -82,9 +120,14 @@ export async function POST({ request }) {
     // Data is now validated and typed
     const { name, email, message, website } = validationResult.data;
 
+    // Track the form submission with honeypot status
+    await trackUmamiEvent(request, "form_received", {
+      is_spam: website ? "true" : "false",
+    });
+
     // if the honeypot is filled, it's likely a bot
     if (website) {
-      console.log("Honeypot triggered - possible bot submission");
+      console.debug("Honeypot triggered - possible bot submission");
       // Return success to not alert the bot
       return new Response(
         JSON.stringify({
@@ -110,18 +153,18 @@ export async function POST({ request }) {
       to: "info@orble-tea.com",
       subject: `New Contact Form Submission from ${name}`,
       text: `
-Name: ${name}
-Email: ${email}
+        Name: ${name}
+        Email: ${email}
 
-Message:
-${message}
-      `,
-      html: `
-<h2>New Contact Form Submission</h2>
-<p><strong>Name:</strong> ${name}</p>
-<p><strong>Email:</strong> ${email}</p>
-<p><strong>Message:</strong></p>
-<p>${message.replace(/\n/g, "<br>")}</p>
+        Message:
+        ${message}
+              `,
+              html: `
+        <h2>New Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message.replace(/\n/g, "<br>")}</p>
       `,
       "h:Reply-To": email,
     };
