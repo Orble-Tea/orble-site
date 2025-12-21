@@ -65,7 +65,9 @@ async function trackUmamiEvent(request, eventName, eventData = {}) {
       console.warn("Umami environment variables not configured");
       return;
     }
-
+    console.log("=== START UMAMI TRACKING ===");
+    console.log("UMAMI_ENDPOINT:", process.env.UMAMI_ENDPOINT);
+    console.log("UMAMI_WEBSITE_ID:", process.env.UMAMI_WEBSITE_ID);
     const url = new URL(request.url);
     
     const payload = {
@@ -83,20 +85,38 @@ async function trackUmamiEvent(request, eventName, eventData = {}) {
       },
     };
 
+    console.log("Payload:", JSON.stringify(payload, null, 2));
+    console.log("Sending to Umami:", `${process.env.UMAMI_ENDPOINT}/api/send`);
+    console.log("User-Agent:", request.headers.get("user-agent") || "Mozilla/5.0 (Server)");
+    
     const response = await fetch(`${process.env.UMAMI_ENDPOINT}/api/send`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": request.headers.get("user-agent") || "Mozilla/5.0 (Server)",
+        "User-Agent":
+          request.headers.get("user-agent") || "Mozilla/5.0 (Server)",
       },
       body: JSON.stringify(payload),
     });
 
+    console.log("Response status:", response.status);
+    const responseText = await response.text();
+    console.log("Response body:", responseText);
+    
     if (!response.ok) {
       console.error(`Umami tracking failed with status: ${response.status}`);
+      console.error(`Response body:`, responseText);
+    } else {
+      console.log(`Umami tracking success!`);
     }
+    
+    console.log("=== END UMAMI TRACKING ===");
   } catch (error) {
-    console.error("Failed to track Umami event:", error);
+    console.error("!!! UMAMI TRACKING ERROR !!!");
+    console.error("Error type:", error.constructor.name);
+    console.error("Error message:", error.message);
+    console.error("Full error:", error);
+    console.error("!!! END ERROR !!!");
   }
 }
 
