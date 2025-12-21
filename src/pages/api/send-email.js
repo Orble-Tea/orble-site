@@ -47,7 +47,7 @@ async function retryWithBackoff(fn, maxRetries = 3, initialDelay = 1000) {
       }
 
       const delay = initialDelay * Math.pow(2, attempt);
-      console.log(
+      console.debug(
         `Email send attempt ${attempt + 1} failed, retrying in ${delay}ms...`,
       );
 
@@ -65,30 +65,16 @@ async function trackUmamiEvent(request, eventName, eventData = {}) {
       console.warn("Umami environment variables not configured");
       return;
     }
-    console.log("=== START UMAMI TRACKING ===");
-    console.log("UMAMI_ENDPOINT:", process.env.UMAMI_ENDPOINT);
-    console.log("UMAMI_WEBSITE_ID:", process.env.UMAMI_WEBSITE_ID);
-    const url = new URL(request.url);
     
     const payload = {
       type: "event",
       payload: {
-        hostname: url.hostname,
-        language: request.headers.get("accept-language")?.split(",")[0] || "en-US",
-        referrer: request.headers.get("referer") || "",
-        screen: "1920x1080",
-        title: "Contact Form Submission",
-        url: url.pathname,
         website: process.env.UMAMI_WEBSITE_ID,
         name: eventName,
         data: eventData,
       },
     };
 
-    console.log("Payload:", JSON.stringify(payload, null, 2));
-    console.log("Sending to Umami:", `${process.env.UMAMI_ENDPOINT}/api/send`);
-    console.log("User-Agent:", request.headers.get("user-agent") || "Mozilla/5.0 (Server)");
-    
     const response = await fetch(`${process.env.UMAMI_ENDPOINT}/api/send`, {
       method: "POST",
       headers: {
@@ -98,25 +84,15 @@ async function trackUmamiEvent(request, eventName, eventData = {}) {
       },
       body: JSON.stringify(payload),
     });
-
-    console.log("Response status:", response.status);
-    const responseText = await response.text();
-    console.log("Response body:", responseText);
     
     if (!response.ok) {
       console.error(`Umami tracking failed with status: ${response.status}`);
       console.error(`Response body:`, responseText);
     } else {
-      console.log(`Umami tracking success!`);
+      console.debug(`Umami tracking success!`);
     }
-    
-    console.log("=== END UMAMI TRACKING ===");
   } catch (error) {
-    console.error("!!! UMAMI TRACKING ERROR !!!");
-    console.error("Error type:", error.constructor.name);
     console.error("Error message:", error.message);
-    console.error("Full error:", error);
-    console.error("!!! END ERROR !!!");
   }
 }
 
@@ -146,13 +122,12 @@ export async function POST({ request }) {
 
     // Track the form submission with honeypot status
     await trackUmamiEvent(request, "form_received", {
-      honeypot_value: website,
       is_spam: website ? "true" : "false",
     });
 
     // if the honeypot is filled, it's likely a bot
     if (website) {
-      console.log("Honeypot triggered - possible bot submission");
+      console.debug("Honeypot triggered - possible bot submission");
       // Return success to not alert the bot
       return new Response(
         JSON.stringify({

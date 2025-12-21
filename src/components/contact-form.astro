@@ -194,7 +194,7 @@ const { formId = "contact-form", containerClass = "" } = Astro.props;
       if (result.success) {
         try {
           umami.track('form_submission', {
-            honeypot_value: formData.website || '',
+            honeypot_value: formData.website ? "true" : "false",
             is_spam: form.containsSpam()
           });
         } catch (err) {
