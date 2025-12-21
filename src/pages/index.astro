@@ -51,66 +51,66 @@ const next_gen_images = [
 const locations = [
   {
     image: office,
-    alt: "Office Parks",
     title: "Office Parks",
+    alt: "Image of an office park",
     description: "Energize employees and boost workplace satisfaction.",
   },
   {
     image: airport,
-    alt: "Transit Hubs",
     title: "Transit Hubs",
+    alt: "Image of an airport terminal",
     description: "Fuel travellers on the go with a sweet sip.",
   },
   {
     image: campus,
-    alt: "Universities",
     title: "Universities",
+    alt: "Imag of a university campus",
     description: "Give students a grab-n-go, delicious study break.",
   },
   {
     image: hospital,
-    alt: "Hospitals",
     title: "Hospitals",
+    alt: "Image of a hospital hallway",
     description: "Refresh and recharge.",
   },
   {
     image: gym,
-    alt: "Fitness Centers",
     title: "Fitness Centers",
+    alt: "Image of a fitness center interior",
     description: "Power workouts with a tasty treat.",
   },
   {
     image: mall,
-    alt: "Shopping Centers",
     title: "Shopping Centers",
+    alt: "Image of a shopping center",
     description: "Offer a convenient beverage option for browsing.",
   },
 ];
 
 const carouselImages = [
-  { src: orblebeta1, alt: "front left view of orble beta" },
-  { src: orblebeta2, alt: "front view of orble beta" },
-  { src: orblebeta3, alt: "front right view of orble beta" },
-  { src: orblebeta4, alt: "zoomed in view of orble beta" },
+  { src: orblebeta1, alt: "front left view of the orble beta machine" },
+  { src: orblebeta2, alt: "front view of the orble beta machine" },
+  { src: orblebeta3, alt: "front right view the of orble beta machine" },
+  { src: orblebeta4, alt: "zoomed in view of the orble beta machine" },
 ];
 
 const menuThemes = [
   {
     image: classic,
-    alt: "Classic Theme",
+    alt: "boba cup icon",
     title: "Classic",
     description:
       "The top selling flavors in every boba shop: Black, Thai, and Taro.",
   },
   {
     image: dumbells,
-    alt: "High Protein Menu",
+    alt: "dumbell icon",
     title: "High Protein Menu",
     description: "Packed with protein: Strawberry, Matcha, Jasmine",
   },
   {
     image: coffee,
-    alt: "Caffeine Boost Series",
+    alt: "coffee bean icon",
     title: "Caffeine Boost Series",
     description: "Boostd pick-me-ups: Brown Sugar, Matcha, and Earl Grey",
   },
@@ -506,54 +506,56 @@ navItems.push(
       </div>
     </div>
 
-    <div class="orble-tea-bg-one w-full pb-20 font-sans">
-      <div class="mx-[10%] grid grid-cols-1 gap-10 gap-y-2 sm:grid-cols-2">
-        <div class="col-span-1 row-span-1 mt-28">
-          <div class="max-sm:text-center">
-            <span
-              class="inline align-baseline font-heading leading-none text-white text-6xl max-sm:text-6xl lg:text-6xl"
-            >
-              ORBLE
-            </span>
-          </div>
-          <h3
-            class="italic tracking-normal text-white text-2xl max-sm:text-center"
-          >
-            is a revolutionary boba tea machine
-          </h3>
-          <h3
-            class="text-munch-blue my-6 tracking-normal text-sm max-sm:text-center"
-          >
-            Orble is the only machine that can cook both tapioca pearls and tea,
-            designed to deliver freshly brewed bubble tea with unparalleled
-            convenience and customization.
-          </h3>
-        </div>
-        <div class="col-span-1 row-span-2">
-          <Image src={cad} alt="Orble Machine" width={600} />
-        </div>
-        <div class="col-span-1 row-span-2 my-12">
-          <video width="600" autoplay loop muted playsinline id="orble-video">
-            <source src="/media/render-video.mp4" type="video/mp4" />
-            Your browser does not support this video.
-          </video>
-        </div>
-        <div class="col-span-1 row-span-1 max-sm:text-center">
-          <span class="text-l text-munch-blue mt-6 tracking-normal"
-            >With its</span
-          >
-          <span class="text-munch-blue ml-2 italic tracking-normal text-3xl"
-            >sleek and compact design,</span
-          >
-          <h3 class="text-l text-munch-blue tracking-normal">
-            Orble seamlessly integrates into any food service environment,
-            offering customers a delightful boba tea experience at the touch of
-            a button.
-          </h3>
-          <Image src={tealbar} alt="Bar" width={400} class="mx-auto mt-10" />
-        </div>
+<div class="orble-tea-bg-one w-full pb-20 font-sans">
+  <div class="mx-[10%] grid grid-cols-1 gap-10 gap-y-2 sm:grid-cols-2">
+    <div class="col-span-1 row-span-1 mt-20">
+      <div class="max-sm:text-center">
+        <span
+          class="inline align-baseline font-heading leading-none text-white text-6xl max-sm:text-6xl lg:text-6xl"
+        >
+          ORBLE
+        </span>
       </div>
+      <h3
+        class="italic tracking-normal text-white text-2xl max-sm:text-center"
+      >
+        is a revolutionary boba tea machine
+      </h3>
+      <h3
+        class="text-munch-blue my-6 tracking-normal text-sm max-sm:text-center"
+      >
+        Orble is the only machine that can cook both tapioca pearls and tea,
+        designed to deliver freshly brewed bubble tea with unparalleled
+        convenience and customization.
+      </h3>
     </div>
+    <div class="col-span-1 row-span-2 flex items-center justify-center">
+      <Image src={cad} alt="Orble Machine 3d render" width={600} class="w-full max-w-[600px] h-auto" />
+    </div>
+    <div class="col-span-1 row-span-2 my-12 flex items-start justify-center">
+      <video width="500" autoplay loop muted playsinline id="orble-video" class="w-full max-w-[500px] h-auto">
+        <source src="/media/next-gen-render-video.mp4" type="video/mp4" />
+        Your browser does not support this video.
+      </video>
+    </div>
+    <div class="col-span-1 row-span-1 max-sm:text-center flex flex-col justify-center">
+      <div>
+        <span class="text-l text-munch-blue mt-6 tracking-normal"
+          >With its</span
+        >
+        <span class="text-munch-blue ml-2 italic tracking-normal text-3xl"
+          >sleek and compact design,</span
+        >
+        <h3 class="text-l text-munch-blue tracking-normal">
+          Orble seamlessly integrates into any food service environment,
+          offering customers a delightful boba tea experience at the touch of
+          a button.
+        </h3>
+      </div>
+      <Image src={tealbar} alt="Bar" width={400} class="mx-auto mt-10" />
+    </div>
+  </div>
+</div>
 
     <!-- Video + media section-->
     <div
