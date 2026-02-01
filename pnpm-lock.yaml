@@ -11,7 +11,7 @@ specifiers:
   "@types/node": ^18.11.18
   "@types/ogl": npm:ogl-types@^0.0.102
   astro: ^2.0.1
-  astro-icon: ^1.5.5
+  astro-icon: ^0.8.0
   cssnano: ^5.1.14
   micromodal: ^0.4.10
   ogl: ^0.0.103
@@ -33,7 +33,7 @@ dependencies:
   "@fontsource/lato": 4.5.10
   "@fontsource/staatliches": 4.5.9
   astro: 2.0.1_@types+node@18.11.18
-  astro-icon: 1.5.5
+  astro-icon: 0.8.0
   micromodal: 0.4.10
   ogl: 0.0.103
   sharp: 0.34.4
@@ -1289,7 +1289,7 @@ packages:
     hasBin: true
     dev: false
 
-  /astro-icon/1.5.5:
+  /astro-icon/0.8.0:
     resolution:
       {
         integrity: sha512-sCzhZcl46BIyLJVg89hq5J4uQABn2psmGvK4cUaxib+M/kBI3TrPy1w3g2O5h/WcrTHLVN9LyxjgkD4lEJJFpw==,
