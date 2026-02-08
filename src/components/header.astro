@@ -24,7 +24,7 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
     <Icon
       id="logo"
       name="logo"
-      class="relative bottom-1 -ml-10 h-8 origin-[right_center] scale-0 transition-all duration-500"
+      class="relative bottom-1 -ml-10 h-8 w-auto origin-[right_center] scale-0 transition-all duration-500"
     />
     <h1 class="sm:block">{mainTitle}</h1>
   </a>
@@ -67,7 +67,7 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
             </button>
           </header>
           <div class="flex justify-center">
-            <Icon name="logo" class="h-16" />
+            <Icon name="logo" class="m-auto h-40 pb-4 md:h-56 w-auto" />
           </div>
           <nav>
             <ul class="flex flex-col">
