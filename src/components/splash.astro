@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import { Icon } from "astro-icon";
+import { Icon } from "astro-icon/components";
 import machineImage from "$assets/alpha-render.png";
 import betaImage from "$assets/beta-render.webp";
 ---
@@ -19,7 +19,7 @@ import betaImage from "$assets/beta-render.webp";
 
     <!-- text -->
     <h2 class="flex flex-shrink-0 flex-col items-center text-center sm:mx-16">
-      <Icon name="logo" class="m-auto h-24 pb-4 md:h-32" />
+      <Icon name="logo" class="m-auto h-40 pb-4 md:h-32 w-auto" />
       <div class="font-heading leading-tight text-3xl sm:text-5xl">
         Your fully<br />
         au<span class="text-primary">tea</span>matic <br />

@@ -1,5 +1,5 @@
 ---
-import { Icon } from "astro-icon";
+import { Icon } from "astro-icon/components";
 import ScrollDown from "./scroll-down.astro";
 import type { NavItem } from "~/types";
 
@@ -24,7 +24,7 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
     <Icon
       id="logo"
       name="logo"
-      class="relative bottom-1 -ml-10 h-8 origin-[right_center] scale-0 transition-all duration-500"
+      class="relative bottom-1 -ml-10 h-8 w-auto origin-[right_center] scale-0 transition-all duration-500"
     />
     <h1 class="sm:block">{mainTitle}</h1>
   </a>
@@ -50,7 +50,7 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
         class="btn sm:hidden"
         aria-label="Navigation"
       >
-        <Icon pack="mdi" name="menu" class="h-8" />
+        <Icon name="pixelarticons:menu" class="h-8" />
       </button>
     </div>
     <div id="menu-modal" class="modal hidden" aria-hidden="true">
@@ -63,11 +63,11 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
               class="btn"
               aria-label="Close navigation"
             >
-              <Icon pack="mdi" name="close" class="h-8" />
+              <Icon name="pixelarticons:menu" class="h-8" />
             </button>
           </header>
           <div class="flex justify-center">
-            <Icon name="logo" class="h-16" />
+            <Icon name="logo" class="m-auto h-40 pb-4 md:h-56 w-auto" />
           </div>
           <nav>
             <ul class="flex flex-col">
