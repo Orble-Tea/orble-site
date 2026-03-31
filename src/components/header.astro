@@ -108,24 +108,29 @@ const { mainTitle, navItems, scrollTarget } = Astro.props;
   document.addEventListener(
     "DOMContentLoaded",
     () => {
-      const splash = document.getElementById("splash")!;
+      const splash = document.getElementById("splash");
 
-      const arrowObs = new IntersectionObserver(
-        (entries) => {
-          scrolly?.classList.toggle("opacity-0", !entries[0].isIntersecting);
-        },
-        { threshold: 0.5 },
-      );
-      arrowObs.observe(splash);
+      if (splash) {
+        const arrowObs = new IntersectionObserver(
+          (entries) => {
+            scrolly?.classList.toggle("opacity-0", !entries[0].isIntersecting);
+          },
+          { threshold: 0.5 },
+        );
+        arrowObs.observe(splash);
 
-      const headerObs = new IntersectionObserver(
-        (entries) =>
-          header.classList.toggle("fixed-header", !entries[0].isIntersecting),
-        {
-          rootMargin: "-1% 0px",
-        },
-      );
-      headerObs.observe(splash);
+        const headerObs = new IntersectionObserver(
+          (entries) =>
+            header.classList.toggle("fixed-header", !entries[0].isIntersecting),
+          {
+            rootMargin: "-1% 0px",
+          },
+        );
+        headerObs.observe(splash);
+      } else {
+        header.classList.add("fixed-header");
+        scrolly?.classList.add("opacity-0");
+      }
     },
     false,
   );

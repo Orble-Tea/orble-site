@@ -1,0 +1,248 @@
+---
+import "~/styles/index.css";
+import type { NavItem } from "~/types";
+import { Image } from "astro:assets";
+import Header from "$components/header.astro";
+import teaLeaves from "~/assets/images/bg-design/orble-tea-bg-long.svg";
+import orblebeta1 from "~/assets/images/beta-renders/front-left.jpg";
+import orblebeta2 from "~/assets/images/beta-renders/front.jpg";
+import orblebeta3 from "~/assets/images/beta-renders/front-right.jpg";
+import orblebeta4 from "~/assets/images/beta-renders/zoom-in.jpg";
+
+const navItems: NavItem[] = [
+  { id: "/", title: "Home" },
+  { id: "/drinks", title: "Drinks" },
+  { id: "/#features", title: "Features" },
+  { id: "/#contact", title: "Contact Us" },
+];
+
+const target = { id: "#gallery", title: "Gallery" };
+
+const drinks = [
+  {
+    name: "Classic Milk Tea",
+    image: orblebeta1,
+    description:
+      "A smooth black tea base blended with creamy milk and chewy tapioca pearls.",
+    nutrition:
+      "240 kcal · 35g carbs · 2g protein · 5g fat · 18g sugar",
+  },
+  {
+    name: "Matcha Mellow",
+    image: orblebeta2,
+    description:
+      "Bright matcha green tea mixed with milk and honey for a gentle lift.",
+    nutrition:
+      "220 kcal · 32g carbs · 3g protein · 4g fat · 16g sugar",
+  },
+  {
+    name: "Mango Boba Bliss",
+    image: orblebeta3,
+    description:
+      "Tropical mango puree with tapioca pearls and a citrus finish.",
+    nutrition:
+      "260 kcal · 40g carbs · 1g protein · 2g fat · 24g sugar",
+  },
+  {
+    name: "Rose Oolong",
+    image: orblebeta4,
+    description:
+      "Floral oolong tea kissed with rose and a hint of vanilla.",
+    nutrition:
+      "180 kcal · 28g carbs · 1g protein · 2g fat · 14g sugar",
+  },
+  {
+    name: "Cocoa Pearl Shake",
+    image: orblebeta2,
+    description:
+      "Rich chocolate milk tea finished with chocolate pearls for extra texture.",
+    nutrition:
+      "310 kcal · 45g carbs · 4g protein · 6g fat · 26g sugar",
+  },
+];
+---
+<!doctype html>
+<html lang="en" class="h-full bg-white font-sans motion-safe:scroll-smooth" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drinks | Orble</title>
+    <meta
+      name="description"
+      content="Explore Orble drinks, see nutrition facts, and search by name."
+    />
+  </head>
+  <body class="h-full overflow-x-hidden bg-default text-default text-base selection:bg-secondary selection:text-white">
+    <Header mainTitle="Orble Tea" navItems={navItems} scrollTarget={target} />
+
+    <main class="mx-auto max-w-7xl px-6 pb-20 pt-24 sm:px-8">
+      <section class="overflow-hidden rounded-[2rem] bg-slate-100 text-slate-950">
+        <div class="relative h-[300px] sm:h-[360px] overflow-hidden rounded-[2rem]">
+          <Image
+            src={teaLeaves}
+            alt="Tea leaves placeholder background"
+            class="absolute inset-0 h-full w-full object-cover opacity-90"
+          />
+          <div class="absolute inset-0 bg-slate-100/70"></div>
+          <div class="absolute inset-0 opacity-50 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.95),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(15,23,42,0.08),_transparent_30%)]"></div>
+          <div class="relative z-10 flex h-full flex-col justify-center px-6 py-10 sm:px-10">
+            <span class="text-sm uppercase tracking-[0.4em] text-slate-700">Drinks</span>
+            <h1 class="mt-4 text-5xl font-heading tracking-tight sm:text-6xl text-slate-950">Drinks</h1>
+            <p class="mt-4 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
+              Browse our drink collection, search by name, and reveal nutrition facts for every cup.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="gallery" class="mt-10 rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+        <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 class="text-2xl font-semibold text-slate-900">Browse all drinks</h2>
+            <p class="mt-2 text-sm leading-6 text-slate-600">
+              Search by name and click any card to see details and nutrition facts.
+            </p>
+          </div>
+          <label class="block w-full sm:w-auto">
+            <span class="sr-only">Search drinks</span>
+            <input
+              id="drink-search"
+              type="search"
+              placeholder="Search drinks..."
+              class="w-full rounded-full border border-slate-300 bg-slate-50 px-5 py-3 text-slate-900 outline-none focus:border-teal-theme focus:ring-2 focus:ring-teal-theme/30 sm:w-[320px]"
+            />
+          </label>
+        </div>
+
+        <div id="drink-results" class="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {drinks.map((drink) => (
+            <article
+              class="drink-card group cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              data-index={drink.name.toLowerCase()}
+              data-name={drink.name}
+              data-description={drink.description}
+              data-nutrition={drink.nutrition}
+              data-image={drink.image.src}
+              role="button"
+              tabindex="0"
+            >
+              <div class="flex flex-col gap-6">
+                <p class="text-sm uppercase tracking-[0.35em] text-munch-blue">{drink.name}</p>
+                <div class="overflow-hidden rounded-xl bg-white shadow-sm h-48 sm:h-56 flex items-center justify-center">
+                  <Image src={drink.image} alt={drink.name} class="h-full w-full object-contain" />
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <p id="no-results" class="hidden mt-8 text-center text-slate-500">
+          No drinks matched your search.
+        </p>
+      </section>
+    </main>
+
+    <div id="drink-popup" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
+      <div id="drink-popup-panel" class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300 ease-out transform-gpu scale-95 opacity-0">
+        <div class="p-6 flex flex-col gap-4">
+          <p class="text-sm uppercase tracking-[0.45em] text-munch-blue">Drink details</p>
+          <h2 id="drink-popup-title" class="text-3xl font-heading text-slate-950"></h2>
+          <div class="overflow-hidden rounded-xl bg-slate-100 shadow-inner h-56">
+            <img id="drink-popup-image" src="" alt="" class="h-full w-full object-contain" />
+          </div>
+          <p id="drink-popup-description" class="text-base leading-7 text-slate-600"></p>
+          <div class="rounded-xl bg-slate-50 p-4">
+            <h3 class="text-sm font-semibold text-slate-900">Nutrition facts</h3>
+            <p id="drink-popup-nutrition" class="mt-2 text-sm leading-6 text-slate-600"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.getElementById("drink-search") as HTMLInputElement | null;
+        const cards = Array.from(document.querySelectorAll(".drink-card")) as HTMLElement[];
+        const noResults = document.getElementById("no-results");
+        const popup = document.getElementById("drink-popup");
+        const popupPanel = document.getElementById("drink-popup-panel");
+        const popupTitle = document.getElementById("drink-popup-title");
+        const popupDescription = document.getElementById("drink-popup-description");
+        const popupNutrition = document.getElementById("drink-popup-nutrition");
+        const popupImage = document.getElementById("drink-popup-image") as HTMLImageElement | null;
+        let hidePopupTimeout: number | null = null;
+
+        const filterCards = () => {
+          const query = (searchInput?.value || "").toLowerCase().trim();
+          let matches = 0;
+          cards.forEach((card) => {
+            const name = card.dataset.index || "";
+            const show = name.includes(query);
+            card.style.display = show ? "block" : "none";
+            if (show) matches += 1;
+          });
+          if (noResults) {
+            noResults.classList.toggle("hidden", matches > 0);
+          }
+        };
+
+        const openPopup = (card: HTMLElement) => {
+          const name = card.dataset.name || "";
+          const description = card.dataset.description || "";
+          const nutrition = card.dataset.nutrition || "";
+          const imageSrc = card.dataset.image || "";
+
+          if (popupTitle) popupTitle.textContent = name;
+          if (popupDescription) popupDescription.textContent = description;
+          if (popupNutrition) popupNutrition.textContent = nutrition;
+          if (popupImage) {
+            popupImage.src = imageSrc;
+            popupImage.alt = name;
+          }
+
+          if (hidePopupTimeout) {
+            window.clearTimeout(hidePopupTimeout);
+            hidePopupTimeout = null;
+          }
+
+          popup?.classList.remove("hidden");
+          document.body.style.overflow = "hidden";
+
+          requestAnimationFrame(() => {
+            popupPanel?.classList.remove("scale-95", "opacity-0");
+          });
+        };
+
+        const closePopup = () => {
+          popupPanel?.classList.add("scale-95", "opacity-0");
+          document.body.style.overflow = "auto";
+
+          hidePopupTimeout = window.setTimeout(() => {
+            popup?.classList.add("hidden");
+            hidePopupTimeout = null;
+          }, 220);
+        };
+
+        filterCards();
+        searchInput?.addEventListener("input", filterCards);
+
+        cards.forEach((card) => {
+          card.addEventListener("click", () => openPopup(card));
+          card.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openPopup(card);
+            }
+          });
+        });
+
+        popup?.addEventListener("click", (event) => {
+          if (event.target === popup) closePopup();
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") closePopup();
+        });
+      });
+    </script>
+  </body>
+</html>
