@@ -23,7 +23,7 @@ const {
 <div class="flex items-center justify-center">
   <div
     id={id}
-    class="relative w-full max-w-md"
+    class="relative w-full max-w-3xl"
     data-carousel={auto ? "slide" : "static"}
   >
     <!-- Carousel wrapper -->
@@ -31,7 +31,7 @@ const {
       {
         items.map((item, index) => (
           <div
-            class={`duration-700 ease-in-out ${index === 0 ? "" : "hidden"}`}
+            class={`duration-700 ease-in-out ${index === 0 ? "" : "hidden"} px-10`}
             data-carousel-item
           >
             <Frame
@@ -65,7 +65,7 @@ const {
     <!-- Slider controls -->
     <button
       type="button"
-      class="group absolute start-0 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4 focus:outline-none"
+      class="group absolute start-0 top-1/2 z-30 -translate-y-1/2 flex w-10 cursor-pointer items-center justify-center focus:outline-none"
       data-carousel-prev
     >
       <span
@@ -92,7 +92,7 @@ const {
     </button>
     <button
       type="button"
-      class="group absolute end-0 top-0 z-30 flex h-full cursor-pointer items-center justify-center px-4 focus:outline-none"
+      class="group absolute end-0 top-1/2 z-30 -translate-y-1/2 flex w-10 cursor-pointer items-center justify-center focus:outline-none"
       data-carousel-next
     >
       <span

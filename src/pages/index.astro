@@ -16,14 +16,15 @@ import logo from "~/assets/images/logo_inkscape.svg";
 
 import ImageCarousel from "$components/image-carousel.astro";
 import Frame from "$components/image-frame.astro";
+import betaRender from "$assets/beta-render.webp";
 import orblebeta1 from "~/assets/images/beta-renders/front-left.jpg";
 import orblebeta2 from "~/assets/images/beta-renders/front.jpg";
 import orblebeta3 from "~/assets/images/beta-renders/front-right.jpg";
 import orblebeta4 from "~/assets/images/beta-renders/zoom-in.jpg";
 
-import office from "~/assets/images/office.jpeg";
-import airport from "~/assets/images/airport.jpg";
-import campus from "~/assets/images/campus.jpg";
+import office from "~/assets/images/archviz apartment 2.jpg";
+import airport from "~/assets/images/airport render 3.jpg";
+import campus from "~/assets/images/archviz 1 with people studying 1.jpg";
 import hospital from "~/assets/images/hospital-hallway.jpg";
 import gym from "~/assets/images/gym.png";
 import mall from "~/assets/images/mall.webp";
@@ -134,21 +135,13 @@ const sections = sectionData.map((s) => ({
   Layout: s.layout,
 }));
 
-const navItems: NavItem[] = sections.map((s) => ({
-  id: "#" + s.info.id,
-  title: s.info.title,
-}));
-const target = navItems[0];
-navItems.push(
-  {
-    id: "#features",
-    title: "Features",
-  },
-  {
-    id: "#contact",
-    title: "Contact Us",
-  },
-);
+const navItems: NavItem[] = [
+  { id: "/", title: "Home" },
+  { id: "/drinks", title: "Drinks" },
+  { id: "#features", title: "Features" },
+  { id: "#contact", title: "Contact Us" },
+];
+const target = navItems[2];
 ---
 
 <!doctype html>
@@ -256,6 +249,81 @@ navItems.push(
         border: 1px solid #fca5a5;
       }
     </style>
+
+    <section id="orble-beta-promo" class="relative bg-slate-50">
+      <div class="mx-auto max-w-7xl px-6 pb-16 pt-6 sm:px-8">
+        <div class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_30px_90px_-50px_rgba(15,23,42,0.3)]">
+          <div class="grid items-center gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(320px,420px)_1fr]">
+            <div class="relative lg:sticky lg:top-28">
+              <div class="relative overflow-hidden rounded-[2rem] bg-white p-6">
+                <div id="beta-promo-loader" class="absolute inset-0 z-20 flex items-center justify-center rounded-[2rem] bg-white/95 text-slate-900">
+                  <div class="flex flex-col items-center gap-3">
+                    <div class="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-white"></div>
+                    <span class="text-sm font-medium">Loading image...</span>
+                  </div>
+                </div>
+                <Image
+                  id="beta-panel-image"
+                  class="h-full w-full object-cover fade-slide-up"
+                  src={betaRender}
+                  alt="Orble Beta Machine"
+                  loading="eager"
+                />
+              </div>
+            </div>
+
+            <div class="space-y-6 p-4 sm:p-0">
+              <p class="text-sm uppercase tracking-[0.45em] text-slate-500">
+                Orble Beta
+              </p>
+              <h2 class="text-4xl font-heading tracking-tight text-slate-950 sm:text-5xl">
+                first orble beta opens in E-Cafe
+              </h2>
+              <p class="text-base leading-8 text-slate-600 max-w-2xl">
+                Discover the first Orble Beta machine in the Accenture Cafe at
+                220 South 33rd Street.
+              </p>
+              <div class="flex flex-col gap-3 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center">
+                <div class="flex items-center gap-3 text-slate-900">
+                  <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                      <path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z" />
+                    </svg>
+                  </span>
+                  <span class="text-sm leading-6 text-slate-900">
+                    Accenture Cafe • 220 South 33rd Street
+                  </span>
+                </div>
+              </div>
+              <a
+                href="/drinks"
+                class="inline-flex w-full items-center justify-center rounded-full bg-emerald-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-emerald-400 sm:w-auto"
+              >
+                see details and nutrition facts
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const promoImage = document.getElementById("beta-panel-image") as HTMLImageElement | null;
+          const promoLoader = document.getElementById("beta-promo-loader");
+
+          const hideLoader = () => {
+            promoLoader?.classList.add("hidden");
+          };
+
+          if (promoImage) {
+            if (promoImage.complete) {
+              hideLoader();
+            } else {
+              promoImage.addEventListener("load", hideLoader);
+            }
+          }
+        });
+      </script>
+    </section>
 
     <!-- Orble beta logo + header -->
     <div

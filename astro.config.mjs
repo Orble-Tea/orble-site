@@ -4,12 +4,18 @@ import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
 import glsl from "vite-plugin-glsl";
 import netlify from "@astrojs/netlify";
+import icon from "astro-icon";
+
 
 export default defineConfig({
   site: "https://www.orble-tea.com",
   output: "server",
   adapter: netlify(),
-  integrations: [tailwind(), mdx(), sitemap()],
+  integrations: [icon({
+      include: {
+        pixelarticons: ["*"],
+      },
+    }), tailwind(), mdx(), sitemap()],
   vite: {
     css: {
       devSourcemap: true,

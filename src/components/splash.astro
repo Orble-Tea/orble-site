@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import { Icon } from "astro-icon";
+import { Icon } from "astro-icon/components";
 import machineImage from "$assets/alpha-render.png";
 import betaImage from "$assets/beta-render.webp";
 ---
@@ -12,27 +12,73 @@ import betaImage from "$assets/beta-render.webp";
   >
     <!-- left render -->
     <Image
-      class="h-auto max-h-[25vh] w-auto max-w-[70%] sm:max-h-[70%] sm:max-w-[80%]"
+      class="h-auto max-h-[25vh] w-auto max-w-[70%] sm:max-h-[70%] sm:max-w-[80%] fade-slide-up"
       src={betaImage}
       alt="3D render of the Orble Beta Boba Tea Machine"
     />
 
     <!-- text -->
     <h2 class="flex flex-shrink-0 flex-col items-center text-center sm:mx-16">
-      <Icon name="logo" class="m-auto h-24 pb-4 md:h-32" />
+      <Icon name="logo" class="m-auto h-40 pb-4 md:h-32 w-auto" />
       <div class="font-heading leading-tight text-3xl sm:text-5xl">
-        Your fully<br />
-        au<span class="text-primary">tea</span>matic <br />
-        boba machine.
+        <span class="block line-blur">Your fully</span>
+        <span class="block line-blur delay-100">au<span class="text-primary">tea</span>matic</span>
+        <span class="block line-blur delay-200">boba machine.</span>
       </div>
     </h2>
 
     <!-- right render -->
     <Image
-      class="h-auto max-h-[25vh] w-auto max-w-[70%] sm:max-h-[70%] sm:max-w-[80%]"
+      class="h-auto max-h-[25vh] w-auto max-w-[70%] sm:max-h-[70%] sm:max-w-[80%] fade-slide-up delay-100"
       src={machineImage}
       loading="eager"
       alt="3D render of the Orble Boba Tea Machine"
     />
   </div>
+
+  <style>
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-slide-up {
+      opacity: 0;
+      animation: fadeSlideUp 0.8s ease-out forwards;
+      will-change: opacity, transform;
+    }
+
+    .delay-100 {
+      animation-delay: 0.14s;
+    }
+
+    @keyframes lineBlurIn {
+      from {
+        opacity: 0;
+        filter: blur(8px);
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0);
+      }
+    }
+
+    .line-blur {
+      opacity: 0;
+      animation: lineBlurIn 0.65s ease-out forwards;
+      will-change: opacity, transform, filter;
+    }
+
+    .delay-200 {
+      animation-delay: 0.24s;
+    }
+  </style>
 </section>
