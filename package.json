@@ -10,9 +10,12 @@
     "compile": "astro check && tsc --noEmit && astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@astrojs/tailwind": "^6.0.2",
     "@types/dompurify": "^3.0.5",
     "@types/micromodal": "^0.3.3",
@@ -20,6 +23,7 @@
     "@types/ogl": "npm:ogl-types@^0.0.102",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",
+    "@vitest/coverage-v8": "^3.2.4",
     "astro-eslint-parser": "^1.2.2",
     "cssnano": "^5.1.14",
     "eslint": "^9.39.1",
@@ -35,8 +39,10 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "tailwindcss-fluid-type": "^2.0.3",
+    "typescript": "^5.9.3",
     "vite": "^4.0.4",
-    "vite-plugin-glsl": "^1.1.1"
+    "vite-plugin-glsl": "^1.1.1",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.7",

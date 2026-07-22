@@ -45,9 +45,9 @@ export default [
     },
   },
 
-  // Lint JS API routes (Node environment)
+  // Lint JS API routes and shared API libraries (Node environment)
   {
-    files: ["src/pages/api/**/*.js"],
+    files: ["src/pages/api/**/*.js", "src/lib/restock/**/*.js"],
     languageOptions: {
       parserOptions: {
         sourceType: "module",

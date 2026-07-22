@@ -1,5 +1,6 @@
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
+
 export interface NavItem {
-  /** The section ID used for things like links and nav items. */
   id: string;
   title?: string;
 }
