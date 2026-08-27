@@ -1,12 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createMachineProducts,
   getMachineProducts,
+  getMachineProductId,
+  getNayaxProductId,
   getProductName,
   getProductOnHand,
   getProductPar,
   getProductSlot,
   hasProductOnHand,
+  updateMachineProducts,
 } from "../../../src/lib/restock/nayax.js";
 
 describe("nayax helpers", () => {
@@ -19,7 +23,9 @@ describe("nayax helpers", () => {
     vi.stubEnv("NAYAX_API_TOKEN", "token");
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
-        JSON.stringify({ data: [{ MDBCode: 1, MissingStockByMDB: 3, PAR: 4 }] }),
+        JSON.stringify({
+          data: [{ MDBCode: 1, MissingStockByMDB: 3, PAR: 4 }],
+        }),
         {
           status: 200,
         },
@@ -56,6 +62,40 @@ describe("nayax helpers", () => {
     expect(getProductPar(products[0])).toBe(3);
     expect(hasProductOnHand(products[0])).toBe(true);
     expect(getProductName({ dexProductName: " Thai Tea " })).toBe("Thai Tea");
+    expect(getMachineProductId({ machineProductId: "mp-1" })).toBe("mp-1");
+    expect(getNayaxProductId({ productId: "np-1" })).toBe("np-1");
+  });
+
+  it("updates and creates machine products with bearer auth", async () => {
+    vi.stubEnv("NAYAX_API_TOKEN", "token");
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(
+        async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
+      );
+    const payload = [
+      { MachineProductID: "mp-1", NayaxProductID: "np-1", MDBCode: 1, PAR: 4 },
+    ];
+
+    await updateMachineProducts("machine-1", payload);
+    await createMachineProducts("machine-1", payload);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://lynx.nayax.com/operational/v1/machines/machine-1/machineProducts?avoidDelete=true",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://lynx.nayax.com/operational/v1/machines/machine-1/machineProducts",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    );
   });
 
   it("reads portal-style pick fields", () => {

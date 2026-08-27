@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("restock service", () => {
   let buildRestockData;
+  let submitRestock;
   let getMachineConfig;
 
   beforeEach(async () => {
@@ -14,7 +15,7 @@ describe("restock service", () => {
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
 
     ({ getMachineConfig } = await import("../../../src/lib/restock/config.js"));
-    ({ buildRestockData } = await import(
+    ({ buildRestockData, submitRestock } = await import(
       "../../../src/lib/restock/restock-service.js"
     ));
   });
@@ -480,4 +481,154 @@ describe("restock service", () => {
     });
   });
 
+  it("submits a Load by updating Nayax and writing clearout, load, and visit rows", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (url, options = {}) => {
+        const urlText = String(url);
+        const method = options.method || "GET";
+
+        if (urlText.includes("'Restock%20Log':append")) {
+          return new Response(
+            JSON.stringify({
+              updates: { updatedRange: "'Restock Log'!A2:J3" },
+            }),
+          );
+        }
+        if (urlText.includes("'Visits':append")) {
+          return new Response(
+            JSON.stringify({ updates: { updatedRange: "'Visits'!A2:C2" } }),
+          );
+        }
+        if (urlText.includes("'Restock%20Log'")) {
+          return new Response(
+            JSON.stringify({ values: [["Batch ID", "Event"]] }),
+          );
+        }
+        if (urlText.includes("Production%20Plan")) {
+          return new Response(
+            JSON.stringify({
+              values: [
+                [
+                  "Drink Variation",
+                  "Amount to 30TH",
+                  "Slot (30TH)",
+                  "NayaxProductID",
+                ],
+                ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1", "np-new"],
+              ],
+            }),
+          );
+        }
+        if (urlText.includes("machineProducts") && method === "PUT") {
+          return new Response(JSON.stringify({ ok: true }));
+        }
+        if (urlText.includes("machineProducts")) {
+          return new Response(
+            JSON.stringify([
+              {
+                MachineProductID: "mp-1",
+                NayaxProductID: "np-old",
+                MDBCode: 1,
+                PAR: 4,
+                MissingStockByMDB: 2,
+                DEXProductName: "Taro Normal 16oz",
+              },
+            ]),
+          );
+        }
+        throw new Error(`Unexpected URL: ${urlText}`);
+      });
+
+    await expect(
+      submitRestock(getMachineConfig("30th"), {
+        batchId: "30TH-2026-07-10",
+        event: "Load",
+        machine: "30TH",
+        date: "2026-07-10",
+        duration: "5m 32s",
+        slots: [{ slot: 1, waste: 2, new: 4 }],
+      }),
+    ).resolves.toEqual({ success: true, message: "Restock complete" });
+
+    const nayaxPut = fetchMock.mock.calls.find(
+      ([url, options]) =>
+        String(url).includes("avoidDelete=true") && options?.method === "PUT",
+    );
+    expect(JSON.parse(nayaxPut[1].body)).toEqual([
+      {
+        MachineProductID: "mp-1",
+        NayaxProductID: "np-new",
+        MachineID: "machine-1",
+        MDBCode: 1,
+        PAR: 4,
+        DEXProductName: "Thai Tea Less Sweet w/ Lychee 16oz",
+      },
+    ]);
+
+    const restockAppend = fetchMock.mock.calls.find(([url]) =>
+      String(url).includes("'Restock%20Log':append"),
+    );
+    expect(JSON.parse(restockAppend[1].body).values).toEqual([
+      [
+        "30TH-2026-07-10",
+        "Clearout",
+        "2026-07-10",
+        1,
+        "Thai Tea Less Sweet w/ Lychee 16oz",
+        2,
+        2,
+        0,
+        0,
+        0,
+      ],
+      [
+        "30TH-2026-07-10",
+        "Load",
+        "2026-07-10",
+        1,
+        "Thai Tea Less Sweet w/ Lychee 16oz",
+        0,
+        0,
+        4,
+        4,
+        4,
+      ],
+    ]);
+
+    const visitsAppend = fetchMock.mock.calls.find(([url]) =>
+      String(url).includes("'Visits':append"),
+    );
+    expect(JSON.parse(visitsAppend[1].body).values).toEqual([
+      ["30TH-2026-07-10", "2026-07-10", "5m 32s"],
+    ]);
+  });
+
+  it("rejects duplicate submit events", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          values: [
+            ["Batch ID", "Event"],
+            ["30TH-2026-07-10", "Load"],
+          ],
+        }),
+      ),
+    );
+
+    await expect(
+      submitRestock(getMachineConfig("30th"), {
+        batchId: "30TH-2026-07-10",
+        event: "Load",
+        machine: "30TH",
+        date: "2026-07-10",
+        duration: "5m 32s",
+        slots: [{ slot: 1, waste: 2, new: 4 }],
+      }),
+    ).rejects.toMatchObject({
+      alreadySubmitted: true,
+      existingEntryRow: 2,
+      message: "This Load has already been submitted.",
+    });
+  });
 });

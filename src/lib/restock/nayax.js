@@ -51,6 +51,20 @@ export async function getMachineProducts(machineId) {
     : payload?.data || payload?.items || [];
 }
 
+export async function updateMachineProducts(machineId, products) {
+  return nayaxFetch(`/machines/${machineId}/machineProducts?avoidDelete=true`, {
+    method: "PUT",
+    body: JSON.stringify(products),
+  });
+}
+
+export async function createMachineProducts(machineId, products) {
+  return nayaxFetch(`/machines/${machineId}/machineProducts`, {
+    method: "POST",
+    body: JSON.stringify(products),
+  });
+}
+
 export function getProductSlot(product) {
   return Number(
     product.MDBCode ??
@@ -104,4 +118,47 @@ export function hasProductOnHand(product) {
 
 export function getProductName(product) {
   return String(product.DEXProductName ?? product.dexProductName ?? "").trim();
+}
+
+export function getMachineProductId(product) {
+  return (
+    product.MachineProductID ??
+    product.machineProductId ??
+    product.machineProductID ??
+    product.MachineProductId ??
+    product.machine_product_id ??
+    null
+  );
+}
+
+export function getNayaxProductId(product) {
+  return (
+    product.NayaxProductID ??
+    product.nayaxProductId ??
+    product.nayaxProductID ??
+    product.NayaxProductId ??
+    product.ProductID ??
+    product.productId ??
+    product.productID ??
+    product.product_id ??
+    null
+  );
+}
+
+export function getCashPrice(product) {
+  return (
+    product.CashPrice ?? product.cashPrice ?? product.Cash ?? product.cash ?? 0
+  );
+}
+
+export function getCreditCardPrice(product) {
+  return (
+    product.CreditCardPrice ??
+    product.creditCardPrice ??
+    product.CreditPrice ??
+    product.creditPrice ??
+    product.Credit ??
+    product.credit ??
+    getCashPrice(product)
+  );
 }
