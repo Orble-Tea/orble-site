@@ -1,0 +1,41 @@
+name: Integration Tests
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: integration-tests-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          RESTOCK_SECRET_KEY: ${{ secrets.RESTOCK_SECRET_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
+          GOOGLE_PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
+          PRODUCTION_PLAN_SHEET_ID: ${{ secrets.PRODUCTION_PLAN_SHEET_ID }}
+          INVENTORY_SHEET_ID: ${{ secrets.INVENTORY_SHEET_ID }}
+          RESTOCK_LOG_SHEET_ID: ${{ secrets.RESTOCK_LOG_SHEET_ID }}
+          NAYAX_BASE_URL: ${{ secrets.NAYAX_BASE_URL }}
+          NAYAX_QA_MACHINE_30TH_ID: ${{ secrets.NAYAX_QA_MACHINE_30TH_ID }}
+          NAYAX_QA_API_TOKEN: ${{ secrets.NAYAX_QA_API_TOKEN }}
+          NAYAX_MACHINE_30TH_ID: ${{ secrets.NAYAX_MACHINE_30TH_ID }}
+          NAYAX_API_TOKEN: ${{ secrets.NAYAX_API_TOKEN }}
