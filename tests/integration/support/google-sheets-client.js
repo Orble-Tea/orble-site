@@ -148,11 +148,54 @@ export async function ensureSheet(spreadsheetId, sheetName) {
 export async function getLatestSheetTitle(spreadsheetId) {
   const metadata = await readSpreadsheetMetadata(spreadsheetId);
   const sheets = Array.isArray(metadata?.sheets) ? metadata.sheets : [];
-  const latestSheet = sheets.at(-1)?.properties?.title;
+  const latestSheet =
+    findLatestDateSheetTitle(sheets) || sheets.at(-1)?.properties?.title;
   if (!latestSheet) {
     throw new Error(`Spreadsheet ${spreadsheetId} has no sheets`);
   }
   return latestSheet;
+}
+
+function findLatestDateSheetTitle(sheets) {
+  return sheets
+    .map((sheet) => {
+      const title = sheet?.properties?.title;
+      return {
+        title,
+        time: parseSheetDate(title)?.getTime() ?? Number.NEGATIVE_INFINITY,
+      };
+    })
+    .filter((sheet) => sheet.title && Number.isFinite(sheet.time))
+    .sort((left, right) => right.time - left.time)[0]?.title;
+}
+
+function parseSheetDate(title) {
+  const text = String(title || "").trim();
+  const isoMatch = text.match(
+    /(?:^|[^\d])(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[^\d])/,
+  );
+  if (isoMatch) {
+    return new Date(
+      Date.UTC(
+        Number(isoMatch[1]),
+        Number(isoMatch[2]) - 1,
+        Number(isoMatch[3]),
+      ),
+    );
+  }
+
+  const slashMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slashMatch) {
+    return new Date(
+      Date.UTC(
+        Number(slashMatch[3]),
+        Number(slashMatch[1]) - 1,
+        Number(slashMatch[2]),
+      ),
+    );
+  }
+
+  return null;
 }
 
 export async function clearLatestSheet(spreadsheetId) {

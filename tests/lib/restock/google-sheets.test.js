@@ -99,7 +99,7 @@ describe("google sheets helpers", () => {
     });
   });
 
-  it("reads values from the newest sheet in a workbook", async () => {
+  it("reads values from the newest date-named sheet in a workbook", async () => {
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
     const fetchMock = vi.spyOn(globalThis, "fetch");
     fetchMock
@@ -107,8 +107,10 @@ describe("google sheets helpers", () => {
         new Response(
           JSON.stringify({
             sheets: [
-              { properties: { title: "Inventory-2026-08-17", index: 0 } },
-              { properties: { title: "Inventory-2026-08-18", index: 1 } },
+              { properties: { title: "Sheet1", index: 0 } },
+              { properties: { title: "09/02/2026", index: 1 } },
+              { properties: { title: "08/24/2026", index: 2 } },
+              { properties: { title: "08/21/2026", index: 3 } },
             ],
           }),
           { status: 200 },
@@ -135,7 +137,7 @@ describe("google sheets helpers", () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      "https://sheets.googleapis.com/v4/spreadsheets/sheet-id/values/'Inventory-2026-08-18'",
+      "https://sheets.googleapis.com/v4/spreadsheets/sheet-id/values/'09%2F02%2F2026'",
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer sheets-token",
