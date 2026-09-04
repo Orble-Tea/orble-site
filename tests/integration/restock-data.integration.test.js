@@ -95,7 +95,9 @@ function chooseDifferentSlots(currentSlot) {
 function expectRestockDataSlotContract(slot) {
   expect(slot).toHaveProperty("previousDrink");
   expect(slot).toHaveProperty("expectedNew");
+  expect(slot).toHaveProperty("unassigned");
   expect(slot).not.toHaveProperty("drink");
+  expect(slot).not.toHaveProperty("empty");
   expect(slot).not.toHaveProperty("new");
 }
 
@@ -151,12 +153,12 @@ describe("restock data integration", () => {
         expect.objectContaining({
           slot: 1,
           expectedNew: 2,
-          empty: false,
+          unassigned: false,
         }),
         expect.objectContaining({
           slot: 2,
           expectedNew: 2,
-          empty: false,
+          unassigned: false,
         }),
       ]),
     });
@@ -201,7 +203,7 @@ describe("restock data integration", () => {
         topping: parsed.topping,
         sweetnessLevel: parsed.sweetness,
         expectedNew: 2,
-        empty: false,
+        unassigned: false,
       });
     }
     expectRestockDataSlotContract(body.slots[liveProduct.slot - 1]);
@@ -214,7 +216,7 @@ describe("restock data integration", () => {
       topping: null,
       sweetnessLevel: null,
       expectedNew: 0,
-      empty: true,
+      unassigned: true,
     });
   });
 
@@ -253,7 +255,7 @@ describe("restock data integration", () => {
           waste: 0,
           expectedNew: topoff.expectedNew,
           total: topoff.total,
-          empty: false,
+          unassigned: false,
         }),
       ]),
     });

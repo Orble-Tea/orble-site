@@ -117,7 +117,8 @@ function makeSlotState(slot, current, event, warnings) {
     waste,
     expectedNew: 0,
     total: previous - waste,
-    empty: !current,
+    unassigned: true,
+    hasCurrentProduct: Boolean(current),
   };
 }
 
@@ -205,7 +206,7 @@ async function readInventoryRows() {
 
 function getTopoffCandidates(machineConfig, slots) {
   return slots
-    .filter((slot) => !slot.empty)
+    .filter((slot) => slot.hasCurrentProduct)
     .map((slot) => {
       const capacity = slotCapacityForDrinkParts(slot);
       return {
@@ -315,7 +316,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
         size: null,
         topping: null,
         sweetnessLevel: null,
-        empty: true,
+        unassigned: true,
       });
       updateSlotTotals(slot);
     }
@@ -341,7 +342,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
           topping: parsedDrink.topping || null,
           sweetnessLevel: parsedDrink.sweetness || null,
           expectedNew: allocation.quantity,
-          empty: false,
+          unassigned: allocation.quantity === 0,
         });
         updateSlotTotals(slot);
       }
@@ -363,17 +364,23 @@ export async function buildRestockData(machineConfig, date, options = {}) {
 
     for (const candidate of candidates) {
       candidate.slot.expectedNew = candidate.allocation;
+      candidate.slot.unassigned = candidate.allocation === 0;
       updateSlotTotals(candidate.slot);
     }
   }
 
   if (event === RESTOCK_EVENTS.clearout) {
     for (const slot of slots) {
-      if (slot.empty) continue;
+      if (!slot.hasCurrentProduct) continue;
       slot.expectedNew = 0;
       slot.waste = slot.previous;
+      slot.unassigned = false;
       updateSlotTotals(slot);
     }
+  }
+
+  for (const slot of slots) {
+    delete slot.hasCurrentProduct;
   }
 
   return {
