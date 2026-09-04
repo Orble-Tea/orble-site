@@ -2,6 +2,8 @@
 
 ## Summary
 > **Provide a concise summary** of what this PR does and why it’s needed.
+> 
+> This PR adds backend API routing for the restock workflow. Normal `GET /api/restock-data` requests automatically return either a `Load` or `Topoff` payload based on what has already been logged for that batch. Rare clearout-only days, such as holiday shutdowns or scheduled maintenance, are supported explicitly with `mode=clearout`.
 ---
 
 ## Context / Background
@@ -17,6 +19,9 @@
 > **Explain the approach** used in this PR:
  - Describe key classes, functions, or modules that were modified or added
  - Highlight any important decisions and trade-offs made
+ - `GET /api/restock-data` now uses Restock Log history to determine the next normal event for a batch: `Load` first, then `Topoff` after the load has been logged.
+ - `mode=clearout` is an explicit opt-in for the rare case where the machine is being cleared without a same-day load. This path is separate from the normal Load/Topoff flow so the default API behavior stays aligned with the usual restock process.
+ - The handler rejects unsupported mode values so accidental query strings do not change the event selection.
 
 ---
 
