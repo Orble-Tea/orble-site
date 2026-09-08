@@ -290,6 +290,65 @@ describe("restock service", () => {
     expect(data.slots[0].expectedNew).toBe(2);
   });
 
+  it("matches Inventory allocation columns regardless of capitalization or spacing", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      const urlText = String(url);
+      if (urlText.includes("Restock%20Log")) {
+        return new Response(
+          JSON.stringify({
+            values: [
+              ["batch id", "EVENT"],
+              ["30TH-2026-07-10", "load"],
+            ],
+          }),
+        );
+      }
+      if (urlText.endsWith("/inventory-sheet")) {
+        return new Response(
+          JSON.stringify({
+            sheets: [
+              { properties: { title: "Inventory-2026-08-18", index: 0 } },
+            ],
+          }),
+        );
+      }
+      if (urlText.includes("Inventory-2026-08-18")) {
+        return new Response(
+          JSON.stringify({
+            values: [
+              ["DRINK", "storage", "To-30 th"],
+              ["Thai Tea 16oz Less Sugar w/ Lychee", 2, 2],
+            ],
+          }),
+        );
+      }
+      return new Response(
+        JSON.stringify([
+          {
+            MDBCode: 1,
+            PAR: 4,
+            MissingStockByMDB: 4,
+            DEXProductName: "THAI_16_LESS_LYC",
+          },
+        ]),
+      );
+    });
+
+    const data = await buildRestockData(
+      getMachineConfig("30th"),
+      "2026-07-10",
+    );
+
+    expect(data.event).toBe("Topoff");
+    expect(data.slots[0]).toMatchObject({
+      previous: 0,
+      expectedNew: 2,
+      total: 2,
+      unassigned: false,
+    });
+    expect(data.warnings).toEqual([]);
+  });
+
   it("does not use Inventory amounts assigned to a different machine for Topoff", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       const urlText = String(url);

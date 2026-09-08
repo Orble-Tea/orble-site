@@ -45,6 +45,30 @@ function parseSlots(value) {
     .filter((slot) => Number.isInteger(slot) && slot > 0);
 }
 
+function normalizeColumnName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function findColumnName(row, expectedColumnName) {
+  const expected = normalizeColumnName(expectedColumnName);
+  return Object.keys(row).find(
+    (columnName) => normalizeColumnName(columnName) === expected,
+  );
+}
+
+function getRowValue(row, expectedColumnName) {
+  const columnName = findColumnName(row, expectedColumnName);
+  return columnName ? row[columnName] : "";
+}
+
+function addWarning(warnings, warning) {
+  warnings.push(warning);
+  console.warn("restock-data warning:", warning);
+}
+
 function toSlotMap(products) {
   const map = new Map();
   for (const product of products) {
@@ -102,8 +126,7 @@ function makeSlotState(slot, current, event, warnings) {
     : null;
 
   if (warning) {
-    warnings.push(warning);
-    console.warn("restock-data warning:", warning);
+    addWarning(warnings, warning);
   }
 
   return {
@@ -167,7 +190,9 @@ function normalizeRequestedMode(mode) {
 }
 
 function getPlanVariation(row) {
-  return row["Drink Variation"] || row.Variation || row.variation || "";
+  return (
+    getRowValue(row, "Drink Variation") || getRowValue(row, "Variation")
+  );
 }
 
 function getInventoryMachineHeader(machineConfig) {
@@ -201,7 +226,7 @@ async function readInventoryRows() {
     await readLatestSheetValues(
       assertConfigured(SHEET_IDS.inventory, "INVENTORY_SHEET_ID"),
     ),
-  ).filter((row) => normalizeDrinkName(row.Drink));
+  ).filter((row) => normalizeDrinkName(getRowValue(row, "Drink")));
 }
 
 function getTopoffCandidates(machineConfig, slots) {
@@ -258,18 +283,15 @@ export async function determineEvent(batchId, options = {}) {
   const rows = await readRestockLogRows();
   const hasLoad = rows.some(
     (row) =>
-      row["Batch ID"] === batchId &&
-      String(row.Event).toLowerCase() === RESTOCK_EVENTS.load.toLowerCase(),
+      getRowValue(row, "Batch ID") === batchId &&
+      String(getRowValue(row, "Event")).toLowerCase() ===
+        RESTOCK_EVENTS.load.toLowerCase(),
   );
   const hasTopoff = rows.some(
     (row) =>
-      row["Batch ID"] === batchId &&
-      String(row.Event).toLowerCase() === RESTOCK_EVENTS.topoff.toLowerCase(),
-  );
-  const hasClearout = rows.some(
-    (row) =>
-      row["Batch ID"] === batchId &&
-      String(row.Event).toLowerCase() === RESTOCK_EVENTS.clearout.toLowerCase(),
+      getRowValue(row, "Batch ID") === batchId &&
+      String(getRowValue(row, "Event")).toLowerCase() ===
+        RESTOCK_EVENTS.topoff.toLowerCase(),
   );
 
   const requestedMode = normalizeRequestedMode(options.mode ?? options.event);
@@ -282,9 +304,11 @@ export async function determineEvent(batchId, options = {}) {
   }
 
   if (requestedMode === RESTOCK_EVENTS.clearout.toLowerCase()) {
-    if (rows.every((row) => row["Batch ID"] !== batchId))
+    if (rows.every((row) => getRowValue(row, "Batch ID") !== batchId))
       return RESTOCK_EVENTS.clearout;
-    const existing = rows.find((row) => row["Batch ID"] === batchId);
+    const existing = rows.find(
+      (row) => getRowValue(row, "Batch ID") === batchId,
+    );
     throw new AlreadySubmittedError(
       "This event has already been submitted for this batch.",
       existing?._rowNumber,
@@ -294,7 +318,9 @@ export async function determineEvent(batchId, options = {}) {
   if (!hasLoad) return RESTOCK_EVENTS.load;
   if (!hasTopoff) return RESTOCK_EVENTS.topoff;
 
-  const existing = rows.find((row) => row["Batch ID"] === batchId);
+  const existing = rows.find(
+    (row) => getRowValue(row, "Batch ID") === batchId,
+  );
   throw new AlreadySubmittedError(
     "This event has already been submitted for this batch.",
     existing?._rowNumber,
@@ -326,8 +352,8 @@ export async function buildRestockData(machineConfig, date, options = {}) {
     const slotHeader = getSlotHeader(machineConfig);
     for (const row of rows) {
       const drink = normalizeDrinkName(getPlanVariation(row));
-      const amount = parseInteger(row[amountHeader]);
-      const slotNumbers = parseSlots(row[slotHeader]);
+      const amount = parseInteger(getRowValue(row, amountHeader));
+      const slotNumbers = parseSlots(getRowValue(row, slotHeader));
       for (const allocation of distributeAcrossSlots(
         amount,
         slotNumbers,
@@ -352,10 +378,29 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   if (event === RESTOCK_EVENTS.topoff) {
     const inventoryRows = await readInventoryRows();
     const inventoryMachineHeader = getInventoryMachineHeader(machineConfig);
+    const hasMachineAllocationColumn = inventoryRows.some((row) =>
+      findColumnName(row, inventoryMachineHeader),
+    );
+
+    if (inventoryRows.length > 0 && !hasMachineAllocationColumn) {
+      addWarning(warnings, {
+        code: "MISSING_INVENTORY_ALLOCATION_COLUMN",
+        expectedColumn: inventoryMachineHeader,
+        availableColumns: [
+          ...new Set(
+            inventoryRows.flatMap((row) =>
+              Object.keys(row).filter((columnName) => columnName !== "_rowNumber"),
+            ),
+          ),
+        ],
+        message: `Inventory is missing an allocation column for ${machineConfig.label}. Expected a column equivalent to "${inventoryMachineHeader}".`,
+      });
+    }
+
     const storageByDrink = new Map(
       inventoryRows.map((row) => [
-        canonicalDrinkKey(row.Drink),
-        parseInteger(row[inventoryMachineHeader]),
+        canonicalDrinkKey(getRowValue(row, "Drink")),
+        parseInteger(getRowValue(row, inventoryMachineHeader)),
       ]),
     );
     const candidates = getTopoffCandidates(machineConfig, slots);
