@@ -404,6 +404,7 @@ describe("restock service", () => {
       previous: 0,
       expectedNew: 0,
       total: 0,
+      unassigned: false,
     });
   });
 
@@ -468,6 +469,7 @@ describe("restock service", () => {
       previous: 3,
       expectedNew: 0,
       total: 3,
+      unassigned: false,
     });
     expect(data.slots[1]).toMatchObject({
       slot: 2,
@@ -658,7 +660,7 @@ describe("restock service", () => {
       topping: null,
       sweetnessLevel: null,
       previous: 0,
-      unassigned: true,
+      unassigned: false,
     });
     expect(data.warnings).toEqual([
       expect.objectContaining({

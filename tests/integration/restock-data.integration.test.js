@@ -303,6 +303,39 @@ describe("restock data integration", () => {
     expectRestockDataSlotContract(body.slots[topoff.slot - 1]);
   });
 
+  it("keeps a configured Nayax slot assigned when Topoff adds zero drinks", async () => {
+    const topoff = await getLiveTopoffFixture(0);
+    await seedInventory([
+      ["Drink", "Storage", "To 30TH"],
+      [topoff.drink, 2, 0],
+    ]);
+    await seedSheet(
+      requireEnv("RESTOCK_LOG_SHEET_ID"),
+      "Restock Log",
+      [
+        ...RESTOCK_LOG_HEADER,
+        [BATCH_ID, "Load", TEST_DATE, topoff.slot, topoff.drink, topoff.previous, 0, 4, 4, 4],
+      ],
+    );
+
+    const { GET } = await import("../../src/pages/api/restock-data.js");
+    const response = await GET({
+      url: new URL(
+        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}`,
+      ),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.slots[topoff.slot - 1]).toMatchObject({
+      slot: topoff.slot,
+      previous: topoff.previous,
+      expectedNew: 0,
+      total: topoff.previous,
+      unassigned: false,
+    });
+  });
+
   it("returns a conflict once Load and Topoff already exist for the batch", async () => {
     await seedProductionPlan(PRODUCTION_PLAN_ROWS);
     await seedInventory(INVENTORY_ROWS);

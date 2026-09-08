@@ -140,7 +140,7 @@ function makeSlotState(slot, current, event, warnings) {
     waste,
     expectedNew: 0,
     total: previous - waste,
-    unassigned: true,
+    unassigned: !current,
     hasCurrentProduct: Boolean(current),
   };
 }
@@ -368,7 +368,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
           topping: parsedDrink.topping || null,
           sweetnessLevel: parsedDrink.sweetness || null,
           expectedNew: allocation.quantity,
-          unassigned: allocation.quantity === 0,
+          unassigned: false,
         });
         updateSlotTotals(slot);
       }
@@ -409,7 +409,6 @@ export async function buildRestockData(machineConfig, date, options = {}) {
 
     for (const candidate of candidates) {
       candidate.slot.expectedNew = candidate.allocation;
-      candidate.slot.unassigned = candidate.allocation === 0;
       updateSlotTotals(candidate.slot);
     }
   }
