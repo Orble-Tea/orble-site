@@ -336,6 +336,42 @@ describe("restock data integration", () => {
     });
   });
 
+  it("builds Clearout from the original batch date after Load", async () => {
+    const fixture = await getLiveTopoffFixture(0);
+    await seedSheet(
+      requireEnv("RESTOCK_LOG_SHEET_ID"),
+      "Restock Log",
+      [
+        ...RESTOCK_LOG_HEADER,
+        [BATCH_ID, "Load", TEST_DATE, fixture.slot, fixture.drink, fixture.previous, 0, 4, 4, 4],
+      ],
+    );
+
+    const { GET } = await import("../../src/pages/api/restock-data.js");
+    const response = await GET({
+      url: new URL(
+        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}&mode=clearout`,
+      ),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({
+      batchId: BATCH_ID,
+      event: "Clearout",
+      slots: expect.arrayContaining([
+        expect.objectContaining({
+          slot: fixture.slot,
+          previous: fixture.previous,
+          waste: fixture.previous,
+          expectedNew: 0,
+          total: 0,
+          unassigned: false,
+        }),
+      ]),
+    });
+  });
+
   it("returns a conflict once Load and Topoff already exist for the batch", async () => {
     await seedProductionPlan(PRODUCTION_PLAN_ROWS);
     await seedInventory(INVENTORY_ROWS);

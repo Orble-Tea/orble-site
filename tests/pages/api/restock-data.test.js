@@ -157,7 +157,14 @@ describe("GET /api/restock-data", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
-        return new Response(JSON.stringify({ values: [["Batch ID", "Event"]] }));
+        return new Response(
+          JSON.stringify({
+            values: [
+              ["Batch ID", "Event"],
+              ["30TH-2026-07-10", "Load"],
+            ],
+          }),
+        );
       }
       return new Response(
         JSON.stringify([
@@ -182,6 +189,31 @@ describe("GET /api/restock-data", () => {
       batchId: "30TH-2026-07-10",
       event: "Clearout",
       machine: "30TH",
+    });
+  });
+
+  it("rejects Clearout when the batch has no Load", async () => {
+    vi.resetModules();
+    vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
+    vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
+    vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
+    vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
+    vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
+    const { GET } = await import("../../../src/pages/api/restock-data.js");
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ values: [["Batch ID", "Event"]] })),
+    );
+
+    const response = await GET({
+      url: new URL(
+        "https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10&mode=clearout",
+      ),
+    });
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "Clearout requires a Load event for this batch.",
     });
   });
 

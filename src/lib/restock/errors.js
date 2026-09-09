@@ -7,6 +7,14 @@ export class AlreadySubmittedError extends Error {
   }
 }
 
+export class ClearoutRequiresLoadError extends Error {
+  constructor() {
+    super("Clearout requires a Load event for this batch.");
+    this.name = "ClearoutRequiresLoadError";
+    this.clearoutRequiresLoad = true;
+  }
+}
+
 export class UpstreamServiceError extends Error {
   constructor(message, details = {}) {
     super(message);

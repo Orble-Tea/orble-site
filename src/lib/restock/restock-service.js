@@ -8,7 +8,7 @@ import {
   RESTOCK_EVENTS,
   SHEET_IDS,
 } from "./config.js";
-import { AlreadySubmittedError } from "./errors.js";
+import { AlreadySubmittedError, ClearoutRequiresLoadError } from "./errors.js";
 import {
   readLatestSheetValues,
   readSheetValues,
@@ -293,6 +293,18 @@ export async function determineEvent(batchId, options = {}) {
       String(getRowValue(row, "Event")).toLowerCase() ===
         RESTOCK_EVENTS.topoff.toLowerCase(),
   );
+  const loadEntry = rows.find(
+    (row) =>
+      getRowValue(row, "Batch ID") === batchId &&
+      String(getRowValue(row, "Event")).toLowerCase() ===
+        RESTOCK_EVENTS.load.toLowerCase(),
+  );
+  const clearoutEntry = rows.find(
+    (row) =>
+      getRowValue(row, "Batch ID") === batchId &&
+      String(getRowValue(row, "Event")).toLowerCase() ===
+        RESTOCK_EVENTS.clearout.toLowerCase(),
+  );
 
   const requestedMode = normalizeRequestedMode(options.mode ?? options.event);
 
@@ -304,15 +316,14 @@ export async function determineEvent(batchId, options = {}) {
   }
 
   if (requestedMode === RESTOCK_EVENTS.clearout.toLowerCase()) {
-    if (rows.every((row) => getRowValue(row, "Batch ID") !== batchId))
-      return RESTOCK_EVENTS.clearout;
-    const existing = rows.find(
-      (row) => getRowValue(row, "Batch ID") === batchId,
-    );
-    throw new AlreadySubmittedError(
-      "This event has already been submitted for this batch.",
-      existing?._rowNumber,
-    );
+    if (!loadEntry) throw new ClearoutRequiresLoadError();
+    if (clearoutEntry) {
+      throw new AlreadySubmittedError(
+        "This event has already been submitted for this batch.",
+        clearoutEntry._rowNumber,
+      );
+    }
+    return RESTOCK_EVENTS.clearout;
   }
 
   if (!hasLoad) return RESTOCK_EVENTS.load;

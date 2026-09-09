@@ -33,7 +33,7 @@ export async function GET({ url }) {
     });
     return json(data);
   } catch (error) {
-    if (error.alreadySubmitted) {
+    if (error.alreadySubmitted || error.clearoutRequiresLoad) {
       return conflict(error.message, error.existingEntryRow);
     }
     console.error("restock-data error:", error);

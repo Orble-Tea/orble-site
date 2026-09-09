@@ -676,12 +676,17 @@ describe("restock service", () => {
     );
   });
 
-  it("returns Clearout when explicitly requested for a clearout-only day", async () => {
+  it("returns Clearout when explicitly requested for an existing batch", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
-          JSON.stringify({ values: [["Batch ID", "Event"]] }),
+          JSON.stringify({
+            values: [
+              ["Batch ID", "Event"],
+              ["30TH-2026-07-10", "Load"],
+            ],
+          }),
         );
       }
       return new Response(
@@ -714,6 +719,44 @@ describe("restock service", () => {
       waste: 1,
       expectedNew: 0,
       total: 0,
+    });
+  });
+
+  it("requires a prior Load before returning Clearout", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ values: [["Batch ID", "Event"]] })),
+    );
+
+    await expect(
+      buildRestockData(getMachineConfig("30th"), "2026-07-10", {
+        mode: "clearout",
+      }),
+    ).rejects.toMatchObject({
+      clearoutRequiresLoad: true,
+      message: "Clearout requires a Load event for this batch.",
+    });
+  });
+
+  it("does not return Clearout when Clearout is already logged for the batch", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          values: [
+            ["Batch ID", "Event"],
+            ["30TH-2026-07-10", "Load"],
+            ["30TH-2026-07-10", "Clearout"],
+          ],
+        }),
+      ),
+    );
+
+    await expect(
+      buildRestockData(getMachineConfig("30th"), "2026-07-10", {
+        mode: "clearout",
+      }),
+    ).rejects.toMatchObject({
+      alreadySubmitted: true,
+      existingEntryRow: 3,
     });
   });
 
