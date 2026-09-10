@@ -95,7 +95,7 @@ function chooseDifferentSlots(currentSlot) {
 function expectRestockDataSlotContract(slot) {
   expect(slot).toHaveProperty("previousDrink");
   expect(slot).toHaveProperty("expectedNew");
-  expect(slot).toHaveProperty("unassigned");
+  expect(slot).not.toHaveProperty("unassigned");
   expect(slot).not.toHaveProperty("drink");
   expect(slot).not.toHaveProperty("empty");
   expect(slot).not.toHaveProperty("new");
@@ -153,12 +153,10 @@ describe("restock data integration", () => {
         expect.objectContaining({
           slot: 1,
           expectedNew: 2,
-          unassigned: false,
         }),
         expect.objectContaining({
           slot: 2,
           expectedNew: 2,
-          unassigned: false,
         }),
       ]),
     });
@@ -203,7 +201,6 @@ describe("restock data integration", () => {
         topping: parsed.topping,
         sweetnessLevel: parsed.sweetness,
         expectedNew: 2,
-        unassigned: false,
       });
     }
     expectRestockDataSlotContract(body.slots[liveProduct.slot - 1]);
@@ -216,7 +213,6 @@ describe("restock data integration", () => {
       topping: null,
       sweetnessLevel: null,
       expectedNew: 0,
-      unassigned: true,
     });
   });
 
@@ -255,7 +251,6 @@ describe("restock data integration", () => {
           waste: 0,
           expectedNew: topoff.expectedNew,
           total: topoff.total,
-          unassigned: false,
         }),
       ]),
     });
@@ -303,7 +298,7 @@ describe("restock data integration", () => {
     expectRestockDataSlotContract(body.slots[topoff.slot - 1]);
   });
 
-  it("keeps a configured Nayax slot assigned when Topoff adds zero drinks", async () => {
+  it("does not expose an assignment flag when Topoff adds zero drinks", async () => {
     const topoff = await getLiveTopoffFixture(0);
     await seedInventory([
       ["Drink", "Storage", "To 30TH"],
@@ -332,8 +327,8 @@ describe("restock data integration", () => {
       previous: topoff.previous,
       expectedNew: 0,
       total: topoff.previous,
-      unassigned: false,
     });
+    expect(body.slots[topoff.slot - 1]).not.toHaveProperty("unassigned");
   });
 
   it("builds Clearout from the original batch date after Load", async () => {
@@ -366,7 +361,6 @@ describe("restock data integration", () => {
           waste: fixture.previous,
           expectedNew: 0,
           total: 0,
-          unassigned: false,
         }),
       ]),
     });

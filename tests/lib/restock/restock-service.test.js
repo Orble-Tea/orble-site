@@ -76,10 +76,10 @@ describe("restock service", () => {
       waste: 2,
       expectedNew: 4,
       total: 4,
-      unassigned: false,
     });
     expect(data.slots[0]).not.toHaveProperty("drink");
     expect(data.slots[0]).not.toHaveProperty("empty");
+    expect(data.slots[0]).not.toHaveProperty("unassigned");
   });
 
   it("distributes Load quantities evenly across multiple slots", async () => {
@@ -113,7 +113,7 @@ describe("restock service", () => {
     ]);
   });
 
-  it("does not keep Nayax drink fields in unassigned Load slots", async () => {
+  it("does not keep Nayax drink fields in Load slots absent from the Production Plan", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
@@ -162,7 +162,6 @@ describe("restock service", () => {
       waste: 3,
       expectedNew: 0,
       total: 0,
-      unassigned: true,
     });
     expect(data.slots[7]).toMatchObject({
       slot: 8,
@@ -175,7 +174,6 @@ describe("restock service", () => {
       waste: 0,
       expectedNew: 4,
       total: 4,
-      unassigned: false,
     });
   });
 
@@ -211,7 +209,6 @@ describe("restock service", () => {
       size: "16oz",
       expectedNew: 4,
       total: 4,
-      unassigned: false,
     });
     expect(data.slots[21]).toMatchObject({
       slot: 22,
@@ -219,7 +216,6 @@ describe("restock service", () => {
       size: "16oz",
       expectedNew: 4,
       total: 4,
-      unassigned: false,
     });
   });
 
@@ -284,7 +280,6 @@ describe("restock service", () => {
       waste: 0,
       expectedNew: 2,
       total: 4,
-      unassigned: false,
     });
     expect(data.slots[0]).not.toHaveProperty("drink");
     expect(data.slots[0].expectedNew).toBe(2);
@@ -344,7 +339,6 @@ describe("restock service", () => {
       previous: 0,
       expectedNew: 2,
       total: 2,
-      unassigned: false,
     });
     expect(data.warnings).toEqual([]);
   });
@@ -404,7 +398,6 @@ describe("restock service", () => {
       previous: 0,
       expectedNew: 0,
       total: 0,
-      unassigned: false,
     });
   });
 
@@ -469,7 +462,6 @@ describe("restock service", () => {
       previous: 3,
       expectedNew: 0,
       total: 3,
-      unassigned: false,
     });
     expect(data.slots[1]).toMatchObject({
       slot: 2,
@@ -660,7 +652,6 @@ describe("restock service", () => {
       topping: null,
       sweetnessLevel: null,
       previous: 0,
-      unassigned: false,
     });
     expect(data.warnings).toEqual([
       expect.objectContaining({

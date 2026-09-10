@@ -140,7 +140,6 @@ function makeSlotState(slot, current, event, warnings) {
     waste,
     expectedNew: 0,
     total: previous - waste,
-    unassigned: !current,
     hasCurrentProduct: Boolean(current),
   };
 }
@@ -353,7 +352,6 @@ export async function buildRestockData(machineConfig, date, options = {}) {
         size: null,
         topping: null,
         sweetnessLevel: null,
-        unassigned: true,
       });
       updateSlotTotals(slot);
     }
@@ -379,7 +377,6 @@ export async function buildRestockData(machineConfig, date, options = {}) {
           topping: parsedDrink.topping || null,
           sweetnessLevel: parsedDrink.sweetness || null,
           expectedNew: allocation.quantity,
-          unassigned: false,
         });
         updateSlotTotals(slot);
       }
@@ -429,7 +426,6 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       if (!slot.hasCurrentProduct) continue;
       slot.expectedNew = 0;
       slot.waste = slot.previous;
-      slot.unassigned = false;
       updateSlotTotals(slot);
     }
   }
