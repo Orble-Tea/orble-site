@@ -17,6 +17,13 @@ module.exports = {
         secondary: "var(--color-secondary)",
         accent: "var(--color-accent)",
         'teal-theme': '#b1d9cd',
+        orble: {
+          tint: '#EAF6F2',
+          light: '#B1D9CD',
+          DEFAULT: '#9DD9C8',
+          dark: '#7AC4B3',
+          ink: '#3E7A6C',
+        },
         'tan-theme': '#fff9ef', 
       },
       textColor: {
