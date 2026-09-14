@@ -8,6 +8,7 @@ import netlify from "@astrojs/netlify";
 export default defineConfig({
   site: "https://www.orble-tea.com",
   output: "server",
+  devToolbar: { enabled: false },
   adapter: netlify(),
   integrations: [tailwind(), mdx(), sitemap()],
   vite: {

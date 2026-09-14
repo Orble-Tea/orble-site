@@ -19,7 +19,9 @@ describe("nayax helpers", () => {
     vi.stubEnv("NAYAX_API_TOKEN", "token");
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
-        JSON.stringify({ data: [{ MDBCode: 1, MissingStockByMDB: 3, PAR: 4 }] }),
+        JSON.stringify({
+          data: [{ MDBCode: 1, MissingStockByMDB: 3, PAR: 4 }],
+        }),
         {
           status: 200,
         },
