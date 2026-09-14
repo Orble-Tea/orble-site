@@ -31,6 +31,38 @@
 | `npm run format`       | Format code with [Prettier](https://prettier.io/)  |
 | `npm run clean`        | Remove `node_modules` and build output             |
 
+## Testing
+
+We have four levels of tests in this repo. The first three run in CI on every push with zero secrets.
+
+| Level | What is mocked | Command |
+| --- | --- | --- |
+| Unit (vitest) | everything outside the function | `npm test` |
+| Browser (Playwright) | everything server-side | `npx playwright test --project=browser` |
+| Integration (Playwright) | external dependencies (Nayax/Sheets, via `tests/e2e/fixture-server.mjs`) | `npx playwright test --project=integration` |
+| Smoke | nothing | `npm run smoke` (manual only, see below) |
+
+### Live smoke test
+
+The smoke exists for one question: is the slot table the restocker sees derived correctly from the Production Plan and Inventory, after passing through the real backend? It runs against the live site (or a deploy preview), reads the actual Google Sheets independently, and asserts per drink that the plan amounts equal what the table tells the restocker to load (Load days), or that topoff amounts never exceed cold storage (Topoff days). It saves `smoke-table.png` for eyeballing every run.
+
+```
+RESTOCK_SECRET_KEY=... \
+SMOKE_DATE=2026-09-08 \
+GOOGLE_SERVICE_ACCOUNT_EMAIL=... GOOGLE_PRIVATE_KEY=... \
+PRODUCTION_PLAN_SHEET_ID=... RESTOCK_LOG_SHEET_ID=... INVENTORY_SHEET_ID=... \
+npm run smoke
+```
+
+Optional: `SMOKE_URL=https://deploy-preview-NN--orble-tea.netlify.app` to target a preview, `SMOKE_MACHINE` (default 30TH), `GOOGLE_SHEETS_ACCESS_TOKEN` instead of the service account pair.
+
+Rules the smoke lives by:
+
+- **Not in CI, on purpose.** It depends on live third parties and real data, and is run by a human who knows what the sheets say today. Run it before merging risky changes, after Netlify env changes, or when the machine misbehaves and you want to rule out software in one command.
+- **Read-only.** It never taps Complete. Once the real submit ships, Complete writes actual Restock Log rows and Nayax updates.
+- **Independent derivation.** `tests/smoke/smoke.spec.js` must never import from `src/lib/restock`. Its expectations are computed naively from raw sheet values; reusing the backend's own code would let a derivation bug agree with itself and pass.
+- **Aggregate-level.** It checks that no unit of any drink is lost or invented end to end. Slot-level placement is covered by the fixture-backed browser tests.
+
 ## Credits
 
 - astronaut image
