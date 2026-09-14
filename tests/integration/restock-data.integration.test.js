@@ -18,7 +18,20 @@ const PRODUCTION_PLAN_ROWS = [
   ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
   ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1, 2"],
 ];
-const RESTOCK_LOG_HEADER = [["Batch ID", "Event", "Date", "Slot", "Drink", "Previous", "Waste", "New", "Total", "Expected"]];
+const RESTOCK_LOG_HEADER = [
+  [
+    "Batch ID",
+    "Event",
+    "Date",
+    "Slot",
+    "Drink",
+    "Previous",
+    "Waste",
+    "New",
+    "Total",
+    "Expected",
+  ],
+];
 const INVENTORY_ROWS = [
   ["Drink", "Storage", "To 30TH"],
   ["Thai Tea 16oz Less Sugar w/ Lychee", 2, 2],
@@ -37,7 +50,11 @@ async function seedRestockLog(rows) {
 }
 
 async function seedProductionPlan(rows) {
-  await seedSheet(requireEnv("PRODUCTION_PLAN_SHEET_ID"), "Production Plan", rows);
+  await seedSheet(
+    requireEnv("PRODUCTION_PLAN_SHEET_ID"),
+    "Production Plan",
+    rows,
+  );
 }
 
 async function seedInventory(rows) {
@@ -52,7 +69,9 @@ async function getLiveTopoffFixture(storage) {
     getProductSlot,
     hasProductOnHand,
   } = await import("../../src/lib/restock/nayax.js");
-  const products = await getMachineProducts(requireEnv("NAYAX_MACHINE_30TH_ID"));
+  const products = await getMachineProducts(
+    requireEnv("NAYAX_MACHINE_30TH_ID"),
+  );
   const product = products.find((candidate) => {
     const slot = getProductSlot(candidate);
     const drink = normalizeDrinkName(getProductName(candidate));
@@ -107,21 +126,29 @@ describe("restock data integration", () => {
     vi.stubEnv("RESTOCK_SECRET_KEY", "integration-secret");
     vi.stubEnv(
       "NAYAX_BASE_URL",
-      process.env.NAYAX_BASE_URL ||
-        "https://lynx.nayax.com/operational/v1",
+      process.env.NAYAX_BASE_URL || "https://lynx.nayax.com/operational/v1",
     );
     vi.stubEnv("NAYAX_MACHINE_30TH_ID", requireEnv("NAYAX_MACHINE_30TH_ID"));
-    vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", requireEnv("PRODUCTION_PLAN_SHEET_ID"));
+    vi.stubEnv(
+      "PRODUCTION_PLAN_SHEET_ID",
+      requireEnv("PRODUCTION_PLAN_SHEET_ID"),
+    );
     vi.stubEnv("INVENTORY_SHEET_ID", requireEnv("INVENTORY_SHEET_ID"));
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", requireEnv("RESTOCK_LOG_SHEET_ID"));
-    vi.stubEnv("GOOGLE_SERVICE_ACCOUNT_EMAIL", requireEnv("GOOGLE_SERVICE_ACCOUNT_EMAIL"));
+    vi.stubEnv(
+      "GOOGLE_SERVICE_ACCOUNT_EMAIL",
+      requireEnv("GOOGLE_SERVICE_ACCOUNT_EMAIL"),
+    );
     vi.stubEnv("GOOGLE_PRIVATE_KEY", requireEnv("GOOGLE_PRIVATE_KEY"));
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "");
     vi.stubEnv("NAYAX_API_TOKEN", requireEnv("NAYAX_API_TOKEN"));
   });
 
   afterEach(async () => {
-    await clearSheetRange(requireEnv("PRODUCTION_PLAN_SHEET_ID"), "Production Plan");
+    await clearSheetRange(
+      requireEnv("PRODUCTION_PLAN_SHEET_ID"),
+      "Production Plan",
+    );
     await clearSheetRange(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log");
     await clearLatestSheet(requireEnv("INVENTORY_SHEET_ID"));
     vi.restoreAllMocks();
@@ -222,14 +249,21 @@ describe("restock data integration", () => {
       ["Drink", "Storage", "To 30TH"],
       [topoff.drink, 2, 2],
     ]);
-    await seedSheet(
-      requireEnv("RESTOCK_LOG_SHEET_ID"),
-      "Restock Log",
+    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
+      ...RESTOCK_LOG_HEADER,
       [
-        ...RESTOCK_LOG_HEADER,
-        [BATCH_ID, "Load", TEST_DATE, topoff.slot, topoff.drink, topoff.previous, 0, 4, 4, 4],
+        BATCH_ID,
+        "Load",
+        TEST_DATE,
+        topoff.slot,
+        topoff.drink,
+        topoff.previous,
+        0,
+        4,
+        4,
+        4,
       ],
-    );
+    ]);
 
     const { GET } = await import("../../src/pages/api/restock-data.js");
     const response = await GET({
@@ -265,14 +299,21 @@ describe("restock data integration", () => {
       ["Drink", "Storage", "To 30TH"],
       [topoff.drink, 2, 1],
     ]);
-    await seedSheet(
-      requireEnv("RESTOCK_LOG_SHEET_ID"),
-      "Restock Log",
+    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
+      ...RESTOCK_LOG_HEADER,
       [
-        ...RESTOCK_LOG_HEADER,
-        [BATCH_ID, "Load", TEST_DATE, topoff.slot, topoff.drink, topoff.previous, 0, 4, 4, 4],
+        BATCH_ID,
+        "Load",
+        TEST_DATE,
+        topoff.slot,
+        topoff.drink,
+        topoff.previous,
+        0,
+        4,
+        4,
+        4,
       ],
-    );
+    ]);
 
     const { GET } = await import("../../src/pages/api/restock-data.js");
     const response = await GET({
@@ -304,14 +345,21 @@ describe("restock data integration", () => {
       ["Drink", "Storage", "To 30TH"],
       [topoff.drink, 2, 0],
     ]);
-    await seedSheet(
-      requireEnv("RESTOCK_LOG_SHEET_ID"),
-      "Restock Log",
+    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
+      ...RESTOCK_LOG_HEADER,
       [
-        ...RESTOCK_LOG_HEADER,
-        [BATCH_ID, "Load", TEST_DATE, topoff.slot, topoff.drink, topoff.previous, 0, 4, 4, 4],
+        BATCH_ID,
+        "Load",
+        TEST_DATE,
+        topoff.slot,
+        topoff.drink,
+        topoff.previous,
+        0,
+        4,
+        4,
+        4,
       ],
-    );
+    ]);
 
     const { GET } = await import("../../src/pages/api/restock-data.js");
     const response = await GET({
@@ -333,14 +381,21 @@ describe("restock data integration", () => {
 
   it("builds Clearout from the original batch date after Load", async () => {
     const fixture = await getLiveTopoffFixture(0);
-    await seedSheet(
-      requireEnv("RESTOCK_LOG_SHEET_ID"),
-      "Restock Log",
+    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
+      ...RESTOCK_LOG_HEADER,
       [
-        ...RESTOCK_LOG_HEADER,
-        [BATCH_ID, "Load", TEST_DATE, fixture.slot, fixture.drink, fixture.previous, 0, 4, 4, 4],
+        BATCH_ID,
+        "Load",
+        TEST_DATE,
+        fixture.slot,
+        fixture.drink,
+        fixture.previous,
+        0,
+        4,
+        4,
+        4,
       ],
-    );
+    ]);
 
     const { GET } = await import("../../src/pages/api/restock-data.js");
     const response = await GET({
@@ -369,15 +424,33 @@ describe("restock data integration", () => {
   it("returns a conflict once Load and Topoff already exist for the batch", async () => {
     await seedProductionPlan(PRODUCTION_PLAN_ROWS);
     await seedInventory(INVENTORY_ROWS);
-    await seedSheet(
-      requireEnv("RESTOCK_LOG_SHEET_ID"),
-      "Restock Log",
+    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
+      ...RESTOCK_LOG_HEADER,
       [
-        ...RESTOCK_LOG_HEADER,
-        [BATCH_ID, "Load", TEST_DATE, 1, "Thai Tea Less Sweet w/ Lychee 16oz", 1, 0, 4, 4, 4],
-        [BATCH_ID, "Topoff", TEST_DATE, 1, "Thai Tea Less Sweet w/ Lychee 16oz", 1, 0, 2, 3, 2],
+        BATCH_ID,
+        "Load",
+        TEST_DATE,
+        1,
+        "Thai Tea Less Sweet w/ Lychee 16oz",
+        1,
+        0,
+        4,
+        4,
+        4,
       ],
-    );
+      [
+        BATCH_ID,
+        "Topoff",
+        TEST_DATE,
+        1,
+        "Thai Tea Less Sweet w/ Lychee 16oz",
+        1,
+        0,
+        2,
+        3,
+        2,
+      ],
+    ]);
 
     const { GET } = await import("../../src/pages/api/restock-data.js");
     const response = await GET({
