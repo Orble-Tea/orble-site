@@ -1,0 +1,37 @@
+# @steered AudibleSecurityContext 1.2 2026-09-14
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Compile and Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # astro check + tsc --noEmit + astro build
+      - name: Compile
+        run: npm run compile
+
+      # Integration tests need live Google credentials and run in their own
+      # workflow; this job covers everything that runs without secrets.
+      - name: Unit tests
+        run: npx vitest run --exclude 'tests/integration/**'
