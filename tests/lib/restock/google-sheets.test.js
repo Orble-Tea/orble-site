@@ -158,9 +158,8 @@ describe("google sheets helpers", () => {
         .replace(/\n/g, "\\n"),
     );
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "");
-    const { readSheetValues: readValuesWithServiceAccount } = await import(
-      "../../../src/lib/restock/google-sheets.js"
-    );
+    const { readSheetValues: readValuesWithServiceAccount } =
+      await import("../../../src/lib/restock/google-sheets.js");
 
     const fetchMock = vi.spyOn(globalThis, "fetch");
     fetchMock
