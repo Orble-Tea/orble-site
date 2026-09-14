@@ -1,0 +1,840 @@
+---
+// @steered AudibleSecurityContext 1.2 2026-09-14
+// Restock form: start -> slot table (Load/Topoff) -> edit slot -> submitted.
+// Data comes from GET /api/restock-data; submit posts the whole form as-is
+// to the stub POST /api/restock-submit. Auth is the ?key= secret in the URL,
+// validated server-side by both endpoints.
+import "~/styles/index.css";
+import { MACHINE_CONFIG } from "~/lib/restock/config.js";
+import bob from "~/assets/images/logo_inkscape.svg";
+
+// Display-case config labels ("30TH" renders as "30th"); a machine with no
+// Nayax id yet renders as a disabled card.
+const machines = MACHINE_CONFIG.map((m, i) => ({
+  value: m.label,
+  display: m.label === "30TH" ? "30th" : m.label,
+  configured: Boolean(m.machineId),
+  checked: i === 0,
+}));
+const today = new Date().toISOString().slice(0, 10);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Restock · Orble Tea</title>
+  </head>
+  <body class="min-h-screen bg-[#F4F7F6] font-sans">
+    <!-- ============ view: start ============ -->
+    <section
+      id="view-start"
+      class="flex min-h-screen flex-col items-center justify-center p-6"
+    >
+      <div class="mb-8 text-center">
+        <img src={bob.src} alt="Orble" class="mx-auto mb-3 h-20" />
+        <div class="font-heading text-gray-900 text-3xl">ORBLE</div>
+        <div class="text-gray-400 text-sm">Restock Portal</div>
+      </div>
+
+      <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-md">
+        <div
+          id="start-status"
+          class="mb-4 hidden rounded-xl px-3 py-2 text-[13px]"
+        >
+        </div>
+
+        <label
+          class="mb-2 block font-semibold uppercase tracking-wide text-gray-500 text-xs"
+          >Machine</label
+        >
+        <div class="mb-5 grid grid-cols-2 gap-3">
+          {
+            machines.map((m) => (
+              <label class={m.configured ? "cursor-pointer" : ""}>
+                <input
+                  type="radio"
+                  name="machine"
+                  value={m.value}
+                  checked={m.checked && m.configured}
+                  disabled={!m.configured}
+                  class="peer hidden"
+                />
+                <div
+                  class={
+                    m.configured
+                      ? "rounded-2xl border-2 border-gray-200 p-4 text-center transition peer-checked:border-orble-dark peer-checked:bg-orble-tint"
+                      : "rounded-2xl border-2 border-gray-100 bg-gray-50 p-4 text-center opacity-60"
+                  }
+                >
+                  <div
+                    class={
+                      m.configured
+                        ? "font-semibold text-gray-900 text-base"
+                        : "font-semibold text-gray-400 text-base"
+                    }
+                  >
+                    {m.display}
+                  </div>
+                  {!m.configured && (
+                    <div class="mt-0.5 text-[11px] text-gray-400">
+                      not set up yet
+                    </div>
+                  )}
+                </div>
+              </label>
+            ))
+          }
+        </div>
+
+        <label
+          class="mb-2 block font-semibold uppercase tracking-wide text-gray-500 text-xs"
+          >Batch date</label
+        >
+        <input
+          id="batch-date"
+          type="date"
+          value={today}
+          class="w-full rounded-2xl border-2 border-gray-200 bg-white px-4 py-3 text-gray-800 text-base focus:border-orble-dark focus:outline-none"
+        />
+        <p class="mb-6 mt-1.5 leading-snug text-[11px] text-gray-400">
+          The date the drinks were made.
+        </p>
+
+        <button
+          id="start-log"
+          class="w-full rounded-2xl bg-orble-dark py-4 font-semibold text-white shadow-md transition text-base active:scale-[0.99]"
+        >
+          Start log
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ view: table ============ -->
+    <section id="view-table" class="hidden pb-28">
+      <div class="sticky top-0 z-10 border-b border-gray-200 bg-white">
+        <div
+          id="approve-banner"
+          class="hidden border-b border-red-200 bg-red-50 px-4 py-2 text-[13px] text-red-700"
+        >
+          After verifying and editing slot contents, mark each slot as done by
+          clicking on the checkbox in the right hand corner of each slot card.
+        </div>
+        <div class="px-4 py-3">
+          <div class="text-gray-400 text-xs">
+            <span id="table-event"></span> · <span id="table-date"></span>
+          </div>
+          <div class="font-heading text-gray-900 text-xl" id="table-machine">
+          </div>
+        </div>
+        <div
+          class="flex px-3 pb-1 font-semibold uppercase text-gray-500 text-xs"
+        >
+          <div class="w-12 whitespace-nowrap text-center">Slot #</div>
+          <div class="flex-1 px-3">Product</div>
+          <div class="shrink-0 whitespace-nowrap text-right">Checkbox</div>
+        </div>
+      </div>
+      <div id="slot-list" class="space-y-2 p-3"></div>
+      <div
+        class="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 p-4 backdrop-blur"
+      >
+        <button
+          id="complete"
+          class="w-full rounded-2xl bg-orble-dark py-4 font-semibold text-white shadow-md transition text-base active:scale-[0.99]"
+        >
+          Complete
+        </button>
+        <div
+          id="complete-hint"
+          class="mt-2 hidden text-center font-bold text-red-500 text-sm"
+        >
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ view: edit ============ -->
+    <section id="view-edit" class="hidden pb-28">
+      <div
+        class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3"
+      >
+        <div>
+          <div class="text-gray-400 text-xs" id="edit-context"></div>
+          <div class="font-heading text-gray-900 text-xl" id="edit-title"></div>
+        </div>
+        <button
+          id="edit-cancel"
+          class="rounded-full bg-gray-100 px-4 py-2 font-medium text-gray-500 text-sm active:bg-gray-200"
+        >
+          cancel
+        </button>
+      </div>
+      <div class="space-y-5 p-4" id="edit-body"></div>
+      <div
+        class="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 p-4 backdrop-blur"
+      >
+        <button
+          id="edit-save"
+          class="w-full rounded-2xl bg-orble-dark py-4 font-semibold text-white shadow-md transition text-base active:scale-[0.99]"
+        >
+          Save
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ view: submitted ============ -->
+    <section
+      id="view-submitted"
+      class="flex hidden min-h-screen flex-col items-center justify-center p-6"
+    >
+      <div
+        class="w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-md"
+      >
+        <div
+          class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-orble-tint"
+        >
+          <svg
+            class="h-8 w-8 text-orble-dark"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="3"
+              d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h1 class="mb-1 font-bold text-gray-900 text-xl">Restock submitted</h1>
+        <p class="mb-8 text-gray-400 text-sm" id="submitted-meta"></p>
+        <button
+          id="new-log"
+          class="w-full rounded-2xl bg-gray-100 py-3.5 font-medium text-gray-700 text-sm active:bg-gray-200"
+        >
+          Start new log
+        </button>
+      </div>
+    </section>
+
+    <script>
+      const KEY = new URLSearchParams(location.search).get("key") || "";
+      const $ = (id: string) => document.getElementById(id)!;
+
+      type Slot = {
+        slot: number;
+        flavor: string | null;
+        size: string | null;
+        topping: string | null;
+        sweetnessLevel: string | null;
+        previousDrink: string | null;
+        previous: number;
+        waste: number;
+        expectedNew?: number;
+        new?: number;
+        // client-side state
+        newCount: number;
+        approved: boolean;
+        edited: boolean;
+        warning?: string;
+      };
+
+      let payload: any = null;
+      let slots: Slot[] = [];
+      let editingIndex = -1;
+      let showErrors = false;
+      let startedAt = 0;
+
+      // ---------- view switching ----------
+      const VIEWS = ["start", "table", "edit", "submitted"];
+      function showView(name: string) {
+        for (const v of VIEWS)
+          $(`view-${v}`).classList.toggle("hidden", v !== name);
+        window.scrollTo(0, 0);
+      }
+
+      // Forward transitions push a history entry so the phone's back button
+      // walks edit -> table -> start instead of leaving the page entirely.
+      function navigate(name: string, replace = false) {
+        const state = { view: name };
+        if (replace) history.replaceState(state, "");
+        else history.pushState(state, "");
+        showView(name);
+      }
+      // Back out of the edit view via history so the entry is consumed and
+      // back from the table never lands on a stale edit form.
+      function closeEdit() {
+        if (history.state?.view === "edit") history.back();
+        else showView("table");
+      }
+      history.replaceState({ view: "start" }, "");
+      window.addEventListener("popstate", (e) => {
+        const view = (e.state as { view?: string } | null)?.view;
+        // Table and edit are only renderable while a log is open; a stale
+        // history entry (e.g. after reload) falls back to the start view.
+        if (!view || !payload) return showView("start");
+        if (view === "edit") return showView("table"); // never re-enter a popped edit form
+        if (view === "table") renderTable();
+        showView(view);
+      });
+
+      // ---------- start view + error states ----------
+      const STATUS_STYLES: Record<string, string> = {
+        error: "bg-red-50 border border-red-200 text-red-700",
+        warn: "bg-amber-50 border border-amber-200 text-amber-800",
+        info: "bg-orble-tint text-orble-ink",
+      };
+      function startStatus(kind: string | null, html?: string) {
+        const el = $("start-status");
+        if (!kind) return el.classList.add("hidden");
+        el.className = `mb-4 rounded-xl px-3 py-2 text-[13px] ${STATUS_STYLES[kind]}`;
+        el.innerHTML = html || "";
+        el.classList.remove("hidden");
+      }
+
+      function selectedMachine(): string {
+        const checked = document.querySelector<HTMLInputElement>(
+          "input[name=machine]:checked",
+        );
+        return checked ? checked.value : "";
+      }
+
+      async function startLog() {
+        const machine = selectedMachine();
+        const date = ($("batch-date") as HTMLInputElement).value;
+        if (!machine || !date) return;
+        startStatus("info", "Loading…");
+        let response: Response;
+        try {
+          response = await fetch(
+            `/api/restock-data?key=${encodeURIComponent(KEY)}&machine=${encodeURIComponent(machine)}&date=${encodeURIComponent(date)}`,
+          );
+        } catch {
+          startStatus(
+            "error",
+            "No connection. Check your signal and try again. Nothing was lost.",
+          );
+          return;
+        }
+        let body: any = {};
+        try {
+          body = await response.json();
+        } catch {
+          /* non-JSON body falls through to the generic error below */
+        }
+        if (!response.ok) {
+          if (response.status === 403) {
+            startStatus(
+              "error",
+              "This link isn't valid. Ask for the current restock link and re-save your bookmark.",
+            );
+          } else if (response.status === 409) {
+            startStatus(
+              "info",
+              "This batch was already loaded and topped off. Please check your batch date.",
+            );
+          } else if (response.status === 502) {
+            startStatus(
+              "warn",
+              `${body.error || "Couldn't reach Nayax"}. Your machine and date are kept. Try again.`,
+            );
+          } else if (
+            response.status === 500 &&
+            /not configured/i.test(body.error || "")
+          ) {
+            startStatus("warn", `${machine} isn't connected to Nayax yet.`);
+          } else {
+            startStatus("error", "Something went wrong. Try again.");
+          }
+          return;
+        }
+        startStatus(null);
+        payload = body;
+        startedAt = Date.now();
+        initSlots();
+        restoreDraft();
+        renderTable();
+        navigate("table");
+      }
+
+      // ---------- slot state ----------
+      function isEmpty(s: Slot): boolean {
+        return (
+          !s.flavor &&
+          !s.previousDrink &&
+          (s.expectedNew ?? s.new ?? 0) === 0 &&
+          s.previous === 0
+        );
+      }
+
+      function initSlots() {
+        slots = payload.slots.map((s: any) => ({
+          ...s,
+          newCount: s.new ?? s.expectedNew ?? 0,
+          approved: false,
+          edited: false,
+        }));
+        for (const w of payload.warnings || []) {
+          const hit = slots.find((s) => s.slot === w.slot);
+          if (hit)
+            hit.warning =
+              "unrecognized flavor code: pick one of the valid flavors";
+        }
+      }
+
+      // A retiring slot on a Load: drinks come out, the plan puts nothing in,
+      // the slot's desired end state is Empty. Rendered as "Empty" with a
+      // "removing X" instruction, never as the (nonexistent) incoming drink.
+      function isRetiring(s: Slot): boolean {
+        return (
+          payload.event === "Load" &&
+          !s.flavor &&
+          !!s.previousDrink &&
+          !s.warning
+        );
+      }
+
+      // Heuristic: the previous drink string contains the flavor when the slot
+      // keeps its drink; anything else is a swap worth calling out on a Load.
+      function isSwap(s: Slot): boolean {
+        if (payload.event !== "Load" || !s.previousDrink || !s.flavor)
+          return false;
+        return !s.previousDrink.toLowerCase().includes(s.flavor.toLowerCase());
+      }
+
+      function fullName(s: Slot): string {
+        let out =
+          `${s.size || ""} ${s.flavor || ""} ${s.sweetnessLevel || ""}`.trim();
+        if (s.topping && !/^no/i.test(s.topping)) out += ` with ${s.topping}`;
+        return out.replace(/\s+/g, " ");
+      }
+
+      function totalOf(s: Slot): number {
+        return Math.max(s.previous - s.waste + s.newCount, 0);
+      }
+
+      // ---------- draft persistence (survives screen off / reload) ----------
+      function draftKey(): string {
+        return `restock-draft-${payload.batchId}-${payload.event}`;
+      }
+      function saveDraft() {
+        const data = slots.map((s) => ({
+          slot: s.slot,
+          waste: s.waste,
+          newCount: s.newCount,
+          approved: s.approved,
+          edited: s.edited,
+          flavor: s.flavor,
+          size: s.size,
+          topping: s.topping,
+          sweetnessLevel: s.sweetnessLevel,
+        }));
+        try {
+          localStorage.setItem(
+            draftKey(),
+            JSON.stringify({ ts: Date.now(), startedAt, data }),
+          );
+        } catch {
+          /* storage full or blocked: the form still works, it just won't survive a reload */
+        }
+      }
+      function restoreDraft() {
+        try {
+          const raw = localStorage.getItem(draftKey());
+          if (!raw) return;
+          const draft = JSON.parse(raw);
+          startedAt = draft.startedAt || startedAt;
+          for (const d of draft.data) {
+            const s = slots.find((x) => x.slot === d.slot);
+            if (s) Object.assign(s, d, { newCount: d.newCount });
+          }
+        } catch {
+          /* corrupt draft: start clean */
+        }
+      }
+      function clearDraft() {
+        try {
+          localStorage.removeItem(draftKey());
+        } catch {
+          /* ignore */
+        }
+      }
+
+      // ---------- table view ----------
+      function esc(s: string): string {
+        const div = document.createElement("div");
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      function countRow(label: string, value: number, cls: string): string {
+        return `<div>${label}: <b class="font-semibold ${cls}">${value}</b></div>`;
+      }
+
+      function checkboxCell(i: number, checked: boolean): string {
+        return `<label class="flex w-14 cursor-pointer items-center justify-center border-l border-gray-100 active:bg-orble-tint">
+          <input type="checkbox" data-approve="${i}" class="h-5 w-5 rounded accent-[#7AC4B3] ring-1 ring-gray-900" ${checked ? "checked" : ""}></label>`;
+      }
+
+      function renderSlot(s: Slot, i: number): string {
+        const empty = isEmpty(s);
+        if (s.approved) {
+          const grey = empty || isRetiring(s);
+          return `<div class="scroll-mt-36 scroll-mb-32 flex items-stretch overflow-hidden rounded-2xl border border-gray-300 ${grey ? "bg-gray-100/70" : "bg-white shadow-sm"}">
+            <div class="flex w-12 items-center justify-center py-2.5 ${grey ? "" : "border-r border-gray-100 bg-gray-50"}">
+              <div class="text-base font-bold ${grey ? "text-gray-300" : "text-gray-800"}">${s.slot}</div></div>
+            <div class="flex flex-1 items-center px-3"><div class="text-base ${grey ? "text-gray-400" : "text-gray-700"}">${grey ? "Empty" : esc(fullName(s))}</div></div>
+            ${checkboxCell(i, true)}</div>`;
+        }
+        const outline =
+          showErrors && !s.approved
+            ? "border-2 border-red-400"
+            : "border border-gray-300";
+        const ring = s.warning ? " ring-1 ring-amber-200" : "";
+        let body: string;
+        let counts = "";
+        if (empty) {
+          body = `<div class="py-0.5 text-base text-gray-400">Empty</div>`;
+        } else {
+          const title = s.warning
+            ? `<div class="text-base font-semibold text-amber-700">${esc(s.flavor || "?")}</div>`
+            : isRetiring(s)
+              ? `<div class="text-base font-semibold text-gray-400">Empty</div>`
+              : `<div class="text-base font-semibold text-gray-900">${esc(s.flavor || "?")}</div>`;
+          const quals = [s.size, s.topping, s.sweetnessLevel]
+            .filter(Boolean)
+            .map((q) => `<div class="text-xs text-gray-500">${esc(q!)}</div>`)
+            .join("");
+          body =
+            title +
+            (isSwap(s)
+              ? `<div class="text-[13px] text-orble-ink">replacing ${esc(s.previousDrink!)}</div>`
+              : isRetiring(s)
+                ? `<div class="text-[13px] text-gray-400">removing ${esc(s.previousDrink!)}</div>`
+                : "") +
+            quals +
+            (s.warning
+              ? `<div class="mt-0.5 text-[13px] text-amber-700">${s.warning}</div>`
+              : "") +
+            (s.edited
+              ? `<div class="mt-1 text-[10px] italic text-gray-400">(edited)</div>`
+              : "");
+          const grey = isRetiring(s);
+          counts = `<div class="w-[104px] space-y-0.5 py-2.5 pr-3 text-right text-[13px] text-gray-400">
+            ${payload.event === "Topoff" ? countRow("previous", s.previous, "text-gray-700") : ""}
+            ${countRow("waste", s.waste, grey ? "text-gray-400" : s.waste > 0 ? "text-red-500" : "text-gray-700")}
+            ${countRow("new", s.newCount, grey ? "text-gray-400" : "text-orble-ink")}
+            ${countRow("total", totalOf(s), grey ? "text-gray-400" : "text-gray-900")}</div>`;
+        }
+        return `<div class="scroll-mt-36 scroll-mb-32 overflow-hidden rounded-2xl ${outline}${ring}">
+          <div class="flex items-stretch ${empty ? "bg-gray-100/70" : "bg-white shadow-sm"}">
+            <div class="flex w-12 items-center justify-center py-3 ${empty ? "" : "border-r border-gray-100 bg-gray-50"}">
+              <div class="text-base font-bold ${empty ? "text-gray-300" : "text-gray-800"}">${s.slot}</div></div>
+            <div class="flex-1 px-3 py-2.5">${body}</div>
+            ${counts}
+            ${checkboxCell(i, false)}
+          </div>
+          <div class="border-t border-gray-100 py-1.5 text-center ${empty ? "bg-gray-100/70" : "bg-white"}">
+            <button data-edit="${i}" class="rounded-full bg-orble-light/20 px-5 py-2 text-sm font-medium text-orble-ink active:bg-orble-light/40">edit</button>
+          </div></div>`;
+      }
+
+      function renderTable() {
+        $("table-event").textContent = payload.event;
+        $("table-date").textContent = payload.date;
+        $("table-machine").textContent = payload.machine;
+        $("slot-list").innerHTML = slots.map(renderSlot).join("");
+      }
+
+      // ---------- edit view ----------
+      function distinct(field: keyof Slot, extra: (string | null)[]): string[] {
+        const values = new Set<string>();
+        for (const s of slots) if (s[field]) values.add(String(s[field]));
+        for (const v of extra) if (v) values.add(v);
+        return [...values];
+      }
+
+      function chipGroup(
+        name: string,
+        options: string[],
+        selected: string | null,
+      ): string {
+        const chips = options
+          .map(
+            (o) => `<label class="cursor-pointer">
+          <input type="radio" name="${name}" value="${esc(o)}" class="peer hidden" ${o === selected ? "checked" : ""}>
+          <div class="rounded-2xl border-2 border-gray-200 py-3.5 text-center text-sm font-medium text-gray-700 transition peer-checked:border-orble-dark peer-checked:bg-orble-tint peer-checked:text-orble-ink">${esc(o)}</div></label>`,
+          )
+          .join("");
+        return `<div><label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">${name}</label>
+          <div class="grid grid-cols-2 gap-3">${chips}</div></div>`;
+      }
+
+      function stepper(
+        id: string,
+        label: string,
+        value: number,
+        cls: string,
+      ): string {
+        return `<div>
+          <label class="mb-2 block text-center text-xs font-semibold uppercase tracking-wide text-gray-500">${label}</label>
+          <div class="flex items-center justify-center gap-2">
+            <button data-step="${id}:-1" class="h-10 w-10 rounded-full bg-gray-100 text-xl font-bold text-gray-600 active:bg-gray-200">−</button>
+            <span id="edit-${id}" class="w-8 text-center text-2xl font-bold ${cls}">${value}</span>
+            <button data-step="${id}:1" class="h-10 w-10 rounded-full bg-gray-100 text-xl font-bold text-gray-600 active:bg-gray-200">+</button>
+          </div></div>`;
+      }
+
+      const editState = { waste: 0, newCount: 0 };
+
+      function openEdit(i: number) {
+        editingIndex = i;
+        const s = slots[i];
+        editState.waste = s.waste;
+        editState.newCount = s.newCount;
+        $("edit-context").textContent =
+          `Editing · ${payload.event} · ${payload.machine}`;
+        $("edit-title").textContent = `Slot ${s.slot}`;
+        const flavors = distinct("flavor", [s.flavor]);
+        const flavorOptions =
+          (s.warning
+            ? `<option value="" selected disabled>Select flavor</option>`
+            : "") +
+          flavors
+            .map(
+              (f) =>
+                `<option ${!s.warning && f === s.flavor ? "selected" : ""}>${esc(f)}</option>`,
+            )
+            .join("") +
+          `<option value="__empty__" ${isRetiring(s) ? "selected" : ""}>— Empty (clear slot) —</option>`;
+        const replacing = s.previousDrink
+          ? `<div class="flex items-center justify-between rounded-xl px-3 py-2 ${s.warning ? "border border-amber-200 bg-amber-50" : "bg-orble-tint"}">
+              <span class="text-[13px] ${s.warning ? "text-amber-800" : "text-orble-ink"}">${isRetiring(s) ? "removing" : "replacing"} ${esc(s.previousDrink)} · ${s.previous} drink${s.previous === 1 ? "" : "s"}</span>
+              <button class="rounded-full bg-white/70 px-3 py-1 text-xs font-medium ${s.warning ? "text-amber-800" : "text-orble-ink"} active:bg-white">edit</button>
+            </div>`
+          : "";
+        const warningStrip = s.warning
+          ? `<div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-800">unrecognized flavor code: pick one of the valid flavors below</div>`
+          : "";
+        $("edit-body").innerHTML = `
+          ${replacing}
+          ${warningStrip}
+          <div><label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Flavor</label>
+            <select id="edit-flavor" class="w-full rounded-2xl border-2 border-gray-200 bg-white px-4 py-3 text-base text-gray-800 focus:border-orble-dark focus:outline-none">${flavorOptions}</select></div>
+          <div id="edit-chips">
+          ${chipGroup("Size", distinct("size", [s.size]), s.warning ? null : s.size)}
+          ${chipGroup("Topping", distinct("topping", [s.topping, "None"]), s.warning ? null : s.topping)}
+          ${chipGroup("Sweetness", distinct("sweetnessLevel", [s.sweetnessLevel]), s.warning ? null : s.sweetnessLevel)}
+          </div>
+          <div class="rounded-2xl bg-white p-4 shadow-sm">
+            <div class="grid grid-cols-2 gap-4">
+              ${stepper("waste", "Waste", editState.waste, "text-gray-800")}
+              ${stepper("newCount", "New", editState.newCount, "text-orble-ink")}
+            </div>
+            <div class="mt-4 border-t border-gray-100 pt-3 text-center">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Total</label>
+              <span id="edit-total" class="text-2xl font-bold text-gray-900"></span>
+              <div class="mt-1 text-[13px] text-gray-400">
+                ${s.previous} previous − <span id="edit-m-waste"></span> waste + <span id="edit-m-new"></span> new = <span id="edit-m-total"></span>
+              </div>
+            </div>
+          </div>`;
+        renderEditCounts();
+        // Empty means nothing goes in, so drink attributes are meaningless:
+        // grey the chips out whenever Empty is the selected flavor.
+        const flavorSelect = document.getElementById(
+          "edit-flavor",
+        ) as HTMLSelectElement;
+        const syncChips = () => {
+          const emptySelected = flavorSelect.value === "__empty__";
+          const chips = $("edit-chips");
+          chips.classList.toggle("pointer-events-none", emptySelected);
+          chips.classList.toggle("opacity-40", emptySelected);
+          for (const input of chips.querySelectorAll("input"))
+            (input as HTMLInputElement).disabled = emptySelected;
+          // Nothing goes into a cleared slot: zero the New count and lock
+          // its stepper so it cannot be raised while Empty is selected.
+          if (emptySelected && editState.newCount !== 0) {
+            editState.newCount = 0;
+            renderEditCounts();
+          }
+          for (const btn of document.querySelectorAll<HTMLButtonElement>(
+            '#edit-body [data-step^="newCount"]',
+          )) {
+            btn.disabled = emptySelected;
+            btn.classList.toggle("opacity-40", emptySelected);
+          }
+        };
+        flavorSelect.addEventListener("change", syncChips);
+        syncChips();
+        navigate("edit");
+      }
+
+      function renderEditCounts() {
+        const s = slots[editingIndex];
+        const total = Math.max(
+          s.previous - editState.waste + editState.newCount,
+          0,
+        );
+        $("edit-waste").textContent = String(editState.waste);
+        $("edit-newCount").textContent = String(editState.newCount);
+        $("edit-total").textContent = String(total);
+        $("edit-m-waste").textContent = String(editState.waste);
+        $("edit-m-new").textContent = String(editState.newCount);
+        $("edit-m-total").textContent = String(total);
+      }
+
+      function saveEdit() {
+        const s = slots[editingIndex];
+        const flavorEl = document.getElementById(
+          "edit-flavor",
+        ) as HTMLSelectElement;
+        const pick = (name: string) =>
+          document.querySelector<HTMLInputElement>(
+            `#view-edit input[name=${name}]:checked`,
+          )?.value || null;
+        if (flavorEl.value === "__empty__") {
+          s.flavor = null;
+          s.size = null;
+          s.topping = null;
+          s.sweetnessLevel = null;
+          s.newCount = 0;
+        } else if (flavorEl.value) {
+          s.flavor = flavorEl.value;
+          s.size = pick("Size") || s.size;
+          s.topping = pick("Topping") || s.topping;
+          s.sweetnessLevel = pick("Sweetness") || s.sweetnessLevel;
+          s.newCount = editState.newCount;
+          s.warning = undefined;
+        } else {
+          s.newCount = editState.newCount;
+        }
+        s.waste = editState.waste;
+        const orig = payload.slots[editingIndex];
+        const origNew = orig.new ?? orig.expectedNew ?? 0;
+        s.edited =
+          s.waste !== orig.waste ||
+          s.newCount !== origNew ||
+          s.flavor !== (orig.flavor ?? null) ||
+          s.size !== (orig.size ?? null) ||
+          s.topping !== (orig.topping ?? null) ||
+          s.sweetnessLevel !== (orig.sweetnessLevel ?? null);
+        saveDraft();
+        renderTable();
+        closeEdit();
+      }
+
+      // ---------- complete ----------
+      async function complete() {
+        const unapproved = slots.filter((s) => !s.approved);
+        const hint = $("complete-hint");
+        if (unapproved.length > 0) {
+          showErrors = true;
+          renderTable();
+          const nums = unapproved
+            .slice(0, 5)
+            .map((s) => s.slot)
+            .join(", ");
+          const more =
+            unapproved.length > 5 ? ` and ${unapproved.length - 5} more` : "";
+          hint.textContent = `Not approved: slot${unapproved.length > 1 ? "s" : ""} ${nums}${more}`;
+          $("approve-banner").classList.remove("hidden");
+          hint.classList.remove("hidden");
+          const first = document.querySelector(
+            `[data-approve="${slots.indexOf(unapproved[0])}"]`,
+          );
+          first
+            ?.closest(".rounded-2xl")
+            ?.scrollIntoView({ block: "center", behavior: "smooth" });
+          return;
+        }
+        hint.classList.add("hidden");
+        const seconds = Math.round((Date.now() - startedAt) / 1000);
+        const duration = `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+        const submitSlots = slots
+          .filter((s) => !isEmpty(s))
+          .map((s) => ({ slot: s.slot, waste: s.waste, new: s.newCount }));
+        let response: Response;
+        try {
+          response = await fetch("/api/restock-submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              key: KEY,
+              batchId: payload.batchId,
+              event: payload.event,
+              machine: payload.machine,
+              date: payload.date,
+              duration,
+              slots: submitSlots,
+            }),
+          });
+        } catch {
+          hint.textContent =
+            "Couldn't submit. Nothing was sent. Your entries are kept.";
+          hint.classList.remove("hidden");
+          return;
+        }
+        if (!response.ok) {
+          hint.textContent =
+            response.status === 409
+              ? "This event was already submitted. Check the restock log."
+              : "Couldn't submit. Nothing was sent. Your entries are kept.";
+          hint.classList.remove("hidden");
+          return;
+        }
+        clearDraft();
+        $("approve-banner").classList.add("hidden");
+        const time = new Date().toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        $("submitted-meta").textContent =
+          `${payload.event} · ${payload.machine} · ${payload.date} · ${time}`;
+        navigate("submitted", true);
+      }
+
+      // ---------- events ----------
+      $("start-log").addEventListener("click", startLog);
+      $("complete").addEventListener("click", complete);
+      $("edit-cancel").addEventListener("click", closeEdit);
+      $("edit-save").addEventListener("click", saveEdit);
+      $("new-log").addEventListener("click", () => {
+        payload = null;
+        slots = [];
+        showErrors = false;
+        navigate("start", true);
+      });
+      $("slot-list").addEventListener("change", (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target.dataset.approve === undefined) return;
+        slots[Number(target.dataset.approve)].approved = target.checked;
+        if (slots.every((s) => s.approved))
+          $("approve-banner").classList.add("hidden");
+        saveDraft();
+        renderTable();
+      });
+      $("slot-list").addEventListener("click", (e) => {
+        const button = (e.target as HTMLElement).closest<HTMLElement>(
+          "[data-edit]",
+        );
+        if (button) openEdit(Number(button.dataset.edit));
+      });
+      $("view-edit").addEventListener("click", (e) => {
+        const button = (e.target as HTMLElement).closest<HTMLElement>(
+          "[data-step]",
+        );
+        if (!button) return;
+        const [k, d] = button.dataset.step!.split(":");
+        const s = slots[editingIndex];
+        // waste can't exceed what was physically there; nothing goes below 0
+        const max = k === "waste" ? s.previous : 99;
+        const key = k as "waste" | "newCount";
+        editState[key] = Math.min(max, Math.max(0, editState[key] + Number(d)));
+        renderEditCounts();
+      });
+    </script>
+  </body>
+</html>
