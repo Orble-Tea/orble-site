@@ -1,0 +1,90 @@
+---
+import "~/styles/global.css";
+import "~/styles/theme.css";
+import LabelPrinterShell from "~/components/label-printer/LabelPrinterShell.astro";
+import logo from "~/assets/images/logo_inkscape.svg";
+import { requireRestockSecretKey } from "~/lib/restock/config.js";
+
+const hasAccess = requireRestockSecretKey(Astro.url.searchParams.get("key"));
+---
+
+<!doctype html>
+<html lang="en" data-theme="light" class="h-full font-sans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Orble Label Printer</title>
+  </head>
+  <body>
+    {
+      hasAccess ? (
+        <LabelPrinterShell logoSrc={logo.src} />
+      ) : (
+        <main class="access-panel">
+          <img src={logo.src} alt="" />
+          <h1>Label Printer</h1>
+          <p>Add a valid key to the URL to open the printer.</p>
+        </main>
+      )
+    }
+
+    {
+      hasAccess && (
+        <script>
+          import { startLabelPrinter } from "~/lib/label-printer/client.js";
+
+          startLabelPrinter();
+        </script>
+      )
+    }
+  </body>
+</html>
+
+<style>
+  body {
+    min-height: 100vh;
+    margin: 0;
+    background:
+      radial-gradient(
+        circle at 18% 8%,
+        color-mix(in srgb, var(--color-primary) 38%, transparent),
+        transparent 31rem
+      ),
+      linear-gradient(
+        180deg,
+        var(--color-background) 0%,
+        var(--color-background) 44%,
+        color-mix(in srgb, var(--color-primary) 14%, var(--color-background)) 100%
+      );
+    color: var(--color-text);
+  }
+
+  .access-panel {
+    display: grid;
+    place-items: center;
+    gap: 12px;
+    min-height: 100vh;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .access-panel img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .access-panel h1,
+  .access-panel p {
+    margin: 0;
+  }
+
+  .access-panel h1 {
+    color: var(--color-accent);
+    font-size: 24px;
+  }
+
+  .access-panel p {
+    color: var(--color-text-offset);
+  }
+</style>
