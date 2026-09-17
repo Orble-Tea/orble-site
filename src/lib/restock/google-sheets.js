@@ -158,7 +158,7 @@ function findLatestDateSheetName(sheets) {
     .sort((left, right) => right.time - left.time)[0]?.title;
 }
 
-function parseSheetDate(title) {
+export function parseSheetDate(title) {
   const text = String(title || "").trim();
   const isoMatch = text.match(/(?:^|[^\d])(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[^\d])/);
   if (isoMatch) {
