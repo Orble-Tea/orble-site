@@ -4,6 +4,7 @@ import { defineConfig } from "@playwright/test";
 import { BACKEND_ENV, PORT } from "./tests/e2e/fixture-server.mjs";
 
 const APP_PORT = 4321;
+const LABEL_TEST = /mocked\/label-printer\.spec\.js/;
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -24,9 +25,19 @@ export default defineConfig({
   },
   projects: [
     // Browser tests: page.route() intercepts /api/* so only the page is real.
-    { name: "browser", testMatch: /mocked\/.*\.spec\.js/ },
+    {
+      name: "browser",
+      testMatch: /mocked\/.*\.spec\.js/,
+      testIgnore: LABEL_TEST,
+    },
     // Integration tests: real API routes + service code; only Nayax/Sheets faked.
     { name: "integration", testMatch: /backend\/.*\.spec\.js/ },
+    {
+      name: "label-desktop",
+      testMatch: LABEL_TEST,
+      use: { viewport: { width: 1280, height: 900 } },
+    },
+    { name: "label-mobile", testMatch: LABEL_TEST },
   ],
   webServer: [
     {
@@ -35,7 +46,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: `npx astro dev --host 127.0.0.1 --port ${APP_PORT}`,
+      command: `npx astro dev --config astro.config.playwright.mjs --host 127.0.0.1 --port ${APP_PORT}`,
       url: `http://127.0.0.1:${APP_PORT}/restock?key=test-key`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,

@@ -39,8 +39,11 @@ We have four levels of tests in this repo. The first three run in CI on every pu
 | --- | --- | --- |
 | Unit (vitest) | everything outside the function | `npm test` |
 | Browser (Playwright) | everything server-side | `npx playwright test --project=browser` |
+| Label printer (Playwright, desktop and mobile) | plan responses and USB device | `npm run test:labels` |
 | Integration (Playwright) | external dependencies (Nayax/Sheets, via `tests/e2e/fixture-server.mjs`) | `npx playwright test --project=integration` |
 | Smoke | nothing | `npm run smoke` (manual only, see below) |
+
+`npm run test:e2e` runs all Playwright projects, including label printing, through the shared CI browser job.
 
 ### Live smoke test
 
