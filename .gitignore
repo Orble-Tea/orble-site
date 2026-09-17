@@ -5,6 +5,7 @@ dist/
 
 # dependencies
 node_modules/
+.pycache/
 
 # logs
 npm-debug.log*
@@ -22,3 +23,8 @@ pnpm-debug.log*
 
 # Local Netlify folder
 .netlify
+
+# Label printing generated files
+label-printing/output/
+label-printing/*.bin
+label-printing/*_preview.png
