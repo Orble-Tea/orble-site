@@ -101,7 +101,7 @@ describe("GET /api/restock-data", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
+              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
               ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1"],
             ],
           }),
@@ -128,9 +128,9 @@ describe("GET /api/restock-data", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body).toMatchObject({
-      batchId: "30TH-2026-07-10",
+      batchId: "30th-2026-07-10",
       event: "Load",
-      machine: "30TH",
+      machine: "30th",
       slots: expect.arrayContaining([
         expect.objectContaining({
           slot: 1,
@@ -161,7 +161,7 @@ describe("GET /api/restock-data", () => {
           JSON.stringify({
             values: [
               ["Batch ID", "Event"],
-              ["30TH-2026-07-10", "Load"],
+              ["30th-2026-07-10", "Load"],
             ],
           }),
         );
@@ -186,9 +186,9 @@ describe("GET /api/restock-data", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
-      batchId: "30TH-2026-07-10",
+      batchId: "30th-2026-07-10",
       event: "Clearout",
-      machine: "30TH",
+      machine: "30th",
     });
   });
 
@@ -232,8 +232,8 @@ describe("GET /api/restock-data", () => {
         JSON.stringify({
           values: [
             ["Batch ID", "Event"],
-            ["30TH-2026-07-10", "Load"],
-            ["30TH-2026-07-10", "Topoff"],
+            ["30th-2026-07-10", "Load"],
+            ["30th-2026-07-10", "Topoff"],
           ],
         }),
       ),

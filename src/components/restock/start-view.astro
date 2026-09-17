@@ -1,0 +1,227 @@
+---
+import bob from "~/assets/images/logo_inkscape.svg";
+
+interface Props {
+  machines: { label: string; machineId?: string }[];
+  today: string;
+}
+const { machines, today } = Astro.props;
+---
+
+<script src="/lottie-player.js" defer is:inline></script>
+<!-- ============ loading overlay: bob waves while the log loads ============ -->
+<div
+  id="loading-overlay"
+  class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-white/85 backdrop-blur-sm"
+>
+  <lottie-player
+    src="/bob-waving.json"
+    autoplay
+    loop
+    style="width: 220px; height: 220px;"></lottie-player>
+  <div class="font-semibold text-orble-ink">Loading…</div>
+</div>
+<section
+  id="view-start"
+  class="flex min-h-screen flex-col items-center justify-start p-6 pt-10"
+>
+  <div class="mb-8 text-center">
+    <img src={bob.src} alt="Orble" class="mx-auto mb-3 h-20" />
+    <div class="font-heading text-gray-900 text-3xl">ORBLE</div>
+    <div class="text-gray-400 text-sm">Restock Portal</div>
+  </div>
+
+  <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-md">
+    <div id="start-status" class="mb-4 hidden rounded-xl px-3 py-2 text-[13px]">
+    </div>
+
+    <label
+      class="mb-2 block font-semibold uppercase tracking-wide text-gray-500 text-xs"
+      >Machine</label
+    >
+    <div class="mb-5 grid grid-cols-2 gap-3">
+      {
+        machines.map((m, i) => (
+          <label class={m.machineId ? "cursor-pointer" : ""}>
+            <input
+              type="radio"
+              name="machine"
+              value={m.label}
+              checked={i === 0 && !!m.machineId}
+              disabled={!m.machineId}
+              class="peer hidden"
+            />
+            <div
+              class={
+                m.machineId
+                  ? "rounded-2xl border-2 border-gray-200 p-4 text-center transition peer-checked:border-orble-dark peer-checked:bg-orble-tint"
+                  : "rounded-2xl border-2 border-gray-100 bg-gray-50 p-4 text-center opacity-60"
+              }
+            >
+              <div
+                class={
+                  m.machineId
+                    ? "font-semibold text-gray-900 text-base"
+                    : "font-semibold text-gray-400 text-base"
+                }
+              >
+                {m.label}
+              </div>
+              {!m.machineId && (
+                <div class="mt-0.5 text-[11px] text-gray-400">
+                  not set up yet
+                </div>
+              )}
+            </div>
+          </label>
+        ))
+      }
+    </div>
+
+    <label
+      class="mb-2 block font-semibold uppercase tracking-wide text-gray-500 text-xs"
+      >Batch date</label
+    >
+    <input
+      id="batch-date"
+      type="date"
+      value={today}
+      class="w-full rounded-2xl border-2 border-gray-200 bg-white px-4 py-3 text-gray-800 text-base focus:border-orble-dark focus:outline-none"
+    />
+    <p class="mb-6 mt-1.5 leading-snug text-[11px] text-gray-400">
+      The date the drinks were made.
+    </p>
+
+    <button
+      id="start-log"
+      class="w-full rounded-2xl bg-orble-dark py-4 font-semibold text-white shadow-md transition text-base active:scale-[0.99]"
+    >
+      Start log
+    </button>
+  </div>
+</section>
+
+<script>
+  import { batch } from "nanostores";
+  import { HTTP, plannedNew, type Slot } from "~/lib/restock/ui-helpers";
+  import {
+    $,
+    $payload,
+    $slots,
+    $showErrors,
+    setStartedAt,
+    navigate,
+    KEY,
+    type RestockPayload,
+  } from "~/components/restock/runtime";
+  import { restoreDraft } from "~/components/restock/drafts";
+
+  const STRINGS = {
+    noConnection:
+      "No connection. Check your signal and try again. Nothing was lost.",
+    invalidKey:
+      "This link isn't valid. Ask for the current restock link and re-save your bookmark.",
+    batchFullyLogged:
+      "This batch was already loaded and topped off. Please check your batch date.",
+    nayaxUnreachable: "Couldn't reach Nayax",
+    keptForRetry: "Your machine and date are kept. Try again.",
+    notConnected: (machine: string) =>
+      `${machine} isn't connected to Nayax yet.`,
+    genericError: "Something went wrong. Try again.",
+    unrecognizedCode:
+      "unrecognized flavor code: pick one of the valid flavors",
+  };
+
+  const STATUS_STYLES: Record<string, string> = {
+    error: "bg-red-50 border border-red-200 text-red-700",
+    warn: "bg-amber-50 border border-amber-200 text-amber-800",
+    info: "bg-orble-tint text-orble-ink",
+  };
+
+  /** Shows a status box under the header (error/warn/info), or hides it. */
+  function startStatus(kind: string | null, html?: string) {
+    document
+      .getElementById("loading-overlay")!
+      .classList.replace("flex", "hidden");
+    const el = $("start-status");
+    if (!kind) return el.classList.add("hidden");
+    el.className = `mb-4 rounded-xl px-3 py-2 text-[13px] ${STATUS_STYLES[kind]}`;
+    el.innerHTML = html || "";
+    el.classList.remove("hidden");
+  }
+
+  /** Builds editable slots from the payload, applying backend warnings. */
+  function initSlots(payload: RestockPayload): Slot[] {
+    const warned = new Set((payload.warnings || []).map((w) => w.slot));
+    return payload.slots.map((s: any) => ({
+      ...s,
+      newCount: plannedNew(s),
+      approved: false,
+      edited: false,
+      warning: warned.has(s.slot) ? STRINGS.unrecognizedCode : undefined,
+    }));
+  }
+
+  /**
+   * Fetches the batch data for the chosen machine and date, hydrates the
+   * stores, restores any draft, and opens the table view.
+   */
+  async function startLog() {
+    const machine =
+      document.querySelector<HTMLInputElement>("input[name=machine]:checked")
+        ?.value || "";
+    const date = ($("batch-date") as HTMLInputElement).value;
+    if (!machine || !date) return;
+    document
+      .getElementById("loading-overlay")!
+      .classList.replace("hidden", "flex");
+    let response: Response;
+    try {
+      response = await fetch(
+        `/api/restock-data?key=${encodeURIComponent(KEY)}&machine=${encodeURIComponent(machine)}&date=${encodeURIComponent(date)}`,
+      );
+    } catch {
+      startStatus("error", STRINGS.noConnection);
+      return;
+    }
+    let body: any = {};
+    try {
+      body = await response.json();
+    } catch {
+      /* non-JSON body falls through to the generic error below */
+    }
+    if (!response.ok) {
+      if (response.status === HTTP.FORBIDDEN) {
+        startStatus("error", STRINGS.invalidKey);
+      } else if (response.status === HTTP.CONFLICT) {
+        startStatus("info", STRINGS.batchFullyLogged);
+      } else if (response.status === HTTP.BAD_GATEWAY) {
+        startStatus(
+          "warn",
+          `${body.error || STRINGS.nayaxUnreachable}. ${STRINGS.keptForRetry}`,
+        );
+      } else if (
+        response.status === HTTP.SERVER_ERROR &&
+        /not configured/i.test(body.error || "")
+      ) {
+        startStatus("warn", STRINGS.notConnected(machine));
+      } else {
+        startStatus("error", STRINGS.genericError);
+      }
+      return;
+    }
+    startStatus(null);
+    setStartedAt(Date.now());
+    $("approve-banner").classList.add("hidden");
+    $("complete-hint").classList.add("hidden");
+    batch(() => {
+      $payload.set(body);
+      $showErrors.set(false);
+      $slots.set(initSlots(body));
+    });
+    restoreDraft();
+    navigate("table");
+  }
+
+  $("start-log").addEventListener("click", startLog);
+</script>

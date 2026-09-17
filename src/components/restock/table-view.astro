@@ -1,0 +1,267 @@
+---
+import bob from "~/assets/images/logo_inkscape.svg";
+
+const APPROVE_BANNER =
+  "After verifying and editing slot contents, mark each slot as done by clicking on the checkbox in the right hand corner of each slot card.";
+---
+
+<section id="view-table" class="hidden pb-28">
+  <div class="sticky top-0 z-10 border-b border-gray-200 bg-white">
+    <div class="flex items-center justify-between px-4 py-3">
+      <div>
+        <div class="text-gray-400 text-xs">
+          <span id="table-event"></span> · <span id="table-date"></span>
+        </div>
+        <div class="font-heading text-gray-900 text-xl" id="table-machine">
+        </div>
+      </div>
+      <img src={bob.src} alt="" class="h-11 pr-1" />
+    </div>
+    <div class="flex px-3 pb-1 font-semibold uppercase text-gray-500 text-xs">
+      <div class="w-12 whitespace-nowrap text-center">Slot #</div>
+      <div class="flex-1 px-3">Product</div>
+      <div class="shrink-0 whitespace-nowrap text-right">Checkbox</div>
+    </div>
+    <div
+      id="approve-banner"
+      class="hidden border-t border-red-200 bg-red-50 px-4 py-2 text-[13px] text-red-700"
+    >
+      {APPROVE_BANNER}
+    </div>
+  </div>
+  <div id="slot-list" class="space-y-2 p-3"></div>
+  <div
+    class="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 p-4 backdrop-blur"
+  >
+    <button
+      id="complete"
+      class="w-full rounded-2xl bg-orble-dark py-4 font-semibold text-white shadow-md transition text-base active:scale-[0.99]"
+    >
+      Complete
+    </button>
+    <div
+      id="complete-hint"
+      class="mt-2 hidden text-center font-bold text-red-500 text-sm"
+    >
+    </div>
+  </div>
+</section>
+
+<script>
+  import {
+    HTTP,
+    emptyState,
+    isSwap,
+    esc,
+    type Slot,
+  } from "~/lib/restock/ui-helpers";
+  import { $, $payload, $slots, $showErrors, updateSlot, hooks, navigate, startedAt, KEY } from "~/components/restock/runtime";
+  import { saveDraft, clearDraft } from "~/components/restock/drafts";
+
+  // Blocked-submit hint names at most this many unapproved slots.
+  const MAX_LISTED_SLOTS = 5;
+
+  const STRINGS = {
+    submitFailed: "Couldn't submit. Nothing was sent. Your entries are kept.",
+    alreadySubmitted:
+      "This event was already submitted. Check the restock log.",
+    soldOut: "sold out!",
+    removing: (drink: string) => `removing ${drink}`,
+  };
+
+  /** Display name: size + flavor + sweetness, "with topping" when present. */
+  function fullName(s: Slot): string {
+    let out =
+      `${s.size || ""} ${s.flavor || ""} ${s.sweetnessLevel || ""}`.trim();
+    if (s.topping && !/^no/i.test(s.topping)) out += ` with ${s.topping}`;
+    return out.replace(/\s+/g, " ");
+  }
+
+  /** Approve checkbox cell for one slot row. */
+  function checkboxCell(i: number, checked: boolean): string {
+    return `<label class="flex w-14 cursor-pointer items-center justify-center border-l border-gray-100 active:bg-orble-tint">
+      <input type="checkbox" data-approve="${i}" class="h-5 w-5 rounded accent-[#7AC4B3] ring-1 ring-gray-900" ${checked ? "checked" : ""}></label>`;
+  }
+
+  /** Counts column for a slot row; grey styling for rows rendering as Empty. */
+  function countsColumn(s: Slot, grey: boolean): string {
+    const payload = $payload.get()!;
+    return `<div class="shrink-0 space-y-0.5 whitespace-nowrap py-2.5 pr-3 text-right text-[13px] text-gray-400">
+        ${payload.event === "Topoff" ? `<div>previous: <b class="font-semibold text-gray-700">${Math.max(s.previous, s.waste)}</b></div>` : ""}
+        <div>waste: <b class="font-semibold ${grey ? "text-gray-400" : s.waste > 0 ? "text-red-500" : "text-gray-700"}">${s.waste}</b></div>
+        <div>new: <b class="font-semibold ${grey ? "text-gray-400" : "text-orble-ink"}">${s.newCount}</b></div>
+        <div>total: <b class="font-semibold ${grey ? "text-gray-400" : "text-gray-900"}">${Math.max(s.previous, s.waste) - s.waste + s.newCount}</b></div></div>`;
+  }
+
+  /** One slot card: folded when approved, full card with counts otherwise. */
+  function renderSlot(s: Slot, i: number): string {
+    const payload = $payload.get()!;
+    const empty = emptyState(payload.event, s);
+    if (s.approved) {
+      const grey = !!empty;
+      return `<div class="scroll-mt-36 scroll-mb-32 flex items-stretch overflow-hidden rounded-2xl border border-gray-300 ${grey ? "bg-gray-100/70" : "bg-white shadow-sm"}">
+        <div class="flex w-12 items-center justify-center py-2.5 ${grey ? "" : "border-r border-gray-100 bg-gray-50"}">
+          <div class="text-base font-bold ${grey ? "text-gray-300" : "text-gray-800"}">${s.slot}</div></div>
+        <div class="flex flex-1 items-center px-3 py-2.5"><div class="text-base ${grey ? "text-gray-400" : "text-gray-700"}">${grey ? "Empty" : esc(fullName(s))}</div></div>
+        ${checkboxCell(i, true)}</div>`;
+    }
+    const outline =
+      $showErrors.get() && !s.approved
+        ? "border-2 border-red-400"
+        : "border border-gray-300";
+    const ring = s.warning ? " ring-1 ring-amber-200" : "";
+    let body: string;
+    let counts = "";
+    if (empty) {
+      const note =
+        empty === "retiring"
+          ? `<div class="text-[13px] text-gray-400">${esc(STRINGS.removing(s.previousDrink!))}</div>`
+          : empty === "soldout"
+            ? `<div class="text-[13px] text-amber-700">${STRINGS.soldOut}</div>`
+            : "";
+      body =
+        `<div class="py-0.5 text-base text-gray-400">Empty</div>` +
+        note +
+        (s.edited
+          ? `<div class="mt-1 text-[10px] italic text-gray-400">(edited)</div>`
+          : "");
+      if (s.waste > 0 || s.newCount > 0) counts = countsColumn(s, true);
+    } else {
+      const title = s.warning
+        ? `<div class="text-base font-semibold text-amber-700">${esc(s.flavor || "?")}</div>`
+        : `<div class="text-base font-semibold text-gray-900">${esc(s.flavor || "?")}</div>`;
+      const quals = [s.size, s.topping, s.sweetnessLevel]
+        .filter(Boolean)
+        .map((q) => `<div class="text-xs text-gray-500">${esc(q!)}</div>`)
+        .join("");
+      body =
+        title +
+        (isSwap(payload.event, s)
+          ? `<div class="text-[13px] text-orble-ink">replacing ${esc(s.previousDrink!)}</div>`
+          : "") +
+        quals +
+        (s.warning
+          ? `<div class="mt-0.5 text-[13px] text-amber-700">${s.warning}</div>`
+          : "") +
+        (s.edited
+          ? `<div class="mt-1 text-[10px] italic text-gray-400">(edited)</div>`
+          : "");
+      counts = countsColumn(s, false);
+    }
+    return `<div class="scroll-mt-36 scroll-mb-32 overflow-hidden rounded-2xl ${outline}${ring}">
+      <div class="flex items-stretch ${empty ? "bg-gray-100/70" : "bg-white shadow-sm"}">
+        <div class="flex w-12 items-center justify-center py-3 ${empty ? "" : "border-r border-gray-100 bg-gray-50"}">
+          <div class="text-base font-bold ${empty ? "text-gray-300" : "text-gray-800"}">${s.slot}</div></div>
+        <div class="flex-1 px-3 py-2.5">${body}</div>
+        ${counts}
+        ${checkboxCell(i, false)}
+      </div>
+      <div class="border-t border-gray-100 py-1.5 text-center ${empty ? "bg-gray-100/70" : "bg-white"}">
+        <button data-edit="${i}" class="rounded-full bg-orble-light/20 px-5 py-2 text-sm font-medium text-orble-ink active:bg-orble-light/40">edit</button>
+      </div></div>`;
+  }
+
+  /** Redraws the header fields and slot list; runs on every store change. */
+  function renderTable() {
+    const payload = $payload.get();
+    if (!payload) return; // starting a new log clears the stores
+    $("table-event").textContent = payload.event;
+    $("table-date").textContent = payload.date;
+    $("table-machine").textContent = payload.machine;
+    $("slot-list").innerHTML = $slots.get().map(renderSlot).join("");
+  }
+  $slots.listen(renderTable);
+  $showErrors.listen(renderTable);
+
+  /**
+   * Submits the log. Blocks with red outlines while any slot is
+   * unapproved; on success clears the draft and shows the submitted view.
+   */
+  async function complete() {
+    const slots = $slots.get();
+    const unapproved = slots.filter((s) => !s.approved);
+    const hint = $("complete-hint");
+    if (unapproved.length > 0) {
+      $showErrors.set(true);
+      const nums = unapproved
+        .slice(0, MAX_LISTED_SLOTS)
+        .map((s) => s.slot)
+        .join(", ");
+      const more =
+        unapproved.length > MAX_LISTED_SLOTS
+          ? ` and ${unapproved.length - MAX_LISTED_SLOTS} more`
+          : "";
+      hint.textContent = `Not approved: slot${unapproved.length > 1 ? "s" : ""} ${nums}${more}`;
+      $("approve-banner").classList.remove("hidden");
+      hint.classList.remove("hidden");
+      const first = document.querySelector(
+        `[data-approve="${slots.indexOf(unapproved[0])}"]`,
+      );
+      first
+        ?.closest(".rounded-2xl")
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+    hint.classList.add("hidden");
+    const seconds = Math.round((Date.now() - startedAt) / 1000);
+    const duration = `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+    const submitSlots = slots.map((s) => ({
+      slot: s.slot,
+      waste: s.waste,
+      new: s.newCount,
+    }));
+    let response: Response;
+    try {
+      response = await fetch("/api/restock-submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: KEY,
+          batchId: $payload.get()!.batchId,
+          event: $payload.get()!.event,
+          machine: $payload.get()!.machine,
+          date: $payload.get()!.date,
+          duration,
+          slots: submitSlots,
+        }),
+      });
+    } catch {
+      hint.textContent = STRINGS.submitFailed;
+      hint.classList.remove("hidden");
+      return;
+    }
+    if (!response.ok) {
+      hint.textContent =
+        response.status === HTTP.CONFLICT
+          ? STRINGS.alreadySubmitted
+          : STRINGS.submitFailed;
+      hint.classList.remove("hidden");
+      return;
+    }
+    clearDraft();
+    $("approve-banner").classList.add("hidden");
+    const time = new Date().toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    $("submitted-meta").textContent =
+      `${$payload.get()!.event} · ${$payload.get()!.machine} · ${$payload.get()!.date} · ${time}`;
+    navigate("submitted", true);
+  }
+
+  $("complete").addEventListener("click", complete);
+  $("slot-list").addEventListener("change", (e) => {
+    const target = e.target as HTMLInputElement;
+    if (target.dataset.approve === undefined) return;
+    updateSlot(Number(target.dataset.approve), { approved: target.checked });
+    if ($slots.get().every((s) => s.approved))
+      $("approve-banner").classList.add("hidden");
+    saveDraft();
+  });
+  $("slot-list").addEventListener("click", (e) => {
+    const button = (e.target as HTMLElement).closest<HTMLElement>(
+      "[data-edit]",
+    );
+    if (button) hooks.openEdit(Number(button.dataset.edit));
+  });
+</script>

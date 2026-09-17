@@ -13,7 +13,7 @@ import {
 } from "../../src/lib/restock/drinks.js";
 
 const TEST_DATE = "2026-08-31";
-const BATCH_ID = `30TH-${TEST_DATE}`;
+const BATCH_ID = `30th-${TEST_DATE}`;
 const PRODUCTION_PLAN_ROWS = [
   ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
   ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1, 2"],
@@ -148,7 +148,7 @@ describe("restock data integration", () => {
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Load",
-      machine: "30TH",
+      machine: "30th",
       slots: expect.arrayContaining([
         expect.objectContaining({
           slot: 1,
@@ -188,7 +188,7 @@ describe("restock data integration", () => {
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Load",
-      machine: "30TH",
+      machine: "30th",
     });
     expect(targetSlots).not.toContain(liveProduct.slot);
     for (const slotNumber of targetSlots) {
@@ -243,7 +243,7 @@ describe("restock data integration", () => {
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Topoff",
-      machine: "30TH",
+      machine: "30th",
       slots: expect.arrayContaining([
         expect.objectContaining({
           slot: topoff.slot,
