@@ -9,7 +9,7 @@ import math
 import re
 import subprocess
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from io import StringIO
 from pathlib import Path
 from typing import Iterable, Optional
@@ -32,9 +32,13 @@ DEFAULT_SHEET_URL = (
     "1q9D_qlRPiltdm4hXHDFvgjQ4JQldTh3JlItZVif8OBA/edit?gid=647107374"
 )
 AMOUNT_ALIASES = ("amount of make", "amount to make", "make", "quantity", "qty", "count", "labels")
+TOTAL_STICKERS_ALIASES = ("total stickers", "stickers")
+DIRECT_TO_MACHINE_ALIASES = ("amount to take to machine", "take to machine", "to machine")
 DATE_ALIASES = ("date", "production date", "print date")
 DRINK_ALIASES = ("drink variation", "drink", "variation", "drink name", "label", "product")
 RECIPE_ALIASES = ("recipe", "recipe name", "base recipe")
+SLOT_30TH_ALIASES = ("slot (30th)", "slot 30th", "30th slot")
+SLOT_TOWNE_ALIASES = ("slot (towne)", "slot towne", "towne slot")
 
 
 def build_label(
@@ -76,6 +80,44 @@ def build_label(
     y = max(pad_y, (canvas_h - text_h) // 2)
     text_draw.text((x - bbox[0], y - bbox[1]), text, font=font, fill="black")
     return label_img
+
+
+def build_production_label(
+    drink_name: str,
+    expiration_date: str,
+    code: str,
+    font_path: str,
+    label: str,
+    orientation: str,
+) -> Image.Image:
+    label_info = LabelsManager().get(label)
+    printable_w, printable_h = label_info.dots_printable
+    canvas_w, canvas_h = (printable_h, printable_w) if orientation == "landscape" else (printable_w, printable_h)
+
+    img = Image.new("RGB", (canvas_w, canvas_h), "white")
+    draw = ImageDraw.Draw(img)
+    margin = 8
+    top_h = 52
+
+    code_font_size = fit_font_size(code, font_path, draw, canvas_w // 2 - margin * 2, top_h - margin, 0, 0)
+    exp_text = f"EXP {expiration_date}"
+    exp_font_size = fit_font_size(exp_text, font_path, draw, canvas_w // 2 - margin * 2, top_h - margin, 0, 0)
+    code_font = ImageFont.truetype(font_path, min(34, code_font_size))
+    exp_font = ImageFont.truetype(font_path, min(26, exp_font_size))
+
+    draw.text((margin, margin), code, font=code_font, fill="black")
+    exp_bbox = draw.textbbox((0, 0), exp_text, font=exp_font)
+    draw.text((canvas_w - margin - (exp_bbox[2] - exp_bbox[0]), margin + 4), exp_text, font=exp_font, fill="black")
+
+    drink_font_size = fit_font_size(drink_name, font_path, draw, canvas_w - margin * 2, canvas_h - top_h - margin, 0, 0)
+    drink_font = ImageFont.truetype(font_path, drink_font_size)
+    drink_bbox = draw.textbbox((0, 0), drink_name, font=drink_font)
+    drink_w = drink_bbox[2] - drink_bbox[0]
+    drink_h = drink_bbox[3] - drink_bbox[1]
+    drink_x = max(margin, (canvas_w - drink_w) // 2)
+    drink_y = top_h + max(0, (canvas_h - top_h - drink_h) // 2)
+    draw.text((drink_x - drink_bbox[0], drink_y - drink_bbox[1]), drink_name, font=drink_font, fill="black")
+    return img
 
 
 def fit_font_size(
@@ -155,18 +197,47 @@ def parse_quantity(value: str) -> int:
         return 0
 
 
-def format_date(value: str) -> str:
+def parse_date(value: str) -> date:
     cleaned = str(value).strip()
     if not cleaned:
-        return date.today().strftime("%m/%d/%y")
+        return date.today()
 
     for fmt in ("%m/%d/%y", "%m/%d/%Y", "%Y-%m-%d", "%m-%d-%Y", "%m-%d-%y"):
         try:
-            return datetime.strptime(cleaned, fmt).strftime("%m/%d/%y")
+            return datetime.strptime(cleaned, fmt).date()
         except ValueError:
             pass
 
-    return cleaned
+    raise ValueError(f"Could not parse date {value!r}. Use mm/dd/yy, mm/dd/yyyy, or yyyy-mm-dd.")
+
+
+def format_expiration_date(value: str) -> str:
+    return (parse_date(value) + timedelta(days=7)).strftime("%m/%d/%y")
+
+
+def optional_column(headers: Iterable[str], aliases: tuple[str, ...]) -> Optional[str]:
+    try:
+        return resolve_column(headers, None, aliases)
+    except ValueError:
+        return None
+
+
+def parse_slots(value: str) -> list[str]:
+    slots = re.findall(r"\d+", str(value))
+    return slots or ["00"]
+
+
+def label_code(disposition: str, machine: str, slot: str) -> str:
+    return f"{disposition}{machine}#{slot}"
+
+
+def machine_slots(row: dict[str, str], slot_30th_col: Optional[str], slot_towne_col: Optional[str]) -> list[tuple[str, str]]:
+    slots: list[tuple[str, str]] = []
+    if slot_30th_col and row.get(slot_30th_col, "").strip():
+        slots.extend(("30TH", slot) for slot in parse_slots(row.get(slot_30th_col, "")))
+    if slot_towne_col and row.get(slot_towne_col, "").strip():
+        slots.extend(("TWNE", slot) for slot in parse_slots(row.get(slot_towne_col, "")))
+    return slots or [("30TH", "00")]
 
 
 def production_jobs(
@@ -176,14 +247,19 @@ def production_jobs(
     recipe_column: Optional[str],
     date_column: Optional[str],
     default_date: Optional[str],
+    recipe_filter: Optional[str],
 ) -> dict[str, list[str]]:
     if not rows:
         return {}
 
     headers = rows[0].keys()
     amount_col = resolve_column(headers, amount_column, AMOUNT_ALIASES)
+    total_stickers_col = optional_column(headers, TOTAL_STICKERS_ALIASES)
+    direct_to_machine_col = optional_column(headers, DIRECT_TO_MACHINE_ALIASES)
     drink_col = resolve_column(headers, drink_column, DRINK_ALIASES)
     recipe_col = resolve_column(headers, recipe_column, RECIPE_ALIASES)
+    slot_30th_col = optional_column(headers, SLOT_30TH_ALIASES)
+    slot_towne_col = optional_column(headers, SLOT_TOWNE_ALIASES)
 
     date_col = None
     if date_column:
@@ -195,16 +271,32 @@ def production_jobs(
             date_col = None
 
     grouped: dict[str, list[str]] = defaultdict(list)
+    current_recipe = ""
+    normalized_recipe_filter = normalize_header(recipe_filter) if recipe_filter else None
     for row in rows:
-        quantity = parse_quantity(row.get(amount_col, ""))
+        recipe = row.get(recipe_col, "").strip() or current_recipe
+        if row.get(recipe_col, "").strip():
+            current_recipe = recipe
+
+        if normalized_recipe_filter and normalize_header(recipe) != normalized_recipe_filter:
+            continue
+
+        quantity = parse_quantity(row.get(total_stickers_col, "")) if total_stickers_col else 0
+        if quantity <= 0:
+            quantity = parse_quantity(row.get(amount_col, ""))
+        direct_to_machine = parse_quantity(row.get(direct_to_machine_col, "")) if direct_to_machine_col else 0
         drink = row.get(drink_col, "").strip()
-        recipe = row.get(recipe_col, "").strip()
         if quantity <= 0 or not drink or not recipe:
             continue
 
-        label_date = format_date(default_date or (row.get(date_col, "") if date_col else ""))
-        label_text = f"{label_date} {drink}"
-        grouped[recipe].extend([label_text] * quantity)
+        expiration_date = format_expiration_date(default_date or (row.get(date_col, "") if date_col else ""))
+        slots = machine_slots(row, slot_30th_col, slot_towne_col)
+        for index in range(quantity):
+            disposition = "D" if index < direct_to_machine else "S"
+            machine, slot = slots[index % len(slots)]
+            if disposition == "S":
+                machine = "UNDC"
+            grouped[recipe].append(f"{label_code(disposition, machine, slot)}\t{expiration_date}\t{drink}")
 
     return dict(grouped)
 
@@ -259,6 +351,8 @@ def main() -> None:
         help="Read the default Orble production plan and print labels by recipe.",
     )
     parser.add_argument("--date", help="Override label date, formatted as mm/dd/yy.")
+    parser.add_argument("--code", help="Optional code for a single test label, such as S30TH#21.")
+    parser.add_argument("--recipe", help="Only print or dry-run one recipe group.")
     parser.add_argument("--amount-column", help="Production-plan column containing label quantity.")
     parser.add_argument("--drink-column", help="Production-plan column containing drink variation/name.")
     parser.add_argument("--recipe-column", help="Production-plan column containing recipe grouping.")
@@ -285,6 +379,7 @@ def main() -> None:
             args.recipe_column,
             args.date_column,
             args.date,
+            args.recipe,
         )
         if not jobs:
             print("No labels found to print.")
@@ -297,7 +392,14 @@ def main() -> None:
         for recipe, labels in jobs.items():
             total_labels += len(labels)
             images = [
-                build_label(label_text, args.font, args.font_size, args.pad_x, args.pad_y, args.label, args.orientation)
+                build_production_label(
+                    drink_name=label_text.split("\t", 2)[2],
+                    expiration_date=label_text.split("\t", 2)[1],
+                    code=label_text.split("\t", 2)[0],
+                    font_path=args.font,
+                    label=args.label,
+                    orientation=args.orientation,
+                )
                 for label_text in labels
             ]
             safe_recipe = re.sub(r"[^A-Za-z0-9._-]+", "_", recipe).strip("_") or "recipe"
@@ -307,6 +409,12 @@ def main() -> None:
             images[0].save(output_dir / f"{safe_recipe}_preview.png")
 
             print(f"{recipe}: {len(labels)} labels")
+            if args.dry_run:
+                for sample in labels[:3]:
+                    code, expiration_date, drink_name = sample.split("\t", 2)
+                    print(f"  {code} | EXP {expiration_date} | {drink_name}")
+                if len(labels) > 3:
+                    print(f"  ... {len(labels) - 3} more")
             if args.usb and not args.dry_run:
                 send_usb(instructions, args.usb)
                 print(f"  sent and cut after recipe: {recipe}")
@@ -316,7 +424,17 @@ def main() -> None:
             print(f"Output files: {output_dir.resolve()}")
         return
 
-    label_img = build_label(args.text, args.font, args.font_size, args.pad_x, args.pad_y, args.label, args.orientation)
+    if args.code:
+        label_img = build_production_label(
+            drink_name=args.text,
+            expiration_date=format_expiration_date(args.date or ""),
+            code=args.code,
+            font_path=args.font,
+            label=args.label,
+            orientation=args.orientation,
+        )
+    else:
+        label_img = build_label(args.text, args.font, args.font_size, args.pad_x, args.pad_y, args.label, args.orientation)
     preview_path = Path(args.preview)
     output_path = Path(args.output)
     label_img.save(preview_path)
