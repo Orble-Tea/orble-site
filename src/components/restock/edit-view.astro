@@ -1,0 +1,357 @@
+<section id="view-edit" class="hidden pb-28">
+  <div
+    class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3"
+  >
+    <div>
+      <div class="text-gray-400 text-xs" id="edit-context"></div>
+      <div class="font-heading text-gray-900 text-xl" id="edit-title"></div>
+    </div>
+  </div>
+  <div class="space-y-5 p-4" id="edit-body"></div>
+  <div
+    class="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 p-4 backdrop-blur"
+  >
+    <button
+      id="edit-save"
+      class="w-full rounded-2xl bg-orble-dark py-4 font-semibold text-white shadow-md transition text-base active:scale-[0.99]"
+    >
+      Save
+    </button>
+  </div>
+</section>
+
+<script>
+  import {
+    COLORS,
+    emptyState,
+    plannedNew,
+    esc,
+    type Slot,
+  } from "~/lib/restock/ui-helpers";
+  import {
+    $,
+    $payload,
+    $slots,
+    updateSlot,
+    hooks,
+    navigate,
+    closeEdit,
+  } from "~/components/restock/runtime";
+  import { saveDraft } from "~/components/restock/drafts";
+  import { parseDrinkName } from "~/lib/restock/drinks.js";
+
+  // Stepper ceiling; keeps a held button from running away.
+  const COUNT_MAX = 99;
+
+  const STRINGS = {
+    unrecognizedCodeEdit:
+      "unrecognized flavor code: pick one of the valid flavors below",
+  };
+
+  let editingIndex = -1;
+  let prevOpened = false;
+  const editState = { waste: 0, newCount: 0 };
+
+  // Chip stand-ins for attributes the model stores as null (or missing size)
+  const SIZE_DEFAULT = "16oz";
+  const TOPPING_NONE = "None";
+  const SWEETNESS_DEFAULT = "Regular";
+
+  /** Option values for a chip group: every value present in the payload plus extras. */
+  function distinct(field: keyof Slot, extra: (string | null)[]): string[] {
+    const values = new Set<string>();
+    for (const s of $slots.get()) if (s[field]) values.add(String(s[field]));
+    for (const v of extra) if (v) values.add(v);
+    return [...values];
+  }
+
+  /** Radio chip group for one drink attribute. */
+  function chipGroup(
+    name: string,
+    options: string[],
+    selected: string | null,
+    label = name,
+  ): string {
+    const chips = options
+      .map(
+        (o) => `<label class="cursor-pointer">
+      <input type="radio" name="${name}" value="${esc(o)}" class="peer hidden" ${o === selected ? "checked" : ""}>
+      <div class="rounded-2xl border-2 border-gray-200 bg-gray-100 py-3.5 text-center text-sm font-medium text-gray-700 transition peer-checked:border-orble-dark peer-checked:bg-orble-tint peer-checked:text-orble-ink">${esc(o)}</div></label>`,
+      )
+      .join("");
+    return `<div><label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">${label}</label>
+      <div class="grid grid-cols-2 gap-3">${chips}</div></div>`;
+  }
+
+  /** Plus/minus stepper for a count field. */
+  function stepper(
+    id: string,
+    label: string,
+    value: number,
+    cls: string,
+  ): string {
+    return `<div>
+      <label class="mb-2 block text-center text-xs font-semibold uppercase tracking-wide text-gray-500">${label}</label>
+      <div class="flex items-center justify-center gap-2">
+        <button data-step="${id}:-1" class="h-10 w-10 rounded-full bg-gray-100 text-xl font-bold text-gray-600 active:bg-gray-200">−</button>
+        <span id="edit-${id}" class="w-8 text-center text-2xl font-bold ${cls}">${value}</span>
+        <button data-step="${id}:1" class="h-10 w-10 rounded-full bg-gray-100 text-xl font-bold text-gray-600 active:bg-gray-200">+</button>
+      </div></div>`;
+  }
+
+  const pick = (name: string) =>
+    document.querySelector<HTMLInputElement>(
+      `#view-edit input[name=${name}]:checked`,
+    )?.value || null;
+
+  /** Recomposes the previous drink from the accordion controls, parser format. */
+  function composePrev(): string | null {
+    const el = document.getElementById(
+      "edit-prev-flavor",
+    ) as HTMLSelectElement | null;
+    if (!el) return null;
+    const topping = pick("PrevTopping");
+    const sweetness = pick("PrevSweetness");
+    return [
+      el.value,
+      pick("PrevSize") || SIZE_DEFAULT,
+      sweetness === SWEETNESS_DEFAULT ? null : sweetness,
+      topping && topping !== TOPPING_NONE ? `w/ ${topping}` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  /** Builds and opens the edit form for one slot. */
+  function openEdit(i: number) {
+    editingIndex = i;
+    const payload = $payload.get()!;
+    const s = $slots.get()[i];
+    const retiring = emptyState(payload.event, s) === "retiring";
+    editState.waste = s.waste;
+    editState.newCount = s.newCount;
+    prevOpened = false;
+    $("edit-context").textContent =
+      `Editing · ${payload.event} · ${payload.machine}`;
+    $("edit-title").textContent = `Slot ${s.slot}`;
+    const flavors = distinct("flavor", [s.flavor]);
+    const flavorOptions =
+      (s.warning
+        ? `<option value="" selected disabled>Select flavor</option>`
+        : "") +
+      flavors
+        .map(
+          (f) =>
+            `<option ${!s.warning && f === s.flavor ? "selected" : ""}>${esc(f)}</option>`,
+        )
+        .join("") +
+      `<option value="__empty__" ${retiring ? "selected" : ""}>— Empty (clear slot) —</option>`;
+    let replacing = "";
+    if (s.previousDrink) {
+      const prev = parseDrinkName(s.previousDrink);
+      const prevFlavorOptions = distinct("flavor", [prev.flavor])
+        .map(
+          (f) =>
+            `<option ${f === prev.flavor ? "selected" : ""}>${esc(f)}</option>`,
+        )
+        .join("");
+      const tint = s.warning
+        ? "border border-amber-200 bg-amber-50"
+        : "bg-orble-tint";
+      const prevEdited =
+        s.previousDrink !== (payload.slots[i].previousDrink ?? null);
+      replacing = `<div id="edit-replacing" class="rounded-xl ${tint}">
+        <div class="flex items-center justify-between px-3 py-2">
+          <span class="text-[13px] ${s.warning ? "text-amber-800" : "text-orble-ink"}">${retiring ? "removing" : "replacing"} ${esc(s.previousDrink)} · ${s.previous} drink${s.previous === 1 ? "" : "s"}<span id="edit-prev-mark" class="italic opacity-60${prevEdited ? "" : " hidden"}"> (edited)</span></span>
+          <button data-prev-edit class="rounded-full bg-white/70 px-3 py-1 text-xs font-medium ${s.warning ? "text-amber-800" : "text-orble-ink"} active:bg-white">edit</button>
+        </div>
+        <div id="edit-prev-body" class="hidden space-y-5 px-3 pb-4 pt-1">
+          <div><label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Previous Flavor</label>
+            <select id="edit-prev-flavor" class="w-full rounded-2xl border-2 border-gray-200 bg-white px-4 py-3 text-base text-gray-800 focus:border-orble-dark focus:outline-none">${prevFlavorOptions}</select></div>
+          ${chipGroup("PrevSize", distinct("size", [prev.size, SIZE_DEFAULT]), prev.size || SIZE_DEFAULT, "Previous Size")}
+          ${chipGroup("PrevTopping", distinct("topping", [prev.topping, TOPPING_NONE]), prev.topping ?? TOPPING_NONE, "Previous Topping")}
+          ${chipGroup("PrevSweetness", distinct("sweetnessLevel", [prev.sweetness, SWEETNESS_DEFAULT]), prev.sweetness ?? SWEETNESS_DEFAULT, "Previous Sweetness")}
+        </div>
+      </div>`;
+    }
+    const warningStrip = s.warning
+      ? `<div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-800">${STRINGS.unrecognizedCodeEdit}</div>`
+      : "";
+    $("edit-body").innerHTML = `
+      ${replacing}
+      ${warningStrip}
+      <div><label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Flavor</label>
+        <select id="edit-flavor" class="w-full rounded-2xl border-2 border-gray-200 bg-white px-4 py-3 text-base text-gray-800 focus:border-orble-dark focus:outline-none">${flavorOptions}</select></div>
+      <div id="edit-chips" class="space-y-2">
+      ${chipGroup("Size", distinct("size", [s.size, SIZE_DEFAULT]), s.size || SIZE_DEFAULT)}
+      ${chipGroup("Topping", distinct("topping", [s.topping, TOPPING_NONE]), s.topping ?? TOPPING_NONE)}
+      ${chipGroup("Sweetness", distinct("sweetnessLevel", [s.sweetnessLevel, SWEETNESS_DEFAULT]), s.sweetnessLevel ?? SWEETNESS_DEFAULT)}
+      </div>
+      <div class="rounded-2xl bg-white p-4 shadow-sm">
+        <div class="grid grid-cols-2 gap-4">
+          ${stepper("waste", "Waste", editState.waste, "text-gray-800")}
+          ${stepper("newCount", "New", editState.newCount, "text-orble-ink")}
+        </div>
+        <div class="mt-4 border-t border-gray-100 pt-3 text-center">
+          <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Total</label>
+          <span id="edit-total" class="text-2xl font-bold text-gray-900"></span>
+          <div class="mt-1 text-[13px] text-gray-400">
+            <span id="edit-m-prev"></span> previous − <span id="edit-m-waste"></span> waste + <span id="edit-m-new"></span> new = <span id="edit-m-total"></span>
+          </div>
+        </div>
+      </div>`;
+    renderEditCounts();
+    // Empty means nothing goes in, so drink attributes are meaningless:
+    // grey the chips out whenever Empty is the selected flavor.
+    const flavorSelect = document.getElementById(
+      "edit-flavor",
+    ) as HTMLSelectElement;
+    const syncChips = () => {
+      const emptySelected = flavorSelect.value === "__empty__";
+      const chips = $("edit-chips");
+      chips.classList.toggle("pointer-events-none", emptySelected);
+      for (const input of chips.querySelectorAll("input"))
+        (input as HTMLInputElement).disabled = emptySelected;
+      for (const chip of chips.querySelectorAll<HTMLElement>("label > div")) {
+        chip.style.color = emptySelected ? COLORS.chipMutedText : "";
+        // 'selected' chip should also be gray when slot is empty
+        chip.style.backgroundColor = emptySelected ? COLORS.chipMutedFill : "";
+        chip.style.borderColor = emptySelected ? COLORS.chipMutedBorder : "";
+      }
+      const newValue = document.getElementById("edit-newCount");
+      if (newValue)
+        newValue.style.color = emptySelected ? COLORS.countMuted : "";
+      // Empty zeroes New and raises waste to cover previous; waste stays editable above that
+      const emptyWaste = Math.max(editState.waste, s.previous);
+      if (
+        emptySelected &&
+        (editState.newCount !== 0 || editState.waste !== emptyWaste)
+      ) {
+        editState.newCount = 0;
+        editState.waste = emptyWaste;
+        renderEditCounts();
+      }
+      for (const btn of document.querySelectorAll<HTMLButtonElement>(
+        '#edit-body [data-step^="newCount"]',
+      )) {
+        btn.disabled = emptySelected;
+        btn.classList.toggle("opacity-40", emptySelected);
+      }
+    };
+    flavorSelect.addEventListener("change", syncChips);
+    syncChips();
+    navigate("edit");
+  }
+  hooks.openEdit = openEdit;
+
+  /** Refreshes the stepper values and the total math line. */
+  function renderEditCounts() {
+    const s = $slots.get()[editingIndex];
+    // waste above the Nayax count raises previous to match
+    const prev = Math.max(s.previous, editState.waste);
+    const total = prev - editState.waste + editState.newCount;
+    $("edit-waste").textContent = String(editState.waste);
+    $("edit-newCount").textContent = String(editState.newCount);
+    $("edit-total").textContent = String(total);
+    $("edit-m-prev").textContent = String(prev);
+    $("edit-m-waste").textContent = String(editState.waste);
+    $("edit-m-new").textContent = String(editState.newCount);
+    $("edit-m-total").textContent = String(total);
+  }
+
+  /**
+   * Applies the form as a patch to the slot (Empty clears the drink,
+   * a flavor pick updates attributes), marks it edited, and closes.
+   */
+  function saveEdit() {
+    const s = $slots.get()[editingIndex];
+    const flavorEl = document.getElementById(
+      "edit-flavor",
+    ) as HTMLSelectElement;
+    let patch: Partial<Slot>;
+    if (flavorEl.value === "__empty__") {
+      patch = {
+        flavor: null,
+        size: null,
+        topping: null,
+        sweetnessLevel: null,
+        newCount: 0,
+        // clearing a slot pulls everything still in it
+        waste: Math.max(editState.waste, s.previous),
+      };
+    } else if (flavorEl.value) {
+      const topping = pick("Topping");
+      const sweetness = pick("Sweetness");
+      patch = {
+        flavor: flavorEl.value,
+        size: pick("Size") || s.size,
+        // "None"/"Regular" stand in for the model's null
+        topping: topping === TOPPING_NONE ? null : topping || s.topping,
+        sweetnessLevel:
+          sweetness === SWEETNESS_DEFAULT
+            ? null
+            : sweetness || s.sweetnessLevel,
+        newCount: editState.newCount,
+        warning: undefined,
+      };
+    } else {
+      patch = { newCount: editState.newCount };
+    }
+    patch.waste ??= editState.waste;
+    // Previous-drink correction applies only when the accordion was opened
+    const composedPrev = prevOpened ? composePrev() : null;
+    if (composedPrev !== null) patch.previousDrink = composedPrev;
+    const next = { ...s, ...patch };
+    const orig = $payload.get()!.slots[editingIndex];
+    const origNew = plannedNew(orig);
+    patch.edited =
+      next.waste !== orig.waste ||
+      next.newCount !== origNew ||
+      next.flavor !== (orig.flavor ?? null) ||
+      next.size !== (orig.size ?? null) ||
+      next.topping !== (orig.topping ?? null) ||
+      next.sweetnessLevel !== (orig.sweetnessLevel ?? null) ||
+      next.previousDrink !== (orig.previousDrink ?? null);
+    updateSlot(editingIndex, patch);
+    saveDraft();
+    closeEdit();
+  }
+
+  $("edit-save").addEventListener("click", saveEdit);
+  $("view-edit").addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    const prevBtn = target.closest("[data-prev-edit]");
+    if (prevBtn) {
+      prevOpened = true;
+      // folding only hides the panel: picked values stay and apply on Save
+      const body = $("edit-prev-body");
+      body.classList.toggle("hidden");
+      const folded = body.classList.contains("hidden");
+      prevBtn.textContent = folded ? "edit" : "close";
+      if (folded) {
+        const orig = $payload.get()!.slots[editingIndex].previousDrink ?? null;
+        $("edit-prev-mark").classList.toggle("hidden", composePrev() === orig);
+      }
+      return;
+    }
+    const button = target.closest<HTMLElement>("[data-step]");
+    if (!button) return;
+    const [k, d] = button.dataset.step!.split(":");
+    // Waste is NOT capped at the Nayax count: reality can hold more
+    // drinks than the machine thinks. Nothing goes below 0.
+    const key = k as "waste" | "newCount";
+    const flavorEl = document.getElementById(
+      "edit-flavor",
+    ) as HTMLSelectElement | null;
+    // Empty keeps the total at zero: waste cannot drop below previous
+    const floor =
+      key === "waste" && flavorEl?.value === "__empty__"
+        ? $slots.get()[editingIndex].previous
+        : 0;
+    editState[key] = Math.min(
+      COUNT_MAX,
+      Math.max(floor, editState[key] + Number(d)),
+    );
+    renderEditCounts();
+  });
+</script>

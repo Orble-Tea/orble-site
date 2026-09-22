@@ -1,0 +1,32 @@
+---
+// Restock form: start -> slot table (Load/Topoff) -> edit slot -> submitted.
+// Each view lives in src/components/restock as markup plus its own script.
+// Data comes from GET /api/restock-data and submit posts the whole form
+// as-is to the stub POST /api/restock-submit.
+import "~/styles/index.css";
+import { MACHINE_CONFIG } from "~/lib/restock/config.js";
+import StartView from "~/components/restock/start-view.astro";
+import TableView from "~/components/restock/table-view.astro";
+import EditView from "~/components/restock/edit-view.astro";
+import SubmittedView from "~/components/restock/submitted-view.astro";
+
+const today = new Date().toISOString().slice(0, 10);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Restock · Orble Tea</title>
+  </head>
+  <body
+    class="min-h-screen bg-[#F4F7F6] bg-[linear-gradient(rgba(255,255,255,0.7),rgba(255,255,255,0.7)),url('/restock-bg.jpg')] bg-[length:auto,390px_auto] bg-repeat font-sans"
+  >
+    <StartView machines={MACHINE_CONFIG} today={today} />
+    <TableView />
+    <EditView />
+    <SubmittedView />
+  </body>
+</html>

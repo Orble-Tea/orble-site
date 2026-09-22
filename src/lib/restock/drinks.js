@@ -77,10 +77,19 @@ export function parseDrinkName(value) {
   if (sweetness) flavor = flavor.replace(new RegExp(sweetness, "i"), "");
   flavor = normalizeDrinkName(flavor.replace(/\bw\/\b/i, ""));
 
+  // Strawberry is a topping in the catalog: "Strawberry Matcha" is Matcha
+  // with a strawberry topping, not a flavor of its own. Explicit w/ toppings
+  // take precedence when both appear.
+  let topping = toppingMatch ? normalizeDrinkName(toppingMatch[1]) : null;
+  if (!topping && /\bstrawberry\s+\S/i.test(flavor)) {
+    topping = "Strawberry";
+    flavor = normalizeDrinkName(flavor.replace(/\bstrawberry\b/i, ""));
+  }
+
   return {
     flavor: flavor || drink,
     size,
-    topping: toppingMatch ? normalizeDrinkName(toppingMatch[1]) : null,
+    topping,
     sweetness: sweetness
       ? sweetness.replace(/\b\w/g, (letter) => letter.toUpperCase())
       : null,
