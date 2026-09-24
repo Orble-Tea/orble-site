@@ -1,0 +1,634 @@
+---
+import "~/styles/global.css";
+import logo from "~/assets/images/logo_inkscape.svg";
+import { requireRestockSecretKey } from "~/lib/restock/config.js";
+
+const isLocalhost = ["127.0.0.1", "localhost"].includes(Astro.url.hostname);
+const hasAccess =
+  isLocalhost || requireRestockSecretKey(Astro.url.searchParams.get("key"));
+---
+
+<!doctype html>
+<html lang="en" class="h-full bg-[#f8fbfa] font-sans text-[#2e2937]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Orble Label Printer</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --orble-mint: #b1d9cd;
+        --orble-mint-light: #e8f4f0;
+        --orble-mint-bright: #9dd9c8;
+        --orble-tan: #eacaac;
+        --orble-purple: #54486b;
+        --orble-ink: #2e2937;
+        --orble-muted: #665f71;
+        --orble-border: #c9ddd7;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(circle at 18% 8%, rgba(177, 217, 205, 0.38), transparent 31rem),
+          linear-gradient(180deg, #ffffff 0%, #f8fbfa 44%, #eef7f4 100%);
+        color: var(--orble-ink);
+        font-family:
+          Lato,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(1120px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 24px 0 40px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 8px 0 18px;
+        border-bottom: 2px solid var(--orble-mint);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand img {
+        width: 34px;
+        height: 34px;
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--orble-purple);
+        font-size: 20px;
+        line-height: 1.2;
+        font-weight: 800;
+      }
+
+      .status {
+        min-height: 22px;
+        font-size: 14px;
+        color: var(--orble-muted);
+        text-align: right;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(320px, 420px) 1fr;
+        gap: 22px;
+        padding-top: 22px;
+      }
+
+      section {
+        min-width: 0;
+      }
+
+      .panel {
+        border: 1px solid var(--orble-border);
+        border-radius: 8px;
+        background: #ffffff;
+        box-shadow: 0 18px 46px rgba(84, 72, 107, 0.09);
+      }
+
+      .panel h2 {
+        margin: 0;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--orble-border);
+        color: var(--orble-purple);
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .controls {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--orble-purple);
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--orble-border);
+        border-radius: 6px;
+        background: #fbfdfc;
+        color: var(--orble-ink);
+        font: inherit;
+        padding: 10px 11px;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: var(--orble-purple);
+        box-shadow: 0 0 0 3px rgba(177, 217, 205, 0.55);
+        outline: none;
+      }
+
+      textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 0 16px 16px;
+      }
+
+      button {
+        border: 1px solid var(--orble-purple);
+        border-radius: 6px;
+        background: var(--orble-purple);
+        color: #fff;
+        font: inherit;
+        font-weight: 800;
+        padding: 10px 13px;
+        cursor: pointer;
+      }
+
+      button:hover:not(:disabled) {
+        border-color: #463b5a;
+        background: #463b5a;
+      }
+
+      button.secondary {
+        border-color: var(--orble-mint);
+        background: var(--orble-mint);
+        color: var(--orble-ink);
+      }
+
+      button.secondary:hover:not(:disabled) {
+        border-color: var(--orble-mint-bright);
+        background: var(--orble-mint-bright);
+        color: var(--orble-ink);
+      }
+
+      button:disabled {
+        border-color: #d8e4df;
+        background: #edf3f1;
+        color: #8a938f;
+        cursor: not-allowed;
+      }
+
+      .preview-wrap {
+        padding: 16px;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        max-width: 566px;
+        aspect-ratio: 566 / 165;
+        border: 1px solid var(--orble-border);
+        background: #fff;
+        image-rendering: pixelated;
+      }
+
+      .log {
+        min-height: 260px;
+        margin: 0;
+        padding: 14px 16px;
+        overflow: auto;
+        border-top: 1px solid var(--orble-border);
+        color: var(--orble-ink);
+        background: var(--orble-mint-light);
+        font:
+          12px/1.45 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Monaco,
+          Consolas,
+          "Liberation Mono",
+          monospace;
+        white-space: pre-wrap;
+      }
+
+      .note {
+        margin: 14px 0 0;
+        color: var(--orble-muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .locked {
+        max-width: 620px;
+        margin-top: 22px;
+        padding: 18px 20px;
+      }
+
+      .locked p {
+        margin: 0;
+        color: var(--orble-muted);
+        line-height: 1.5;
+      }
+
+      @media (max-width: 860px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .status {
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="brand">
+          <img src={logo.src} alt="" />
+          <h1>Orble Label Printer</h1>
+        </div>
+        <div class="status" id="connectionStatus">
+          {hasAccess ? "Printer not connected" : "Access required"}
+        </div>
+      </header>
+
+      {
+        hasAccess ? (
+          <div class="workspace">
+            <section class="panel" aria-labelledby="labelSettings">
+              <h2 id="labelSettings">Test Label</h2>
+              <div class="controls">
+                <label>
+                  Drink name
+                  <input id="drinkName" value="Strawberry Matcha 16oz" />
+                </label>
+                <div class="row">
+                  <label>
+                    Code
+                    <input id="labelCode" value="D30TH#21" />
+                  </label>
+                  <label>
+                    Expiration date
+                    <input id="expirationDate" value="09/28/26" />
+                  </label>
+                </div>
+                <label>
+                  Batch lines
+                  <textarea id="batchLines">D30TH#21 | 09/28/26 | Strawberry Matcha 16oz
+ | 09/28/26 | Strawberry Matcha 16oz</textarea>
+                </label>
+              </div>
+              <div class="actions">
+                <button id="connectButton" type="button">
+                  Connect QL-600
+                </button>
+                <button id="printOneButton" type="button" disabled>
+                  Print Test Label
+                </button>
+                <button id="printBatchButton" class="secondary" type="button" disabled>
+                  Print Batch
+                </button>
+              </div>
+            </section>
+
+            <section class="panel" aria-labelledby="previewTitle">
+              <h2 id="previewTitle">Preview</h2>
+              <div class="preview-wrap">
+                <canvas id="preview" width="566" height="165" />
+                <p class="note">
+                  Use Chrome or Edge over HTTPS. The first connection opens the
+                  browser’s USB permission picker.
+                </p>
+              </div>
+              <pre class="log" id="log" aria-live="polite" />
+            </section>
+          </div>
+        ) : (
+          <section class="panel locked" aria-labelledby="lockedTitle">
+            <h2 id="lockedTitle">Access Required</h2>
+            <div class="controls">
+              <p>
+                Add the printer key to the URL, using the same key as the
+                restock page: /label-printer?key=...
+              </p>
+            </div>
+          </section>
+        )
+      }
+    </main>
+
+    {
+      hasAccess && (
+        <script type="module">
+      const BROTHER_VENDOR_ID = 0x04f9;
+      const QL600_PRODUCT_ID = 0x20c0;
+      const DEVICE_PIXEL_WIDTH = 720;
+      const LABEL_WIDTH = 566;
+      const LABEL_HEIGHT = 165;
+      const RASTER_WIDTH = 165;
+      const RASTER_HEIGHT = 566;
+      const ROW_BYTES = DEVICE_PIXEL_WIDTH / 8;
+
+      const state = {
+        device: null,
+        interfaceNumber: null,
+        endpointNumber: null,
+      };
+
+      const el = {
+        status: document.getElementById("connectionStatus"),
+        log: document.getElementById("log"),
+        canvas: document.getElementById("preview"),
+        drinkName: document.getElementById("drinkName"),
+        labelCode: document.getElementById("labelCode"),
+        expirationDate: document.getElementById("expirationDate"),
+        batchLines: document.getElementById("batchLines"),
+        connectButton: document.getElementById("connectButton"),
+        printOneButton: document.getElementById("printOneButton"),
+        printBatchButton: document.getElementById("printBatchButton"),
+      };
+
+      const log = (message) => {
+        const timestamp = new Date().toLocaleTimeString();
+        el.log.textContent += `[${timestamp}] ${message}\n`;
+        el.log.scrollTop = el.log.scrollHeight;
+      };
+
+      const bytes = (...values) => values;
+      const u16le = (value) => [value & 0xff, (value >> 8) & 0xff];
+      const u32le = (value) => [
+        value & 0xff,
+        (value >> 8) & 0xff,
+        (value >> 16) & 0xff,
+        (value >> 24) & 0xff,
+      ];
+
+      function renderLabel({ code, expirationDate, drinkName }) {
+        const ctx = el.canvas.getContext("2d", { willReadFrequently: true });
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, LABEL_WIDTH, LABEL_HEIGHT);
+        ctx.fillStyle = "#000";
+        ctx.textBaseline = "top";
+
+        ctx.font = fitCanvasFont(ctx, code, 265, 44, 34, 8);
+        ctx.fillText(code, 8, 10);
+
+        const exp = `EXP ${expirationDate}`;
+        ctx.font = fitCanvasFont(ctx, exp, 265, 38, 26, 8);
+        const expWidth = ctx.measureText(exp).width;
+        ctx.fillText(exp, LABEL_WIDTH - 8 - expWidth, 14);
+
+        ctx.font = fitCanvasFont(ctx, drinkName, LABEL_WIDTH - 16, 94, 70, 12);
+        const metrics = ctx.measureText(drinkName);
+        const drinkX = Math.max(8, (LABEL_WIDTH - metrics.width) / 2);
+        ctx.fillText(drinkName, drinkX, 70);
+      }
+
+      function fitCanvasFont(ctx, text, maxWidth, maxHeight, maxSize, minSize) {
+        const value = text || "";
+        for (let size = maxSize; size >= minSize; size -= 1) {
+          ctx.font = `700 ${size}px Arial, sans-serif`;
+          const metrics = ctx.measureText(value);
+          const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || size;
+          if (metrics.width <= maxWidth && height <= maxHeight) {
+            return ctx.font;
+          }
+        }
+        return `700 ${minSize}px Arial, sans-serif`;
+      }
+
+      function currentLabel() {
+        return {
+          code: el.labelCode.value.trim(),
+          expirationDate: el.expirationDate.value.trim(),
+          drinkName: el.drinkName.value.trim(),
+        };
+      }
+
+      function parseBatchLines() {
+        return el.batchLines.value
+          .split(/\n+/)
+          .map((line) => line.trimEnd())
+          .filter(Boolean)
+          .map((line) => {
+            const parts = line.split("|").map((part) => part.trim());
+            return {
+              code: parts[0] || "",
+              expirationDate: parts[1] || el.expirationDate.value.trim(),
+              drinkName: parts[2] || el.drinkName.value.trim(),
+            };
+          });
+      }
+
+      function makeRasterBytes(labels, { cut = true } = {}) {
+        const data = [];
+        data.push(...bytes(0x1b, 0x69, 0x61, 0x01));
+        data.push(...new Array(200).fill(0));
+        data.push(...bytes(0x1b, 0x40));
+        data.push(...bytes(0x1b, 0x69, 0x61, 0x01));
+
+        labels.forEach((label, index) => {
+          const rasterRows = labelToRasterRows(label);
+          data.push(...bytes(0x1b, 0x69, 0x53));
+          data.push(...mediaAndQuality(RASTER_HEIGHT, index));
+
+          if (cut) {
+            data.push(...bytes(0x1b, 0x69, 0x4d, 0x40));
+            data.push(...bytes(0x1b, 0x69, 0x41, labels.length));
+          }
+
+          data.push(...bytes(0x1b, 0x69, 0x4b, cut ? 0x08 : 0x00));
+          data.push(...bytes(0x1b, 0x69, 0x64, 0x00, 0x00));
+
+          rasterRows.forEach((row) => {
+            data.push(0x67, 0x00, row.length, ...row);
+          });
+
+          data.push(index === labels.length - 1 ? 0x1a : 0x0c);
+        });
+
+        return new Uint8Array(data);
+      }
+
+      function mediaAndQuality(rasterHeight, pageIndex) {
+        return [
+          0x1b,
+          0x69,
+          0x7a,
+          0xde,
+          0x0b,
+          17,
+          54,
+          ...u32le(rasterHeight),
+          pageIndex === 0 ? 0 : 1,
+          0,
+        ];
+      }
+
+      function labelToRasterRows(label) {
+        renderLabel(label);
+        const ctx = el.canvas.getContext("2d", { willReadFrequently: true });
+        const source = ctx.getImageData(0, 0, LABEL_WIDTH, LABEL_HEIGHT).data;
+        const rows = [];
+
+        for (let y = 0; y < RASTER_HEIGHT; y += 1) {
+          const row = new Uint8Array(ROW_BYTES);
+          for (let x = 0; x < DEVICE_PIXEL_WIDTH; x += 1) {
+            const rasterX = DEVICE_PIXEL_WIDTH - 1 - x;
+            const labelX = rasterYToLabelX(y);
+            const labelY = rasterXToLabelY(rasterX);
+            const isBlack = labelX >= 0 && labelX < LABEL_WIDTH && labelY >= 0 && labelY < LABEL_HEIGHT
+              ? pixelIsBlack(source, labelX, labelY)
+              : false;
+            if (isBlack) {
+              row[x >> 3] |= 0x80 >> (x & 7);
+            }
+          }
+          rows.push(row);
+        }
+
+        return rows;
+      }
+
+      function rasterYToLabelX(rasterY) {
+        return rasterY;
+      }
+
+      function rasterXToLabelY(rasterX) {
+        const printableStart = DEVICE_PIXEL_WIDTH - RASTER_WIDTH;
+        const withinPrintable = rasterX - printableStart;
+        return LABEL_HEIGHT - 1 - withinPrintable;
+      }
+
+      function pixelIsBlack(source, x, y) {
+        const offset = (y * LABEL_WIDTH + x) * 4;
+        const r = source[offset];
+        const g = source[offset + 1];
+        const b = source[offset + 2];
+        const alpha = source[offset + 3] / 255;
+        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) * alpha + 255 * (1 - alpha);
+        return luminance < 180;
+      }
+
+      async function connectPrinter() {
+        if (!("usb" in navigator)) {
+          throw new Error("WebUSB is not available. Use Chrome or Edge over HTTPS.");
+        }
+
+        const device = await navigator.usb.requestDevice({
+          filters: [{ vendorId: BROTHER_VENDOR_ID, productId: QL600_PRODUCT_ID }, { vendorId: BROTHER_VENDOR_ID }],
+        });
+        await device.open();
+        if (device.configuration === null) {
+          await device.selectConfiguration(1);
+        }
+
+        const endpointInfo = findPrinterEndpoint(device);
+        await device.claimInterface(endpointInfo.interfaceNumber);
+        state.device = device;
+        state.interfaceNumber = endpointInfo.interfaceNumber;
+        state.endpointNumber = endpointInfo.endpointNumber;
+
+        el.status.textContent = `Connected: ${device.productName || "Brother printer"}`;
+        el.printOneButton.disabled = false;
+        el.printBatchButton.disabled = false;
+        log(`Connected interface ${state.interfaceNumber}, OUT endpoint ${state.endpointNumber}.`);
+      }
+
+      function findPrinterEndpoint(device) {
+        for (const configuration of device.configurations) {
+          for (const iface of configuration.interfaces) {
+            for (const alternate of iface.alternates) {
+              const outEndpoint = alternate.endpoints.find((endpoint) => endpoint.direction === "out");
+              if (outEndpoint && (alternate.interfaceClass === 7 || device.vendorId === BROTHER_VENDOR_ID)) {
+                return {
+                  interfaceNumber: iface.interfaceNumber,
+                  endpointNumber: outEndpoint.endpointNumber,
+                };
+              }
+            }
+          }
+        }
+        throw new Error("Could not find a printer OUT endpoint on this USB device.");
+      }
+
+      async function sendToPrinter(payload) {
+        if (!state.device || state.endpointNumber == null) {
+          throw new Error("Printer is not connected.");
+        }
+        const result = await state.device.transferOut(state.endpointNumber, payload);
+        log(`Sent ${payload.byteLength} bytes. Transfer status: ${result.status}.`);
+      }
+
+      async function printLabels(labels) {
+        const payload = makeRasterBytes(labels, { cut: true });
+        await sendToPrinter(payload);
+      }
+
+      el.connectButton.addEventListener("click", async () => {
+        try {
+          await connectPrinter();
+        } catch (error) {
+          log(`Connect failed: ${error.message}`);
+          console.error(error);
+        }
+      });
+
+      el.printOneButton.addEventListener("click", async () => {
+        try {
+          await printLabels([currentLabel()]);
+        } catch (error) {
+          log(`Print failed: ${error.message}`);
+          console.error(error);
+        }
+      });
+
+      el.printBatchButton.addEventListener("click", async () => {
+        try {
+          await printLabels(parseBatchLines());
+        } catch (error) {
+          log(`Batch print failed: ${error.message}`);
+          console.error(error);
+        }
+      });
+
+      ["input", "change"].forEach((eventName) => {
+        [el.drinkName, el.labelCode, el.expirationDate].forEach((input) => {
+          input.addEventListener(eventName, () => renderLabel(currentLabel()));
+        });
+      });
+
+      renderLabel(currentLabel());
+      log("Ready. Connect a QL-600 over USB, then click Connect QL-600.");
+        </script>
+      )
+    }
+  </body>
+</html>
