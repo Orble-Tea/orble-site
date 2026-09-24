@@ -228,6 +228,8 @@ def parse_slots(value: str) -> list[str]:
 
 
 def label_code(disposition: str, machine: str, slot: str) -> str:
+    if disposition == "S":
+        return ""
     return f"{disposition}{machine}#{slot}"
 
 
@@ -294,8 +296,6 @@ def production_jobs(
         for index in range(quantity):
             disposition = "D" if index < direct_to_machine else "S"
             machine, slot = slots[index % len(slots)]
-            if disposition == "S":
-                machine = "UNDC"
             grouped[recipe].append(f"{label_code(disposition, machine, slot)}\t{expiration_date}\t{drink}")
 
     return dict(grouped)
@@ -306,9 +306,11 @@ def instructions_for_images(
     model: str,
     label: str,
     cut: bool,
+    cut_every: Optional[int] = None,
+    one_job: bool = False,
 ) -> bytes:
     qlr = BrotherQLRaster(model)
-    return convert(
+    instructions = convert(
         qlr,
         images=images,
         label=label,
@@ -317,6 +319,41 @@ def instructions_for_images(
         dither=False,
         hq=True,
     )
+    if cut and cut_every:
+        instructions = set_cut_every(instructions, cut_every)
+    if one_job and len(images) > 1:
+        instructions = keep_only_final_page_end(instructions, len(images))
+    return instructions
+
+
+def set_cut_every(instructions: bytes, count: int) -> bytes:
+    if not 1 <= count <= 255:
+        raise ValueError("Brother QL cut interval must be between 1 and 255 labels.")
+    return instructions.replace(b"\x1B\x69\x41\x01", b"\x1B\x69\x41" + bytes([count]))
+
+
+def keep_only_final_page_end(instructions: bytes, image_count: int) -> bytes:
+    page_end_count = instructions.count(b"\x1A")
+    if page_end_count != image_count:
+        raise ValueError(f"Expected {image_count} page-end commands, found {page_end_count}.")
+
+    parts = instructions.split(b"\x1A")
+    rebuilt = bytearray()
+    for index, part in enumerate(parts[:-1]):
+        rebuilt.extend(part)
+        rebuilt.extend(b"\x1A" if index == image_count - 1 else b"\x0C")
+    rebuilt.extend(parts[-1])
+    return bytes(rebuilt)
+
+
+def default_cut_for_label(label: str) -> bool:
+    return LabelsManager().get(label).form_factor == FormFactor.ENDLESS
+
+
+def should_cut(args: argparse.Namespace, batch: bool) -> bool:
+    if args.cut is not None:
+        return args.cut
+    return True if batch else default_cut_for_label(args.label)
 
 
 def send_usb(instructions: bytes, usb: str) -> None:
@@ -342,6 +379,12 @@ def main() -> None:
     parser.add_argument("--printer", help="Optional macOS/CUPS printer name. Use `lpstat -p` to find it.")
     parser.add_argument("--usb", help="Optional pyusb printer identifier, such as usb://0x04f9:0x20c0.")
     parser.add_argument("--device", help="Optional raw printer device path.")
+    parser.add_argument(
+        "--cut",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Enable or disable the printer cutter. Defaults to off for die-cut labels and on for endless rolls.",
+    )
     parser.add_argument("--discover-usb", action="store_true", help="List Brother QL USB printers, then exit.")
     parser.add_argument("--sheet-url", help="Read labels from a Google Sheet CSV export URL.")
     parser.add_argument("--csv", help="Read labels from a local CSV file.")
@@ -403,7 +446,15 @@ def main() -> None:
                 for label_text in labels
             ]
             safe_recipe = re.sub(r"[^A-Za-z0-9._-]+", "_", recipe).strip("_") or "recipe"
-            instructions = instructions_for_images(images, args.model, args.label, cut=True)
+            cut = should_cut(args, batch=True)
+            instructions = instructions_for_images(
+                images,
+                args.model,
+                args.label,
+                cut=cut,
+                cut_every=len(images) if cut else None,
+                one_job=cut,
+            )
             output_path = output_dir / f"{safe_recipe}.bin"
             output_path.write_bytes(instructions)
             images[0].save(output_dir / f"{safe_recipe}_preview.png")
@@ -439,7 +490,7 @@ def main() -> None:
     output_path = Path(args.output)
     label_img.save(preview_path)
 
-    instructions = instructions_for_images([label_img], args.model, args.label, cut=True)
+    instructions = instructions_for_images([label_img], args.model, args.label, cut=should_cut(args, batch=False))
     output_path.write_bytes(instructions)
 
     if args.device:

@@ -28,3 +28,4 @@ pnpm-debug.log*
 label-printing/output/
 label-printing/*.bin
 label-printing/*_preview.png
+label-printing/print_queue_state.json
