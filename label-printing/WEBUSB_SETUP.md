@@ -54,7 +54,7 @@ D30TH#21 | 09/28/26 | Strawberry Matcha 16oz
  | 09/28/26 | Strawberry Matcha 16oz
 ```
 
-`Print Recipe Batch` and `Print Everything` both use the lines in this box right now. The browser sends the selected labels as one print job and requests one cut after the final label.
+`Print Recipe Batch` uses the lines in this box. `Print Everything` loads the production plan from Google Sheets through the site API, groups labels by recipe, and prints one recipe group at a time. Each recipe group is sent as one print job and requests one cut after that recipe's final label.
 
 ## Important Limitation
 

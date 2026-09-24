@@ -363,6 +363,7 @@ const hasAccess =
         device: null,
         interfaceNumber: null,
         endpointNumber: null,
+        printing: false,
       };
 
       const el = {
@@ -457,6 +458,46 @@ const hasAccess =
           throw new Error("There are no labels to print.");
         }
         return labels;
+      }
+
+      async function loadProductionPlan() {
+        const params = new URLSearchParams(window.location.search);
+        const response = await fetch(`/api/label-print-data?${params.toString()}`, {
+          headers: { Accept: "application/json" },
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Could not load production plan labels.");
+        }
+        if (!Array.isArray(payload.recipes) || payload.recipes.length === 0) {
+          throw new Error("Production plan did not return any labels.");
+        }
+        return payload;
+      }
+
+      async function printRecipeGroups(recipes) {
+        for (const recipe of recipes) {
+          if (!recipe.labels?.length) continue;
+          log(`Printing ${recipe.recipe}: ${recipe.labels.length} labels.`);
+          await printLabels(recipe.labels);
+        }
+      }
+
+      async function runPrintJob(button, callback) {
+        if (state.printing) {
+          throw new Error("A print job is already running.");
+        }
+        state.printing = true;
+        const previousText = button.textContent;
+        button.disabled = true;
+        button.textContent = "Printing...";
+        try {
+          await callback();
+        } finally {
+          state.printing = false;
+          button.disabled = false;
+          button.textContent = previousText;
+        }
       }
 
       function makeRasterBytes(labels, { cut = true } = {}) {
@@ -616,7 +657,7 @@ const hasAccess =
 
       el.printOneButton.addEventListener("click", async () => {
         try {
-          await printLabels([currentLabel()]);
+          await runPrintJob(el.printOneButton, () => printLabels([currentLabel()]));
         } catch (error) {
           log(`Print failed: ${error.message}`);
           console.error(error);
@@ -625,9 +666,11 @@ const hasAccess =
 
       el.printBatchButton.addEventListener("click", async () => {
         try {
-          const labels = labelsFromTextArea();
-          log(`Printing recipe batch: ${labels.length} labels.`);
-          await printLabels(labels);
+          await runPrintJob(el.printBatchButton, async () => {
+            const labels = labelsFromTextArea();
+            log(`Printing recipe batch: ${labels.length} labels.`);
+            await printLabels(labels);
+          });
         } catch (error) {
           log(`Batch print failed: ${error.message}`);
           console.error(error);
@@ -636,9 +679,13 @@ const hasAccess =
 
       el.printEverythingButton.addEventListener("click", async () => {
         try {
-          const labels = labelsFromTextArea();
-          log(`Printing everything: ${labels.length} labels.`);
-          await printLabels(labels);
+          await runPrintJob(el.printEverythingButton, async () => {
+            log("Loading production plan labels...");
+            const plan = await loadProductionPlan();
+            log(`Loaded ${plan.totalLabels} labels across ${plan.recipeCount} recipes.`);
+            await printRecipeGroups(plan.recipes);
+            log("Finished printing everything.");
+          });
         } catch (error) {
           log(`Print everything failed: ${error.message}`);
           console.error(error);
