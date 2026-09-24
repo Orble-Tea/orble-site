@@ -300,7 +300,7 @@ const hasAccess =
                   </label>
                 </div>
                 <label>
-                  Batch lines
+                  Labels to print
                   <textarea id="batchLines">D30TH#21 | 09/28/26 | Strawberry Matcha 16oz
  | 09/28/26 | Strawberry Matcha 16oz</textarea>
                 </label>
@@ -313,7 +313,10 @@ const hasAccess =
                   Print Test Label
                 </button>
                 <button id="printBatchButton" class="secondary" type="button" disabled>
-                  Print Batch
+                  Print Recipe Batch
+                </button>
+                <button id="printEverythingButton" type="button" disabled>
+                  Print Everything
                 </button>
               </div>
             </section>
@@ -373,6 +376,7 @@ const hasAccess =
         connectButton: document.getElementById("connectButton"),
         printOneButton: document.getElementById("printOneButton"),
         printBatchButton: document.getElementById("printBatchButton"),
+        printEverythingButton: document.getElementById("printEverythingButton"),
       };
 
       const log = (message) => {
@@ -445,6 +449,14 @@ const hasAccess =
               drinkName: parts[2] || el.drinkName.value.trim(),
             };
           });
+      }
+
+      function labelsFromTextArea() {
+        const labels = parseBatchLines();
+        if (labels.length === 0) {
+          throw new Error("There are no labels to print.");
+        }
+        return labels;
       }
 
       function makeRasterBytes(labels, { cut = true } = {}) {
@@ -559,6 +571,7 @@ const hasAccess =
         el.status.textContent = `Connected: ${device.productName || "Brother printer"}`;
         el.printOneButton.disabled = false;
         el.printBatchButton.disabled = false;
+        el.printEverythingButton.disabled = false;
         log(`Connected interface ${state.interfaceNumber}, OUT endpoint ${state.endpointNumber}.`);
       }
 
@@ -612,9 +625,22 @@ const hasAccess =
 
       el.printBatchButton.addEventListener("click", async () => {
         try {
-          await printLabels(parseBatchLines());
+          const labels = labelsFromTextArea();
+          log(`Printing recipe batch: ${labels.length} labels.`);
+          await printLabels(labels);
         } catch (error) {
           log(`Batch print failed: ${error.message}`);
+          console.error(error);
+        }
+      });
+
+      el.printEverythingButton.addEventListener("click", async () => {
+        try {
+          const labels = labelsFromTextArea();
+          log(`Printing everything: ${labels.length} labels.`);
+          await printLabels(labels);
+        } catch (error) {
+          log(`Print everything failed: ${error.message}`);
           console.error(error);
         }
       });

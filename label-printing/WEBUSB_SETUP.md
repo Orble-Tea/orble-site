@@ -35,7 +35,7 @@ The key is checked by the site server before the printer UI is shown. The USB pe
 2. Open the page in Chrome or Edge.
 3. Click `Connect QL-600`.
 4. Select the Brother printer in the browser permission picker.
-5. Click `Print Test Label`.
+5. Click `Print Test Label`, `Print Recipe Batch`, or `Print Everything`.
 
 The test label uses the DK-1204 layout: full drink name, expiration date, and an optional code. If the code field is blank, the top-left area stays blank for storage labels.
 
@@ -54,7 +54,7 @@ D30TH#21 | 09/28/26 | Strawberry Matcha 16oz
  | 09/28/26 | Strawberry Matcha 16oz
 ```
 
-The browser sends the batch as one print job and requests one cut after the final label.
+`Print Recipe Batch` and `Print Everything` both use the lines in this box right now. The browser sends the selected labels as one print job and requests one cut after the final label.
 
 ## Important Limitation
 
