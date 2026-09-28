@@ -1,10 +1,14 @@
+// @steered AudibleSecurityContext 1.2 2026-09-14
 import { createPrivateKey, createSign } from "node:crypto";
 
 import { assertConfigured } from "./config.js";
 import { UpstreamServiceError } from "./errors.js";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const SHEETS_BASE_URL = "https://sheets.googleapis.com/v4/spreadsheets";
+// Overridable so tests can point Sheets reads at a local fixture server,
+// mirroring how NAYAX_BASE_URL already works. Unset in production = real API.
+const SHEETS_BASE_URL =
+  process.env.SHEETS_BASE_URL || "https://sheets.googleapis.com/v4/spreadsheets";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 
 let tokenCache;

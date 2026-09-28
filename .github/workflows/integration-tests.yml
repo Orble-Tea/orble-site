@@ -5,7 +5,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: integration-tests-${{ github.ref }}
+  # One global group (not per-ref): simultaneous pushes to different branches
+  # otherwise run in parallel and trip the Google Sheets API rate limit.
+  group: integration-tests
   cancel-in-progress: false
 
 jobs:
