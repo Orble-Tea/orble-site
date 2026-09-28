@@ -21,7 +21,9 @@ describe("GET /api/restock-data", () => {
     });
 
     expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({ error: "Invalid RESTOCK_SECRET_KEY" });
+    expect(await response.json()).toEqual({
+      error: "Invalid RESTOCK_SECRET_KEY",
+    });
   });
 
   it("rejects unknown machines", async () => {
@@ -64,7 +66,9 @@ describe("GET /api/restock-data", () => {
     });
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: "Machine is not configured" });
+    expect(await response.json()).toEqual({
+      error: "Machine is not configured",
+    });
   });
 
   it("recognizes Towne as a known machine", async () => {
@@ -78,7 +82,9 @@ describe("GET /api/restock-data", () => {
     });
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: "Machine is not configured" });
+    expect(await response.json()).toEqual({
+      error: "Machine is not configured",
+    });
   });
 
   it("returns restock data for a valid request", async () => {
@@ -95,7 +101,9 @@ describe("GET /api/restock-data", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
-        return new Response(JSON.stringify({ values: [["Batch ID", "Event"]] }));
+        return new Response(
+          JSON.stringify({ values: [["Batch ID", "Event"]] }),
+        );
       }
       if (urlText.includes("Production%20Plan")) {
         return new Response(
@@ -266,7 +274,9 @@ describe("GET /api/restock-data", () => {
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       if (String(url).includes("Restock%20Log")) {
-        return new Response(JSON.stringify({ values: [["Batch ID", "Event"]] }));
+        return new Response(
+          JSON.stringify({ values: [["Batch ID", "Event"]] }),
+        );
       }
       return new Response("Forbidden", { status: 403 });
     });
