@@ -9,7 +9,7 @@ const { machines, today } = Astro.props;
 ---
 
 <script src="/lottie-player.js" defer is:inline></script>
-<!-- ============ loading overlay: bob waves while the log loads ============ -->
+<!-- ============ loading overlay: bob waves while the log loads or submits ============ -->
 <div
   id="loading-overlay"
   class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-white/85 backdrop-blur-sm"
@@ -19,7 +19,7 @@ const { machines, today } = Astro.props;
     autoplay
     loop
     style="width: 220px; height: 220px;"></lottie-player>
-  <div class="font-semibold text-orble-ink">Loading…</div>
+  <div id="loading-label" class="font-semibold text-orble-ink">Loading…</div>
 </div>
 <section
   id="view-start"
@@ -128,8 +128,6 @@ const { machines, today } = Astro.props;
     notConnected: (machine: string) =>
       `${machine} isn't connected to Nayax yet.`,
     genericError: "Something went wrong. Try again.",
-    unrecognizedCode:
-      "unrecognized flavor code: pick one of the valid flavors",
   };
 
   const STATUS_STYLES: Record<string, string> = {
@@ -152,13 +150,15 @@ const { machines, today } = Astro.props;
 
   /** Builds editable slots from the payload, applying backend warnings. */
   function initSlots(payload: RestockPayload): Slot[] {
-    const warned = new Set((payload.warnings || []).map((w) => w.slot));
+    const warned = new Map(
+      (payload.warnings || []).map((w) => [w.slot, w.code]),
+    );
     return payload.slots.map((s: any) => ({
       ...s,
       newCount: plannedNew(s),
       approved: false,
       edited: false,
-      warning: warned.has(s.slot) ? STRINGS.unrecognizedCode : undefined,
+      warning: warned.get(s.slot),
     }));
   }
 
@@ -172,6 +172,7 @@ const { machines, today } = Astro.props;
         ?.value || "";
     const date = ($("batch-date") as HTMLInputElement).value;
     if (!machine || !date) return;
+    document.getElementById("loading-label")!.textContent = "Loading…";
     document
       .getElementById("loading-overlay")!
       .classList.replace("hidden", "flex");

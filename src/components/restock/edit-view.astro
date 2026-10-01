@@ -23,9 +23,16 @@
 <script>
   import {
     COLORS,
+    emptyCounts,
     emptyState,
     plannedNew,
     esc,
+    setNew,
+    setPrevious,
+    setWaste,
+    shownPrevious,
+    slotTotal,
+    type Counts,
     type Slot,
   } from "~/lib/restock/ui-helpers";
   import {
@@ -38,24 +45,33 @@
     closeEdit,
   } from "~/components/restock/runtime";
   import { saveDraft } from "~/components/restock/drafts";
-  import { parseDrinkName } from "~/lib/restock/drinks.js";
+  import {
+    parseDrinkName,
+    slotCapacityForDrinkParts,
+  } from "~/lib/restock/drinks.js";
 
   // Stepper ceiling; keeps a held button from running away.
   const COUNT_MAX = 99;
 
   const STRINGS = {
-    unrecognizedCodeEdit:
-      "unrecognized flavor code: pick one of the valid flavors below",
+    warnings: {
+      UNPARSED_NAYAX_PRODUCT_NAME:
+        "unrecognized flavor code: pick one of the valid flavors below",
+      MISSING_NAYAX_PRODUCT_NAME:
+        "no drink name in Nayax: pick one of the valid flavors below",
+      MISSING_NAYAX_ON_HAND:
+        "couldn't read the count from Nayax: check the previous count below",
+    } as Record<string, string>,
   };
 
   let editingIndex = -1;
   let prevOpened = false;
-  const editState = { waste: 0, newCount: 0 };
+  let editState: Counts = { previous: 0, waste: 0, newCount: 0 };
 
   // Chip stand-ins for attributes the model stores as null (or missing size)
   const SIZE_DEFAULT = "16oz";
   const TOPPING_NONE = "None";
-  const SWEETNESS_DEFAULT = "Regular";
+  const SWEETNESS_DEFAULT = "Regular Sweetness";
 
   /** Option values for a chip group: every value present in the payload plus extras. */
   function distinct(field: keyof Slot, extra: (string | null)[]): string[] {
@@ -128,8 +144,7 @@
     const payload = $payload.get()!;
     const s = $slots.get()[i];
     const retiring = emptyState(payload.event, s) === "retiring";
-    editState.waste = s.waste;
-    editState.newCount = s.newCount;
+    editState = { previous: s.previous, waste: s.waste, newCount: s.newCount };
     prevOpened = false;
     $("edit-context").textContent =
       `Editing · ${payload.event} · ${payload.machine}`;
@@ -170,12 +185,12 @@
             <select id="edit-prev-flavor" class="w-full rounded-2xl border-2 border-gray-200 bg-white px-4 py-3 text-base text-gray-800 focus:border-orble-dark focus:outline-none">${prevFlavorOptions}</select></div>
           ${chipGroup("PrevSize", distinct("size", [prev.size, SIZE_DEFAULT]), prev.size || SIZE_DEFAULT, "Previous Size")}
           ${chipGroup("PrevTopping", distinct("topping", [prev.topping, TOPPING_NONE]), prev.topping ?? TOPPING_NONE, "Previous Topping")}
-          ${chipGroup("PrevSweetness", distinct("sweetnessLevel", [prev.sweetness, SWEETNESS_DEFAULT]), prev.sweetness ?? SWEETNESS_DEFAULT, "Previous Sweetness")}
+          ${chipGroup("PrevSweetness", distinct("sweetness", [prev.sweetness, SWEETNESS_DEFAULT]), prev.sweetness ?? SWEETNESS_DEFAULT, "Previous Sweetness")}
         </div>
       </div>`;
     }
     const warningStrip = s.warning
-      ? `<div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-800">${STRINGS.unrecognizedCodeEdit}</div>`
+      ? `<div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] text-amber-800">${STRINGS.warnings[s.warning] ?? STRINGS.warnings.UNPARSED_NAYAX_PRODUCT_NAME}</div>`
       : "";
     $("edit-body").innerHTML = `
       ${replacing}
@@ -185,10 +200,11 @@
       <div id="edit-chips" class="space-y-2">
       ${chipGroup("Size", distinct("size", [s.size, SIZE_DEFAULT]), s.size || SIZE_DEFAULT)}
       ${chipGroup("Topping", distinct("topping", [s.topping, TOPPING_NONE]), s.topping ?? TOPPING_NONE)}
-      ${chipGroup("Sweetness", distinct("sweetnessLevel", [s.sweetnessLevel, SWEETNESS_DEFAULT]), s.sweetnessLevel ?? SWEETNESS_DEFAULT)}
+      ${chipGroup("Sweetness", distinct("sweetness", [s.sweetness, SWEETNESS_DEFAULT]), s.sweetness ?? SWEETNESS_DEFAULT)}
       </div>
       <div class="rounded-2xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-3 gap-2">
+          ${stepper("previous", "Previous", shownPrevious(editState, payload.event), "text-gray-800")}
           ${stepper("waste", "Waste", editState.waste, "text-gray-800")}
           ${stepper("newCount", "New", editState.newCount, "text-orble-ink")}
         </div>
@@ -222,14 +238,15 @@
       if (newValue)
         newValue.style.color = emptySelected ? COLORS.countMuted : "";
       // Empty zeroes New and raises waste to cover previous; waste stays editable above that
-      const emptyWaste = Math.max(editState.waste, s.previous);
-      if (
-        emptySelected &&
-        (editState.newCount !== 0 || editState.waste !== emptyWaste)
-      ) {
-        editState.newCount = 0;
-        editState.waste = emptyWaste;
-        renderEditCounts();
+      if (emptySelected) {
+        const emptied = emptyCounts(editState, payload.event);
+        if (
+          emptied.newCount !== editState.newCount ||
+          emptied.waste !== editState.waste
+        ) {
+          editState = emptied;
+          renderEditCounts();
+        }
       }
       for (const btn of document.querySelectorAll<HTMLButtonElement>(
         '#edit-body [data-step^="newCount"]',
@@ -246,10 +263,10 @@
 
   /** Refreshes the stepper values and the total math line. */
   function renderEditCounts() {
-    const s = $slots.get()[editingIndex];
-    // waste above the Nayax count raises previous to match
-    const prev = Math.max(s.previous, editState.waste);
-    const total = prev - editState.waste + editState.newCount;
+    const event = $payload.get()!.event;
+    const prev = shownPrevious(editState, event);
+    const total = slotTotal(editState, event);
+    $("edit-previous").textContent = String(prev);
     $("edit-waste").textContent = String(editState.waste);
     $("edit-newCount").textContent = String(editState.newCount);
     $("edit-total").textContent = String(total);
@@ -274,10 +291,8 @@
         flavor: null,
         size: null,
         topping: null,
-        sweetnessLevel: null,
-        newCount: 0,
-        // clearing a slot pulls everything still in it
-        waste: Math.max(editState.waste, s.previous),
+        sweetness: null,
+        ...emptyCounts(editState, $payload.get()!.event),
       };
     } else if (flavorEl.value) {
       const topping = pick("Topping");
@@ -285,19 +300,16 @@
       patch = {
         flavor: flavorEl.value,
         size: pick("Size") || s.size,
-        // "None"/"Regular" stand in for the model's null
+        // "None"/"Regular Sweetness" stand in for the model's null
         topping: topping === TOPPING_NONE ? null : topping || s.topping,
-        sweetnessLevel:
-          sweetness === SWEETNESS_DEFAULT
-            ? null
-            : sweetness || s.sweetnessLevel,
-        newCount: editState.newCount,
+        sweetness:
+          sweetness === SWEETNESS_DEFAULT ? null : sweetness || s.sweetness,
+        ...editState,
         warning: undefined,
       };
     } else {
-      patch = { newCount: editState.newCount };
+      patch = { ...editState };
     }
-    patch.waste ??= editState.waste;
     // Previous-drink correction applies only when the accordion was opened
     const composedPrev = prevOpened ? composePrev() : null;
     if (composedPrev !== null) patch.previousDrink = composedPrev;
@@ -306,11 +318,12 @@
     const origNew = plannedNew(orig);
     patch.edited =
       next.waste !== orig.waste ||
+      next.previous !== orig.previous ||
       next.newCount !== origNew ||
       next.flavor !== (orig.flavor ?? null) ||
       next.size !== (orig.size ?? null) ||
       next.topping !== (orig.topping ?? null) ||
-      next.sweetnessLevel !== (orig.sweetnessLevel ?? null) ||
+      next.sweetness !== (orig.sweetness ?? null) ||
       next.previousDrink !== (orig.previousDrink ?? null);
     updateSlot(editingIndex, patch);
     saveDraft();
@@ -336,22 +349,28 @@
     }
     const button = target.closest<HTMLElement>("[data-step]");
     if (!button) return;
-    const [k, d] = button.dataset.step!.split(":");
-    // Waste is NOT capped at the Nayax count: reality can hold more
-    // drinks than the machine thinks. Nothing goes below 0.
-    const key = k as "waste" | "newCount";
+    const [key, d] = button.dataset.step!.split(":");
+    const event = $payload.get()!.event;
+    const s = $slots.get()[editingIndex];
+    const capacity = slotCapacityForDrinkParts(s);
+    const setters = { previous: setPrevious, waste: setWaste, newCount: setNew };
+    const current =
+      key === "previous"
+        ? shownPrevious(editState, event)
+        : editState[key as "waste" | "newCount"];
+    const value = Math.min(COUNT_MAX, current + Number(d));
+    let next = setters[key as keyof typeof setters](
+      editState,
+      value,
+      event,
+      capacity,
+    );
     const flavorEl = document.getElementById(
       "edit-flavor",
     ) as HTMLSelectElement | null;
-    // Empty keeps the total at zero: waste cannot drop below previous
-    const floor =
-      key === "waste" && flavorEl?.value === "__empty__"
-        ? $slots.get()[editingIndex].previous
-        : 0;
-    editState[key] = Math.min(
-      COUNT_MAX,
-      Math.max(floor, editState[key] + Number(d)),
-    );
+    // Empty keeps the total at zero whatever is stepped
+    if (flavorEl?.value === "__empty__") next = emptyCounts(next, event);
+    editState = next;
     renderEditCounts();
   });
 </script>

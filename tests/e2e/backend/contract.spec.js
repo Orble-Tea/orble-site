@@ -1,8 +1,13 @@
 // This spec outlines integration tests between the UI and the backend that call our API routes and services
 import { test, expect } from "@playwright/test";
-import { SCENARIO_DATES } from "../fixture-server.mjs";
+import { PORT, SCENARIO_DATES } from "../fixture-server.mjs";
 
 const KEY = "test-key";
+
+// Submits change the fixture's state; every test starts from the same one
+test.beforeEach(async () => {
+  await fetch(`http://127.0.0.1:${PORT}/__reset`, { method: "POST" });
+});
 
 /** The slot's card element, located by slot number instead of DOM order. */
 function slotCard(page, n) {
@@ -23,15 +28,15 @@ test("Load: real service output renders (field-name contract)", async ({
 
   // Slot 1: plan assigns 3x Matcha, Nayax says 3 Thai Tea in the slot
   // (PAR 4 - missing 1). The page must render the service's expectedNew /
-  // sweetnessLevel / previousDrink fields, not the spec-doc names.
+  // sweetness / previousDrink fields, not the spec-doc names.
   const slot1 = slotCard(page, 1);
   await expect(slot1).toContainText("Matcha");
   await expect(slot1).toContainText(
-    "replacing Thai Tea 16oz Less Sugar w/ Lychee",
+    "replacing Thai Tea 16oz Less Sweet w/ Lychee",
   );
   await expect(slot1).toContainText("new: 3");
   await expect(slot1).toContainText("waste: 3");
-  await expect(slot1).toContainText("Less Sugar"); // sweetnessLevel reached the qualifiers
+  await expect(slot1).toContainText("Less Sweet"); // sweetness reached the qualifiers
 
   // Slot 3: Nayax reports an unparseable product name -> warnings[] flows
   // through the real route and lands on the row.
@@ -74,7 +79,7 @@ test("fully-logged batch: real 409 fires the terminal error card", async ({
   await expect(page.locator("#view-table")).toBeHidden();
 });
 
-test("submit: stub endpoint accepts the page's real POST", async ({ page }) => {
+test("submit: the real route accepts the page's real POST", async ({ page }) => {
   await startLog(page, SCENARIO_DATES.load);
   await expect(page.locator("#table-event")).toHaveText("Load");
   for (const box of await page.locator("[data-approve]").all()) {
@@ -82,6 +87,5 @@ test("submit: stub endpoint accepts the page's real POST", async ({ page }) => {
     await box.check();
   }
   await page.click("#complete");
-  // Real route validated key + required fields and acknowledged.
   await expect(page.locator("#view-submitted")).toBeVisible();
 });

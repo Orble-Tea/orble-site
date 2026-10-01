@@ -2,44 +2,36 @@ import {
   getMachineConfig,
   requireRestockSecretKey,
 } from "../../lib/restock/config.js";
-import {
-  badRequest,
-  conflict,
-  invalidKey,
-  json,
-  serverError,
-  upstreamError,
-} from "../../lib/restock/http.js";
+import { ERRORS, RestockError } from "../../lib/restock/errors.js";
+import { errorResponse, json } from "../../lib/restock/http.js";
 import { buildRestockData } from "../../lib/restock/restock-service.js";
 
 export async function GET({ url }) {
   try {
-    if (!requireRestockSecretKey(url.searchParams.get("key"))) return invalidKey();
+    if (!requireRestockSecretKey(url.searchParams.get("key")))
+      throw new RestockError(ERRORS.invalidKey);
 
     const machineConfig = getMachineConfig(url.searchParams.get("machine"));
-    if (!machineConfig) return badRequest("Unknown machine");
+    if (!machineConfig) throw new RestockError(ERRORS.unknownMachine());
 
     const date = url.searchParams.get("date");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return badRequest("Invalid date");
-    if (!machineConfig.machineId) return serverError("Machine is not configured");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
+      throw new RestockError(ERRORS.invalidDate);
+    if (!machineConfig.machineId)
+      throw new RestockError(ERRORS.machineNotConfigured);
 
     const requestedMode = url.searchParams.get("mode") || url.searchParams.get("event");
-    if (requestedMode && String(requestedMode).toLowerCase() !== "clearout") {
-      return badRequest("Invalid mode");
-    }
+    if (requestedMode && String(requestedMode).toLowerCase() !== "clearout")
+      throw new RestockError(ERRORS.invalidMode);
 
     const data = await buildRestockData(machineConfig, date, {
       mode: requestedMode || null,
     });
     return json(data);
   } catch (error) {
-    if (error.alreadySubmitted || error.clearoutRequiresLoad) {
-      return conflict(error.message, error.existingEntryRow);
-    }
-    console.error("restock-data error:", error);
-    if (error.upstream) {
-      return upstreamError(error.message, error.details);
-    }
-    return serverError();
+    // 4xx are the restocker's to fix; anything else is ours to look at
+    if (!(error instanceof RestockError) || error.status >= 500)
+      console.error("restock-data error:", error);
+    return errorResponse(error);
   }
 }
