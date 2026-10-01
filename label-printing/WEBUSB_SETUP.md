@@ -1,6 +1,6 @@
 # Production Label Printing
 
-This feature lets a production operator print Brother DK-1204 labels directly from the Production Plan. The operator opens the hosted label-printer page, reviews the labels generated from the plan, connects the Brother QL-600 through the browser, and prints the selected rows.
+This feature lets a production operator print labels directly from the Production Plan. The operator opens the hosted label-printer page, reviews the labels generated from the plan, connects the Brother QL-600 through the browser, and prints the selected rows.
 
 The goal is to keep the Production Plan as the source of truth and let any authorized operator print from the browser on the computer connected to the printer. The only local requirement is Chrome or Edge on that computer.
 
@@ -108,16 +108,16 @@ To support a new printer, the browser must be able to claim the USB device throu
 
 ## One-Time Apps Script Setup
 
-Copy `label-printing/apps_script_webusb_integration.js` into the Production Plan Apps Script project.
+These steps have already been taken. The steps are firstly to copy `label-printing/apps_script_webusb_integration.js` into the Production Plan Apps Script project.
 
-Set these Apps Script project properties:
+Then, we set these Apps Script project properties:
 
 ```text
 LABEL_PRINTER_URL=https://YOUR_NETLIFY_DEPLOY/label-printer
 LABEL_PRINTER_KEY=YOUR_RESTOCK_KEY
 ```
 
-Add the menu item to the existing `onOpen()` menu:
+Then add the menu item to the existing `onOpen()` menu:
 
 ```js
 .addItem('Print Labels', 'openLabelPrinter')
