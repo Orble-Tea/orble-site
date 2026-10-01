@@ -22,11 +22,11 @@ function topoffPayload() {
     slots: [
       slot({
         slot: 1,
-        previousDrink: "Thai Tea 16oz Less Sugar w/ Lychee",
+        previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
         flavor: "Thai Tea",
         size: "16oz",
         topping: "Lychee",
-        sweetnessLevel: "Less Sugar",
+        sweetness: "Less Sweet",
         previous: 3,
         waste: 0,
         expectedNew: 2,
@@ -55,7 +55,7 @@ test("full Load visit: render, gate, edit, fold, submit payload", async ({
   const slot1 = slotCard(page, 1);
   await expect(slot1).toContainText("Matcha");
   await expect(slot1).toContainText(
-    "replacing Thai Tea 16oz Less Sugar w/ Lychee",
+    "replacing Thai Tea 16oz Less Sweet w/ Lychee",
   );
   await expect(slot1).toContainText("waste: 3");
   // Same-drink slot shows no replacing line; empty slot renders greyed.
@@ -69,25 +69,24 @@ test("full Load visit: render, gate, edit, fold, submit payload", async ({
   );
   expect(posts).toHaveLength(0);
 
-  // Edit slot 1: math updates live and waste is NOT capped at previous.
-  // On a Load, counting more waste than Nayax expected means Nayax
-  // undercounted: previous tracks the waste up.
+  // Edit slot 1. On a Load the old batch comes out entirely, so waste and
+  // previous move together, and the whole slot is free for new drinks.
   await page.locator("[data-edit]").first().click();
   await page.locator('[data-step="newCount:1"]').click(); // new 3 -> 4
   await expect(page.locator("#edit-total")).toHaveText("4"); // 3 - 3 + 4
-  await page.locator('[data-step="waste:1"]').click(); // waste 3 -> 4
-  await expect(page.locator("#edit-m-prev")).toHaveText("4"); // previous follows
-  await expect(page.locator("#edit-total")).toHaveText("4"); // 4 - 4 + 4
+  await page.locator('[data-step="waste:1"]').click(); // Nayax undercounted: 4 came out
+  await expect(page.locator("#edit-m-prev")).toHaveText("4"); // previous follows waste
   await page.locator('[data-step="waste:-1"]').click(); // back to 3
-  await expect(page.locator("#edit-m-prev")).toHaveText("3"); // and back down
-  await expect(page.locator("#edit-m-waste")).toHaveText("3");
+  await expect(page.locator("#edit-m-prev")).toHaveText("3");
+  // Drop the Lychee: a changed drink must reach the POST.
+  await page
+    .locator('#edit-chips label:has(input[name="Topping"][value="None"])')
+    .click();
   await page.click("#edit-save");
 
   // Approving folds the row to a single line with the full drink name.
   await approveAll(page);
-  await expect(slotCard(page, 1)).toContainText(
-    "16oz Matcha Less Sugar with Lychee",
-  );
+  await expect(slotCard(page, 1)).toContainText("16oz Matcha Less Sweet");
 
   // Complete now submits; the POST body is the contract.
   await page.click("#complete");
@@ -99,28 +98,58 @@ test("full Load visit: render, gate, edit, fold, submit payload", async ({
   expect(body.machine).toBe("30th");
   expect(body.date).toBe("2026-07-10");
   expect(body.duration).toMatch(/^\d+m \d+s$/);
-  // Every slot is reported, empties included; the retiring slot's waste
-  // IS recorded; the edited value made it through.
+  // Every slot sends the full state the restocker confirmed. On a Load,
+  // previous equals waste because everything comes out.
   expect(body.slots).toEqual([
-    { slot: 1, waste: 3, new: 4 },
-    { slot: 2, waste: 2, new: 2 },
-    { slot: 3, waste: 2, new: 0 },
-    { slot: 4, waste: 0, new: 0 },
+    {
+      slot: 1,
+      drink: { flavor: "Matcha", size: "16oz", topping: null, sweetness: "Less Sweet" },
+      previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
+      previous: 3,
+      waste: 3,
+      new: 4,
+    },
+    {
+      slot: 2,
+      drink: { flavor: "Matcha", size: "16oz", topping: null, sweetness: "Less Sweet" },
+      previousDrink: "Matcha 16oz Less Sweet",
+      previous: 2,
+      waste: 2,
+      new: 2,
+    },
+    { slot: 3, drink: null, previousDrink: "Taro 16oz", previous: 2, waste: 2, new: 0 },
+    { slot: 4, drink: null, previousDrink: null, previous: 0, waste: 0, new: 0 },
   ]);
 });
 
-test("Topoff over-waste: previous amends to match waste", async ({ page }) => {
+test("Topoff: the previous stepper corrects the Nayax count and reaches the POST", async ({
+  page,
+}) => {
   await mockData(page, topoffPayload());
+  const posts = await mockSubmit(page);
   await startLog(page, "2026-07-13");
   await scrollAndClick(page.locator("[data-edit]").first());
-  // Nayax says previous 3; waste past it must raise the shown previous.
-  for (let i = 0; i < 4; i++) await page.click('[data-step="waste:1"]');
-  await expect(page.locator("#edit-m-prev")).toHaveText("4");
+  // Nayax says 3 in the slot; the restocker counts 2.
+  await page.click('[data-step="previous:-1"]');
+  await expect(page.locator("#edit-previous")).toHaveText("2");
+  await expect(page.locator("#edit-m-prev")).toHaveText("2");
   await page.click("#edit-save");
-  const slot1 = slotCard(page, 1);
-  await expect(slot1).toContainText("previous: 4");
-  await expect(slot1).toContainText("waste: 4");
-  await expect(slot1).toContainText("total: 2");
+
+  await approveAll(page);
+  await page.click("#complete");
+  await expect(page.locator("#view-submitted")).toBeVisible();
+  // The corrected count is what the server gets.
+  expect(posts[0].slots).toEqual([
+    {
+      slot: 1,
+      drink: { flavor: "Thai Tea", size: "16oz", topping: "Lychee", sweetness: "Less Sweet" },
+      previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
+      previous: 2,
+      waste: 0,
+      new: 2,
+    },
+    { slot: 2, drink: null, previousDrink: null, previous: 0, waste: 0, new: 0 },
+  ]);
 });
 
 test("sold-out slot renders Empty with the sold out! note", async ({
