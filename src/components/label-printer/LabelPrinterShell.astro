@@ -1,0 +1,404 @@
+---
+const { logoSrc } = Astro.props;
+---
+
+<main class="label-printer">
+  <header class="dialog-header">
+    <div class="brand">
+      <img src={logoSrc} alt="" />
+      <div>
+        <p class="eyebrow">Orble Production</p>
+        <h1>Label Printer</h1>
+      </div>
+    </div>
+    <p id="connectionStatus" class="connection-status">Connect a QL-600 to print.</p>
+  </header>
+
+  <div class="dialog-layout">
+    <section class="dialog-panel production-panel" aria-labelledby="productionHeading">
+      <div class="panel-heading">
+        <div>
+          <h2 id="productionHeading">Labels to Print</h2>
+        </div>
+        <button id="reloadPlanButton" type="button" class="secondary-button">Reload</button>
+      </div>
+
+      <div class="selection-summary">
+        Selected <strong><span id="selectedLabelCount">0</span> of <span id="planLabelCount">0</span></strong> labels in production plan
+      </div>
+
+      <label class="select-all">
+        <input id="selectEverything" type="checkbox" checked />
+        <span>Select everything</span>
+      </label>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th aria-label="Selected"></th>
+              <th>Recipe</th>
+              <th>Variation</th>
+              <th>Labels</th>
+              <th>Machine</th>
+              <th>Storage</th>
+            </tr>
+          </thead>
+          <tbody id="planRows">
+            <tr>
+              <td colspan="6">Loading production plan...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button id="connectButton" type="button">Connect QL-600</button>
+        <button id="printSelectedButton" type="button" disabled>Print Everything</button>
+      </div>
+    </section>
+
+    <section class="dialog-panel preview-panel" aria-labelledby="previewHeading">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Test Label</p>
+          <h2 id="previewHeading">Preview</h2>
+        </div>
+      </div>
+
+      <canvas id="preview" width="566" height="165" aria-label="Label preview"></canvas>
+
+      <div class="test-fields">
+        <label>
+          Drink
+          <input id="drinkName" value="Matcha 16oz Less Sugar" />
+        </label>
+        <label>
+          Code
+          <input id="labelCode" value="30TH#21" />
+        </label>
+        <label>
+          Expiration
+          <input id="expirationDate" value="09/28/26" />
+        </label>
+      </div>
+
+      <button id="printOneButton" type="button">Print Test Label</button>
+
+      <div class="log-panel" aria-live="polite">
+        <p class="eyebrow">Status Log</p>
+        <pre id="log"></pre>
+      </div>
+    </section>
+  </div>
+</main>
+
+<style>
+  .label-printer {
+    --printer-primary: var(--color-primary);
+    --printer-accent: var(--color-primary);
+    --printer-accent-strong: color-mix(in srgb, var(--color-primary) 72%, var(--color-text));
+    --printer-text: var(--color-text);
+    --printer-muted: var(--color-text-offset);
+    --printer-surface: var(--color-background);
+    --printer-surface-offset: var(--color-background-offset);
+    --printer-border: var(--color-border);
+    width: min(1160px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 24px 0 40px;
+    color: var(--printer-text);
+  }
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 2px solid var(--printer-primary);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  h1,
+  h2,
+  p {
+    margin: 0;
+  }
+
+  h1 {
+    color: var(--printer-accent);
+    font-size: 22px;
+    line-height: 1.1;
+    font-weight: 800;
+  }
+
+  h2 {
+    color: var(--printer-accent);
+    font-size: 17px;
+    line-height: 1.15;
+    font-weight: 800;
+  }
+
+  .eyebrow {
+    color: var(--printer-muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .connection-status {
+    min-height: 22px;
+    color: var(--printer-muted);
+    font-size: 14px;
+    text-align: right;
+  }
+
+  .dialog-layout {
+    display: grid;
+    grid-template-columns: minmax(560px, 1fr) minmax(330px, 390px);
+    gap: 22px;
+    padding-top: 22px;
+  }
+
+  .dialog-panel {
+    min-width: 0;
+    border: 1px solid var(--printer-border);
+    border-radius: 8px;
+    background: var(--printer-surface);
+    box-shadow: 0 18px 46px color-mix(in srgb, var(--printer-accent) 22%, transparent);
+  }
+
+  .panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 15px 16px;
+    border-bottom: 1px solid var(--printer-border);
+  }
+
+  .selection-summary {
+    margin: 14px 16px 0;
+    border: 1px solid var(--printer-border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--printer-primary) 26%, var(--printer-surface));
+    padding: 12px;
+    color: var(--printer-muted);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .selection-summary strong {
+    color: var(--printer-accent);
+  }
+
+  .select-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 16px 14px 24px;
+    color: var(--printer-accent-strong);
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--printer-accent);
+  }
+
+  .table-wrap {
+    max-height: min(52vh, 520px);
+    overflow: auto;
+    border-top: 1px solid var(--printer-border);
+    border-bottom: 1px solid var(--printer-border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  th,
+  td {
+    padding: 11px 10px;
+    border-bottom: 1px solid var(--printer-border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--printer-surface-offset);
+    box-shadow: 0 1px 0 var(--printer-border);
+    color: var(--printer-accent-strong);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  td {
+    color: var(--printer-text);
+  }
+
+  .checkbox-cell {
+    width: 42px;
+    padding-left: 24px;
+    padding-right: 0;
+  }
+
+  thead th:first-child {
+    width: 42px;
+    padding-left: 24px;
+    padding-right: 0;
+  }
+
+  :global(#planRows td) {
+    padding: 11px 10px;
+    border-bottom: 1px solid var(--printer-border);
+    color: var(--printer-text);
+    vertical-align: top;
+  }
+
+  :global(#planRows .checkbox-cell) {
+    width: 42px;
+    padding-left: 24px;
+    padding-right: 0;
+  }
+
+  :global(#planRows .number-cell) {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .number-cell {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .actions,
+  .test-fields {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  button {
+    min-height: 44px;
+    border: 1px solid var(--printer-accent);
+    border-radius: 8px;
+    background: var(--printer-accent);
+    color: var(--printer-text);
+    font: inherit;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  button.secondary-button {
+    min-height: 36px;
+    padding: 0 14px;
+    background: var(--printer-surface);
+    color: var(--printer-accent-strong);
+  }
+
+  button:disabled {
+    border-color: var(--printer-border);
+    background: var(--printer-surface-offset);
+    color: var(--printer-muted);
+    cursor: not-allowed;
+  }
+
+  canvas {
+    display: block;
+    width: calc(100% - 32px);
+    height: auto;
+    margin: 16px;
+    border: 1px solid var(--printer-border);
+    background: var(--printer-surface);
+  }
+
+  label {
+    display: grid;
+    gap: 6px;
+    color: var(--printer-accent-strong);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  input:not([type="checkbox"]) {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--printer-border);
+    border-radius: 8px;
+    background: var(--printer-surface);
+    color: var(--printer-text);
+    font: inherit;
+    padding: 10px 11px;
+  }
+
+  input:focus {
+    border-color: var(--printer-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--printer-primary) 55%, transparent);
+    outline: none;
+  }
+
+  #printOneButton {
+    width: calc(100% - 32px);
+    margin: 0 16px 16px;
+  }
+
+  .log-panel {
+    margin: 0 16px 16px;
+    border: 1px solid var(--printer-border);
+    border-radius: 8px;
+    background: var(--printer-surface-offset);
+    padding: 12px;
+  }
+
+  pre {
+    min-height: 132px;
+    max-height: 190px;
+    margin: 8px 0 0;
+    overflow: auto;
+    color: var(--printer-text);
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+  }
+
+  @media (max-width: 900px) {
+    .dialog-layout,
+    .actions {
+      grid-template-columns: 1fr;
+    }
+
+    .dialog-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .connection-status {
+      text-align: left;
+    }
+  }
+</style>
