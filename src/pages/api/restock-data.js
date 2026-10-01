@@ -1,3 +1,4 @@
+// @steered AudibleSecurityContext 1.2 2026-10-01
 import {
   getMachineConfig,
   requireRestockSecretKey,
@@ -33,7 +34,7 @@ export async function GET({ url }) {
     });
     return json(data);
   } catch (error) {
-    if (error.alreadySubmitted || error.clearoutRequiresLoad) {
+    if (error.alreadySubmitted || error.clearoutRequiresLoad || error.batchClearedOut) {
       return conflict(error.message, error.existingEntryRow);
     }
     console.error("restock-data error:", error);

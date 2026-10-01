@@ -1,4 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+// Live GET /api/restock-data against the 30th machine and the (Testing)
+// workbooks. The test owns 30th slots 50-52, which have no physical coils:
+// it sets them to a known state, limits the app to them, and puts them back
+// from a snapshot afterwards.
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+import { MESSAGES } from "../../src/lib/restock/errors.js";
+import { RESTOCK_LOG_HEADER } from "../../src/lib/restock/submit-service.js";
 
 import {
   clearSheetRange,
@@ -6,36 +21,20 @@ import {
   seedLatestSheet,
   seedSheet,
 } from "./support/google-sheets-client.js";
-import {
-  normalizeDrinkName,
-  parseDrinkName,
-  slotCapacityForDrink,
-} from "../../src/lib/restock/drinks.js";
 
 const TEST_DATE = "2026-08-31";
 const BATCH_ID = `30th-${TEST_DATE}`;
-const PRODUCTION_PLAN_ROWS = [
-  ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
-  ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1, 2"],
-];
-const RESTOCK_LOG_HEADER = [
-  [
-    "Batch ID",
-    "Event",
-    "Date",
-    "Slot",
-    "Drink",
-    "Previous",
-    "Waste",
-    "New",
-    "Total",
-    "Expected",
-  ],
-];
-const INVENTORY_ROWS = [
-  ["Drink", "Storage", "To 30TH"],
-  ["Thai Tea 16oz Less Sugar w/ Lychee", 2, 2],
-];
+const OWNED_SLOTS = [50, 51, 52];
+// Slot 50 holds THAI with 1 on hand; 51 and 52 hold MATCHA with 0 on hand
+const THAI = "Thai Tea 16oz Less Sweet w/ Lychee"; // 4 per slot
+const MATCHA = "Matcha 16oz Less Sweet";
+const PAR = 4;
+const THAI_PARTS = {
+  flavor: "Thai Tea",
+  size: "16oz",
+  topping: "Lychee",
+  sweetness: "Less Sweet",
+};
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -44,6 +43,22 @@ function requireEnv(name) {
   }
   return value;
 }
+
+const thirtieth = () => requireEnv("NAYAX_MACHINE_30TH_ID");
+const nayax = () => import("../../src/lib/restock/nayax.js");
+
+/** A Load (and optionally more events) already logged for the batch. */
+const logRows = (...events) => [
+  RESTOCK_LOG_HEADER,
+  ...events.map((event) => [
+    BATCH_ID,
+    event,
+    TEST_DATE,
+    "1m 0s",
+    "[]",
+    "Complete",
+  ]),
+];
 
 async function seedRestockLog(rows) {
   await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", rows);
@@ -57,59 +72,23 @@ async function seedProductionPlan(rows) {
   );
 }
 
-async function seedInventory(rows) {
-  await seedLatestSheet(requireEnv("INVENTORY_SHEET_ID"), rows);
+async function seedInventory(toThirtieth) {
+  await seedLatestSheet(requireEnv("INVENTORY_SHEET_ID"), [
+    ["Drink", "Storage", "To 30TH"],
+    [THAI, 2, toThirtieth],
+  ]);
 }
 
-async function getLiveTopoffFixture(storage) {
-  const {
-    getMachineProducts,
-    getProductName,
-    getProductOnHand,
-    getProductSlot,
-    hasProductOnHand,
-  } = await import("../../src/lib/restock/nayax.js");
-  const products = await getMachineProducts(
-    requireEnv("NAYAX_MACHINE_30TH_ID"),
-  );
-  const product = products.find((candidate) => {
-    const slot = getProductSlot(candidate);
-    const drink = normalizeDrinkName(getProductName(candidate));
-    return (
-      Number.isInteger(slot) &&
-      slot >= 1 &&
-      slot <= 35 &&
-      drink &&
-      hasProductOnHand(candidate)
-    );
+async function getRestockData(query = "") {
+  const { GET } = await import("../../src/pages/api/restock-data.js");
+  return GET({
+    url: new URL(
+      `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}${query}`,
+    ),
   });
-
-  if (!product) {
-    throw new Error(
-      "Nayax machine has no readable products in slots 1-35 for Topoff integration testing",
-    );
-  }
-
-  const slot = getProductSlot(product);
-  const drink = normalizeDrinkName(getProductName(product));
-  const previous = getProductOnHand(product);
-  const expectedNew = Math.min(
-    storage,
-    Math.max(slotCapacityForDrink(drink) - previous, 0),
-  );
-
-  return {
-    slot,
-    drink,
-    previous,
-    expectedNew,
-    total: previous + expectedNew,
-  };
 }
 
-function chooseDifferentSlots(currentSlot) {
-  return [1, 2, 3, 4, 5].filter((slot) => slot !== currentSlot).slice(0, 2);
-}
+const slotOf = (body, slot) => body.slots.find((s) => s.slot === slot);
 
 function expectRestockDataSlotContract(slot) {
   expect(slot).toHaveProperty("previousDrink");
@@ -121,14 +100,64 @@ function expectRestockDataSlotContract(slot) {
 }
 
 describe("restock data integration", () => {
-  beforeEach(() => {
+  let snapshot;
+
+  beforeAll(async () => {
+    const {
+      getMachineProducts,
+      getProductName,
+      getProductSlot,
+      putMachineProducts,
+    } = await nayax();
+    const { normalizeDrinkName } =
+      await import("../../src/lib/restock/drinks.js");
+    const products = await getMachineProducts(thirtieth());
+    snapshot = products.filter((p) => OWNED_SLOTS.includes(getProductSlot(p)));
+    // Updated in place, never created or removed, so the restore is exact
+    expect(snapshot.map(getProductSlot).sort()).toEqual(OWNED_SLOTS);
+
+    const source = (drink) => {
+      const found = products.find(
+        (p) =>
+          !OWNED_SLOTS.includes(getProductSlot(p)) &&
+          normalizeDrinkName(getProductName(p)) === drink,
+      );
+      if (!found) throw new Error(`30th has no slot holding ${drink} to copy`);
+      const { NayaxProductID, DEXProductName, CashPrice, CreditCardPrice } =
+        found;
+      return { NayaxProductID, DEXProductName, CashPrice, CreditCardPrice };
+    };
+    const onHand = { 50: 1, 51: 0, 52: 0 };
+    await putMachineProducts(
+      thirtieth(),
+      snapshot.map((p) => {
+        const slot = getProductSlot(p);
+        return {
+          ...p,
+          ...source(slot === 50 ? THAI : MATCHA),
+          PAR,
+          MissingStockByMDB: PAR - onHand[slot],
+        };
+      }),
+      { avoidDelete: true },
+    );
+  });
+
+  afterAll(async () => {
+    if (!snapshot) return;
+    const { putMachineProducts } = await nayax();
+    await putMachineProducts(thirtieth(), snapshot, { avoidDelete: true });
+  });
+
+  beforeEach(async () => {
     vi.resetModules();
     vi.stubEnv("RESTOCK_SECRET_KEY", "integration-secret");
+    vi.stubEnv("RESTOCK_SLOTS_30TH", OWNED_SLOTS.join(","));
     vi.stubEnv(
       "NAYAX_BASE_URL",
       process.env.NAYAX_BASE_URL || "https://lynx.nayax.com/operational/v1",
     );
-    vi.stubEnv("NAYAX_MACHINE_30TH_ID", requireEnv("NAYAX_MACHINE_30TH_ID"));
+    vi.stubEnv("NAYAX_MACHINE_30TH_ID", thirtieth());
     vi.stubEnv(
       "PRODUCTION_PLAN_SHEET_ID",
       requireEnv("PRODUCTION_PLAN_SHEET_ID"),
@@ -142,6 +171,7 @@ describe("restock data integration", () => {
     vi.stubEnv("GOOGLE_PRIVATE_KEY", requireEnv("GOOGLE_PRIVATE_KEY"));
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "");
     vi.stubEnv("NAYAX_API_TOKEN", requireEnv("NAYAX_API_TOKEN"));
+    await seedRestockLog([RESTOCK_LOG_HEADER]);
   });
 
   afterEach(async () => {
@@ -155,313 +185,108 @@ describe("restock data integration", () => {
     vi.unstubAllEnvs();
   });
 
-  beforeEach(async () => {
-    await seedRestockLog(RESTOCK_LOG_HEADER);
-  });
-
-  it("builds Load payloads from the Production Plan workbook", async () => {
-    await seedProductionPlan(PRODUCTION_PLAN_ROWS);
-    await clearLatestSheet(requireEnv("INVENTORY_SHEET_ID"));
-
-    const { GET } = await import("../../src/pages/api/restock-data.js");
-    const response = await GET({
-      url: new URL(
-        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}`,
-      ),
-    });
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body).toMatchObject({
-      batchId: BATCH_ID,
-      event: "Load",
-      machine: "30th",
-      slots: expect.arrayContaining([
-        expect.objectContaining({
-          slot: 1,
-          expectedNew: 2,
-        }),
-        expect.objectContaining({
-          slot: 2,
-          expectedNew: 2,
-        }),
-      ]),
-    });
-    expectRestockDataSlotContract(body.slots[0]);
-    expectRestockDataSlotContract(body.slots[1]);
-  });
-
-  it("uses Production Plan slot assignments for Load when current Nayax slots differ", async () => {
-    const liveProduct = await getLiveTopoffFixture(0);
-    const targetSlots = chooseDifferentSlots(liveProduct.slot);
-    const parsed = parseDrinkName(liveProduct.drink);
-
+  it("builds a Load from the Production Plan's slots, not the drinks Nayax has now", async () => {
     await seedProductionPlan([
       ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
-      [liveProduct.drink, 4, targetSlots.join(", ")],
+      [THAI, 4, "51, 52"],
     ]);
-    await clearLatestSheet(requireEnv("INVENTORY_SHEET_ID"));
 
-    const { GET } = await import("../../src/pages/api/restock-data.js");
-    const response = await GET({
-      url: new URL(
-        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}`,
-      ),
-    });
+    const response = await getRestockData();
 
     expect(response.status).toBe(200);
     const body = await response.json();
-
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Load",
       machine: "30th",
     });
-    expect(targetSlots).not.toContain(liveProduct.slot);
-    for (const slotNumber of targetSlots) {
-      const slot = body.slots[slotNumber - 1];
-      expectRestockDataSlotContract(slot);
-      expect(slot).toMatchObject({
-        slot: slotNumber,
-        flavor: parsed.flavor,
-        size: parsed.size,
-        topping: parsed.topping,
-        sweetnessLevel: parsed.sweetness,
+    for (const slot of [51, 52]) {
+      expect(slotOf(body, slot)).toMatchObject({
+        ...THAI_PARTS,
+        previousDrink: MATCHA,
+        previous: 0,
         expectedNew: 2,
       });
     }
-    expectRestockDataSlotContract(body.slots[liveProduct.slot - 1]);
-    expect(body.slots[liveProduct.slot - 1].previousDrink).toBe(
-      liveProduct.drink,
-    );
-    expect(body.slots[liveProduct.slot - 1]).toMatchObject({
+    // THAI is in slot 50 now, but the plan does not put it there
+    expect(slotOf(body, 50)).toMatchObject({
+      previousDrink: THAI,
       flavor: null,
-      size: null,
-      topping: null,
-      sweetnessLevel: null,
+      previous: 1,
+      waste: 1,
       expectedNew: 0,
+      total: 0,
     });
+    body.slots.forEach(expectRestockDataSlotContract);
   });
 
-  it("builds Topoff payloads from the latest inventory sheet and reflects manual stock reductions", async () => {
-    const topoff = await getLiveTopoffFixture(2);
-    await seedInventory([
-      ["Drink", "Storage", "To 30TH"],
-      [topoff.drink, 2, 2],
-    ]);
-    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
-      ...RESTOCK_LOG_HEADER,
-      [
-        BATCH_ID,
-        "Load",
-        TEST_DATE,
-        topoff.slot,
-        topoff.drink,
-        topoff.previous,
-        0,
-        4,
-        4,
-        4,
-      ],
-    ]);
-
-    const { GET } = await import("../../src/pages/api/restock-data.js");
-    const response = await GET({
-      url: new URL(
-        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}`,
-      ),
-    });
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body).toMatchObject({
-      batchId: BATCH_ID,
-      event: "Topoff",
-      machine: "30th",
-      slots: expect.arrayContaining([
-        expect.objectContaining({
-          slot: topoff.slot,
-          previous: topoff.previous,
-          waste: 0,
-          expectedNew: topoff.expectedNew,
-          total: topoff.total,
-        }),
-      ]),
-    });
-    const slot = body.slots[topoff.slot - 1];
-    expectRestockDataSlotContract(slot);
-    expect(slot.previousDrink).toBe(topoff.drink);
-  });
-
-  it("uses manually reduced inventory when drinks spill before topoff", async () => {
-    const topoff = await getLiveTopoffFixture(1);
-    await seedInventory([
-      ["Drink", "Storage", "To 30TH"],
-      [topoff.drink, 2, 1],
-    ]);
-    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
-      ...RESTOCK_LOG_HEADER,
-      [
-        BATCH_ID,
-        "Load",
-        TEST_DATE,
-        topoff.slot,
-        topoff.drink,
-        topoff.previous,
-        0,
-        4,
-        4,
-        4,
-      ],
-    ]);
-
-    const { GET } = await import("../../src/pages/api/restock-data.js");
-    const response = await GET({
-      url: new URL(
-        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}`,
-      ),
-    });
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body).toMatchObject({
-      batchId: BATCH_ID,
-      event: "Topoff",
-      slots: expect.arrayContaining([
-        expect.objectContaining({
-          slot: topoff.slot,
-          previous: topoff.previous,
-          expectedNew: topoff.expectedNew,
-          total: topoff.total,
-        }),
-      ]),
-    });
-    expectRestockDataSlotContract(body.slots[topoff.slot - 1]);
-  });
-
-  it("does not expose an assignment flag when Topoff adds zero drinks", async () => {
-    const topoff = await getLiveTopoffFixture(0);
-    await seedInventory([
-      ["Drink", "Storage", "To 30TH"],
-      [topoff.drink, 2, 0],
-    ]);
-    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
-      ...RESTOCK_LOG_HEADER,
-      [
-        BATCH_ID,
-        "Load",
-        TEST_DATE,
-        topoff.slot,
-        topoff.drink,
-        topoff.previous,
-        0,
-        4,
-        4,
-        4,
-      ],
-    ]);
-
-    const { GET } = await import("../../src/pages/api/restock-data.js");
-    const response = await GET({
-      url: new URL(
-        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}`,
-      ),
-    });
-
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.slots[topoff.slot - 1]).toMatchObject({
-      slot: topoff.slot,
-      previous: topoff.previous,
+  const topoffs = [
+    { name: "sends what storage allocated", toThirtieth: 2, expectedNew: 2 },
+    {
+      name: "uses a manually reduced allocation after a spill",
+      toThirtieth: 1,
+      expectedNew: 1,
+    },
+    {
+      name: "adds nothing when nothing was allocated",
+      toThirtieth: 0,
       expectedNew: 0,
-      total: topoff.previous,
-    });
-    expect(body.slots[topoff.slot - 1]).not.toHaveProperty("unassigned");
-  });
+    },
+  ];
+  for (const c of topoffs) {
+    it(`builds a Topoff from the latest inventory sheet: ${c.name}`, async () => {
+      await seedInventory(c.toThirtieth);
+      await seedRestockLog(logRows("Load"));
 
-  it("builds Clearout from the original batch date after Load", async () => {
-    const fixture = await getLiveTopoffFixture(0);
-    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
-      ...RESTOCK_LOG_HEADER,
-      [
-        BATCH_ID,
-        "Load",
-        TEST_DATE,
-        fixture.slot,
-        fixture.drink,
-        fixture.previous,
-        0,
-        4,
-        4,
-        4,
-      ],
-    ]);
+      const response = await getRestockData();
 
-    const { GET } = await import("../../src/pages/api/restock-data.js");
-    const response = await GET({
-      url: new URL(
-        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}&mode=clearout`,
-      ),
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toMatchObject({
+        batchId: BATCH_ID,
+        event: "Topoff",
+        machine: "30th",
+      });
+      expect(slotOf(body, 50)).toMatchObject({
+        previousDrink: THAI,
+        previous: 1,
+        waste: 0,
+        expectedNew: c.expectedNew,
+        total: 1 + c.expectedNew,
+      });
+      // No MATCHA in storage
+      expect(slotOf(body, 51)).toMatchObject({
+        previousDrink: MATCHA,
+        expectedNew: 0,
+      });
+      body.slots.forEach(expectRestockDataSlotContract);
     });
+  }
+
+  it("builds a Clearout for the batch after its Load", async () => {
+    await seedRestockLog(logRows("Load"));
+
+    const response = await getRestockData("&mode=clearout");
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body).toMatchObject({
-      batchId: BATCH_ID,
-      event: "Clearout",
-      slots: expect.arrayContaining([
-        expect.objectContaining({
-          slot: fixture.slot,
-          previous: fixture.previous,
-          waste: fixture.previous,
-          expectedNew: 0,
-          total: 0,
-        }),
-      ]),
+    expect(body).toMatchObject({ batchId: BATCH_ID, event: "Clearout" });
+    expect(slotOf(body, 50)).toMatchObject({
+      previous: 1,
+      waste: 1,
+      expectedNew: 0,
+      total: 0,
     });
   });
 
   it("returns a conflict once Load and Topoff already exist for the batch", async () => {
-    await seedProductionPlan(PRODUCTION_PLAN_ROWS);
-    await seedInventory(INVENTORY_ROWS);
-    await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
-      ...RESTOCK_LOG_HEADER,
-      [
-        BATCH_ID,
-        "Load",
-        TEST_DATE,
-        1,
-        "Thai Tea Less Sweet w/ Lychee 16oz",
-        1,
-        0,
-        4,
-        4,
-        4,
-      ],
-      [
-        BATCH_ID,
-        "Topoff",
-        TEST_DATE,
-        1,
-        "Thai Tea Less Sweet w/ Lychee 16oz",
-        1,
-        0,
-        2,
-        3,
-        2,
-      ],
-    ]);
+    await seedRestockLog(logRows("Load", "Topoff"));
 
-    const { GET } = await import("../../src/pages/api/restock-data.js");
-    const response = await GET({
-      url: new URL(
-        `https://orble.test/api/restock-data?key=integration-secret&machine=30th&date=${TEST_DATE}`,
-      ),
-    });
+    const response = await getRestockData();
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({
-      error: "This event has already been submitted for this batch.",
+      error: MESSAGES.alreadySubmitted,
       existingEntryRow: 2,
     });
   });

@@ -53,26 +53,44 @@ const APPROVE_BANNER =
     emptyState,
     isSwap,
     esc,
+    shownPrevious,
+    slotTotal,
+    toSubmitSlot,
     type Slot,
   } from "~/lib/restock/ui-helpers";
-  import { $, $payload, $slots, $showErrors, updateSlot, hooks, navigate, startedAt, KEY } from "~/components/restock/runtime";
+  import {
+    $,
+    $payload,
+    $slots,
+    $showErrors,
+    updateSlot,
+    hooks,
+    navigate,
+    startedAt,
+    KEY,
+  } from "~/components/restock/runtime";
   import { saveDraft, clearDraft } from "~/components/restock/drafts";
+  import { MESSAGES, couldntSubmit } from "~/lib/restock/errors.js";
 
   // Blocked-submit hint names at most this many unapproved slots.
   const MAX_LISTED_SLOTS = 5;
 
   const STRINGS = {
-    submitFailed: "Couldn't submit. Nothing was sent. Your entries are kept.",
-    alreadySubmitted:
-      "This event was already submitted. Check the restock log.",
     soldOut: "sold out!",
     removing: (drink: string) => `removing ${drink}`,
+    warnings: {
+      UNPARSED_NAYAX_PRODUCT_NAME:
+        "unrecognized flavor code: pick one of the valid flavors",
+      MISSING_NAYAX_PRODUCT_NAME:
+        "no drink name in Nayax: pick one of the valid flavors",
+      MISSING_NAYAX_ON_HAND:
+        "couldn't read the count from Nayax: check the previous count",
+    } as Record<string, string>,
   };
 
   /** Display name: size + flavor + sweetness, "with topping" when present. */
   function fullName(s: Slot): string {
-    let out =
-      `${s.size || ""} ${s.flavor || ""} ${s.sweetnessLevel || ""}`.trim();
+    let out = `${s.size || ""} ${s.flavor || ""} ${s.sweetness || ""}`.trim();
     if (s.topping && !/^no/i.test(s.topping)) out += ` with ${s.topping}`;
     return out.replace(/\s+/g, " ");
   }
@@ -87,10 +105,10 @@ const APPROVE_BANNER =
   function countsColumn(s: Slot, grey: boolean): string {
     const payload = $payload.get()!;
     return `<div class="shrink-0 space-y-0.5 whitespace-nowrap py-2.5 pr-3 text-right text-[13px] text-gray-400">
-        ${payload.event === "Topoff" ? `<div>previous: <b class="font-semibold text-gray-700">${Math.max(s.previous, s.waste)}</b></div>` : ""}
+        ${payload.event === "Topoff" ? `<div>previous: <b class="font-semibold text-gray-700">${shownPrevious(s, payload.event)}</b></div>` : ""}
         <div>waste: <b class="font-semibold ${grey ? "text-gray-400" : s.waste > 0 ? "text-red-500" : "text-gray-700"}">${s.waste}</b></div>
         <div>new: <b class="font-semibold ${grey ? "text-gray-400" : "text-orble-ink"}">${s.newCount}</b></div>
-        <div>total: <b class="font-semibold ${grey ? "text-gray-400" : "text-gray-900"}">${Math.max(s.previous, s.waste) - s.waste + s.newCount}</b></div></div>`;
+        <div>total: <b class="font-semibold ${grey ? "text-gray-400" : "text-gray-900"}">${slotTotal(s, payload.event)}</b></div></div>`;
   }
 
   /** One slot card: folded when approved, full card with counts otherwise. */
@@ -130,7 +148,7 @@ const APPROVE_BANNER =
       const title = s.warning
         ? `<div class="text-base font-semibold text-amber-700">${esc(s.flavor || "?")}</div>`
         : `<div class="text-base font-semibold text-gray-900">${esc(s.flavor || "?")}</div>`;
-      const quals = [s.size, s.topping, s.sweetnessLevel]
+      const quals = [s.size, s.topping, s.sweetness]
         .filter(Boolean)
         .map((q) => `<div class="text-xs text-gray-500">${esc(q!)}</div>`)
         .join("");
@@ -141,7 +159,7 @@ const APPROVE_BANNER =
           : "") +
         quals +
         (s.warning
-          ? `<div class="mt-0.5 text-[13px] text-amber-700">${s.warning}</div>`
+          ? `<div class="mt-0.5 text-[13px] text-amber-700">${STRINGS.warnings[s.warning] ?? STRINGS.warnings.UNPARSED_NAYAX_PRODUCT_NAME}</div>`
           : "") +
         (s.edited
           ? `<div class="mt-1 text-[10px] italic text-gray-400">(edited)</div>`
@@ -177,6 +195,16 @@ const APPROVE_BANNER =
    * Submits the log. Blocks with red outlines while any slot is
    * unapproved; on success clears the draft and shows the submitted view.
    */
+  /** Bob waves over the page while a submit is in flight (overlay lives in start-view). */
+  function showSubmitting(on: boolean) {
+    const overlay = document.getElementById("loading-overlay");
+    if (!overlay) return;
+    if (on)
+      document.getElementById("loading-label")!.textContent = "Submitting…";
+    overlay.classList.replace(on ? "hidden" : "flex", on ? "flex" : "hidden");
+    ($("complete") as HTMLButtonElement).disabled = on;
+  }
+
   async function complete() {
     // Snapshot the batch being submitted: $payload can change mid-request if a new log is started
     const payload = $payload.get()!;
@@ -207,12 +235,9 @@ const APPROVE_BANNER =
     hint.classList.add("hidden");
     const seconds = Math.round((Date.now() - startedAt) / 1000);
     const duration = `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
-    const submitSlots = slots.map((s) => ({
-      slot: s.slot,
-      waste: s.waste,
-      new: s.newCount,
-    }));
+    const submitSlots = slots.map((s) => toSubmitSlot(s, payload.event));
     let response: Response;
+    showSubmitting(true);
     try {
       response = await fetch("/api/restock-submit", {
         method: "POST",
@@ -228,18 +253,27 @@ const APPROVE_BANNER =
         }),
       });
     } catch {
-      hint.textContent = STRINGS.submitFailed;
+      showSubmitting(false);
+      hint.textContent = MESSAGES.retrySubmission;
       hint.classList.remove("hidden");
       return;
     }
     if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      showSubmitting(false);
+      // 400 and 409 carry a reason written for the restocker, e.g. a drink
+      // that is not set up in Nayax yet. Anything else is safe to retry.
+      const reason = typeof error.error === "string" ? error.error : null;
       hint.textContent =
         response.status === HTTP.CONFLICT
-          ? STRINGS.alreadySubmitted
-          : STRINGS.submitFailed;
+          ? reason || MESSAGES.alreadySubmitted
+          : response.status === HTTP.BAD_REQUEST && reason
+            ? couldntSubmit(reason)
+            : MESSAGES.retrySubmission;
       hint.classList.remove("hidden");
       return;
     }
+    showSubmitting(false);
     clearDraft(payload);
     // Batch changed mid-request (user went back and started a new log): skip the confirmation UI
     if ($payload.get() !== payload) return;
