@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MESSAGES } from "../../../src/lib/restock/errors.js";
 
 describe("GET /api/restock-data", () => {
   beforeEach(() => {
@@ -145,7 +146,7 @@ describe("GET /api/restock-data", () => {
           previousDrink: "Thai Tea Less Sweet w/ Lychee 16oz",
           flavor: "Thai Tea",
           topping: "Lychee",
-          sweetnessLevel: "Less Sweet",
+          sweetness: "Less Sweet",
         }),
       ]),
     });
@@ -221,7 +222,40 @@ describe("GET /api/restock-data", () => {
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({
-      error: "Clearout requires a Load event for this batch.",
+      error: MESSAGES.clearoutRequiresLoad,
+    });
+  });
+
+  it("returns a conflict for a batch that was already cleared out", async () => {
+    vi.resetModules();
+    vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
+    vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
+    vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
+    vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
+    vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
+    const { GET } = await import("../../../src/pages/api/restock-data.js");
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          values: [
+            ["Batch ID", "Event"],
+            ["30th-2026-07-10", "Load"],
+            ["30th-2026-07-10", "Clearout"],
+          ],
+        }),
+      ),
+    );
+
+    const response = await GET({
+      url: new URL(
+        "https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10",
+      ),
+    });
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: MESSAGES.batchClearedOut,
     });
   });
 
@@ -255,7 +289,7 @@ describe("GET /api/restock-data", () => {
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({
-      error: "This event has already been submitted for this batch.",
+      error: MESSAGES.alreadySubmitted,
       existingEntryRow: 2,
     });
   });

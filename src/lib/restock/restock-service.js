@@ -1,14 +1,21 @@
+// @steered AudibleSecurityContext 1.2 2026-10-01
 import {
   assertConfigured,
   getAmountHeader,
-  getMachineSlotCount,
+  getMachineSlots,
   getSlotHeader,
   PRODUCTION_PLAN_SHEET,
   RESTOCK_LOG_SHEET,
   RESTOCK_EVENTS,
   SHEET_IDS,
 } from "./config.js";
-import { AlreadySubmittedError, ClearoutRequiresLoadError } from "./errors.js";
+import {
+  AlreadySubmittedError,
+  BatchClearedOutError,
+  ClearoutRequiresLoadError,
+  MESSAGES,
+} from "./errors.js";
+import { findEventRow, isUnfinished, parseSlotData } from "./submit-service.js";
 import {
   readLatestSheetValues,
   readSheetValues,
@@ -135,7 +142,7 @@ function makeSlotState(slot, current, event, warnings) {
     flavor: parsed.flavor || null,
     size: parsed.size || null,
     topping: parsed.topping || null,
-    sweetnessLevel: parsed.sweetness || null,
+    sweetness: parsed.sweetness || null,
     previous,
     waste,
     expectedNew: 0,
@@ -150,13 +157,8 @@ function updateSlotTotals(slot) {
 
 function buildMachineSlots(machineProducts, machineConfig, event, warnings) {
   const productBySlot = toSlotMap(machineProducts);
-  return Array.from(
-    { length: getMachineSlotCount(machineConfig) },
-    (_, index) => {
-      const slot = index + 1;
-      const current = productBySlot.get(slot);
-      return makeSlotState(slot, current, event, warnings);
-    },
+  return getMachineSlots(machineConfig).map((slot) =>
+    makeSlotState(slot, productBySlot.get(slot), event, warnings),
   );
 }
 
@@ -207,7 +209,7 @@ async function loadProductionPlanRows() {
 }
 
 /** Reads existing restock history so the API can choose the next event for a batch. */
-async function readRestockLogRows() {
+export async function readRestockLogRows() {
   return rowsToObjects(
     await readSheetValues(
       assertConfigured(SHEET_IDS.restockLog, "RESTOCK_LOG_SHEET_ID"),
@@ -276,7 +278,7 @@ function allocateTopoffStorage(storageByDrink, candidates) {
 }
 
 export async function determineEvent(batchId, options = {}) {
-  const rows = await readRestockLogRows();
+  const rows = options.logRows ?? (await readRestockLogRows());
   const hasLoad = rows.some(
     (row) =>
       String(getRowValue(row, "Batch ID")).toLowerCase() ===
@@ -319,7 +321,7 @@ export async function determineEvent(batchId, options = {}) {
     if (!loadEntry) throw new ClearoutRequiresLoadError();
     if (clearoutEntry) {
       throw new AlreadySubmittedError(
-        "This event has already been submitted for this batch.",
+        MESSAGES.alreadySubmitted,
         clearoutEntry._rowNumber,
       );
     }
@@ -331,19 +333,67 @@ export async function determineEvent(batchId, options = {}) {
 
   const existing = rows.find((row) => getRowValue(row, "Batch ID") === batchId);
   throw new AlreadySubmittedError(
-    "This event has already been submitted for this batch.",
+    MESSAGES.alreadySubmitted,
     existing?._rowNumber,
   );
 }
 
-/** Builds the machine slot form payload for the next restock event for a machine/date. */
+/** A stored submit as the form's prefill, so pressing Complete resends it. */
+function prefillFromLogRow(machineConfig, date, batchId, row) {
+  const slots = parseSlotData(row["Slot Data"]).map((entry) => {
+    const parsed = entry.Drink
+      ? parseDrinkName(normalizeDrinkName(entry.Drink))
+      : {};
+    return {
+      slot: entry.Slot,
+      previousDrink: entry["Previous Drink"] ?? null,
+      flavor: parsed.flavor || null,
+      size: parsed.size || null,
+      topping: parsed.topping || null,
+      sweetness: parsed.sweetness || null,
+      previous: entry.Previous,
+      waste: entry.Waste,
+      expectedNew: entry.New,
+      total: entry.Total,
+    };
+  });
+  return {
+    batchId,
+    event: row.Event,
+    machine: machineConfig.label,
+    date,
+    slots,
+    warnings: [],
+  };
+}
+
+/**
+ * Builds the machine slot form payload for the next restock event for a
+ * machine/date. An unfinished submit is returned as stored. `logRows` and
+ * `machineProducts` can be passed in by a caller that already read them.
+ */
 export async function buildRestockData(machineConfig, date, options = {}) {
   const batchId = `${machineConfig.label}-${date}`;
-  const event = await determineEvent(batchId, options);
+  const logRows = options.logRows ?? (await readRestockLogRows());
+  const clearoutMode =
+    normalizeRequestedMode(options.mode ?? options.event) ===
+    RESTOCK_EVENTS.clearout.toLowerCase();
+  const events = clearoutMode
+    ? [RESTOCK_EVENTS.clearout]
+    : [RESTOCK_EVENTS.load, RESTOCK_EVENTS.topoff];
+  const unfinished = events
+    .map((event) => findEventRow(logRows, batchId, event))
+    .find((row) => row && isUnfinished(row));
+  if (unfinished)
+    return prefillFromLogRow(machineConfig, date, batchId, unfinished);
+  if (!clearoutMode && findEventRow(logRows, batchId, RESTOCK_EVENTS.clearout))
+    throw new BatchClearedOutError();
+
+  const event = await determineEvent(batchId, { ...options, logRows });
 
   // call Nayax and sheets in parallel to reduce latency
   const [machineProducts, sheetRows] = await Promise.all([
-    getMachineProducts(machineConfig.machineId),
+    options.machineProducts ?? getMachineProducts(machineConfig.machineId),
     event === RESTOCK_EVENTS.load
       ? loadProductionPlanRows()
       : event === RESTOCK_EVENTS.topoff
@@ -365,7 +415,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
         flavor: null,
         size: null,
         topping: null,
-        sweetnessLevel: null,
+        sweetness: null,
       });
       updateSlotTotals(slot);
     }
@@ -382,7 +432,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
         slotNumbers,
         drink,
       )) {
-        const slot = slots[allocation.slot - 1];
+        const slot = slots.find((s) => s.slot === allocation.slot);
         if (!slot) continue;
         if (allocation.quantity === 0) continue;
         const parsedDrink = parseDrinkName(drink);
@@ -390,7 +440,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
           flavor: parsedDrink.flavor || null,
           size: parsedDrink.size || null,
           topping: parsedDrink.topping || null,
-          sweetnessLevel: parsedDrink.sweetness || null,
+          sweetness: parsedDrink.sweetness || null,
           expectedNew: allocation.quantity,
         });
         updateSlotTotals(slot);

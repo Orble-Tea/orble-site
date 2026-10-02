@@ -229,11 +229,18 @@ export async function readSheetValues(spreadsheetId, sheetName) {
   return payload.values || [];
 }
 
-export async function appendSheetValues(spreadsheetId, sheetName, rows) {
+// RAW stores values exactly as sent, so text like "N/A" or "07/10" is never
+// reinterpreted as a formula or date.
+export async function appendSheetValues(
+  spreadsheetId,
+  sheetName,
+  rows,
+  valueInputOption = "USER_ENTERED",
+) {
   if (!Array.isArray(rows) || rows.length === 0) return null;
   const range = encodeURIComponent(`${quoteSheetName(sheetName)}`);
   return sheetsFetch(
-    `/${spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED`,
+    `/${spreadsheetId}/values/${range}:append?valueInputOption=${valueInputOption}`,
     {
       method: "POST",
       body: JSON.stringify({ values: rows }),
@@ -250,10 +257,11 @@ export async function updateSheetValues(
   sheetName,
   rangeA1,
   rows,
+  valueInputOption = "USER_ENTERED",
 ) {
   const range = encodeURIComponent(`${quoteSheetName(sheetName)}!${rangeA1}`);
   return sheetsFetch(
-    `/${spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`,
+    `/${spreadsheetId}/values/${range}?valueInputOption=${valueInputOption}`,
     {
       method: "PUT",
       body: JSON.stringify({ values: rows }),

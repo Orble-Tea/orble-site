@@ -11,7 +11,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? "github" : "list",
+  // The HTML report keeps each test's screenshots; CI uploads it per run
+  reporter: process.env.CI
+    ? [["github"], ["html", { open: "never" }]]
+    : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: `http://127.0.0.1:${APP_PORT}`,
     // Phone-sized viewport for real layout (restockers use this at the
@@ -25,8 +28,15 @@ export default defineConfig({
   projects: [
     // Browser tests: page.route() intercepts /api/* so only the page is real.
     { name: "browser", testMatch: /mocked\/.*\.spec\.js/ },
-    // Integration tests: real API routes + service code; only Nayax/Sheets faked.
-    { name: "integration", testMatch: /backend\/.*\.spec\.js/ },
+    // Integration tests: real API routes + service code; only Nayax/Sheets
+    // faked. They share one stateful fixture server, so one at a time.
+    {
+      name: "integration",
+      testMatch: /backend\/.*\.spec\.js/,
+      fullyParallel: false,
+      workers: 1,
+      use: { video: "retain-on-failure", trace: "retain-on-failure" },
+    },
   ],
   webServer: [
     {

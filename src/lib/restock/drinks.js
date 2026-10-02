@@ -2,28 +2,35 @@ export const DEFAULT_DRINK_SLOT_CAPACITY = 4;
 export const BOBA_PACK_SLOT_CAPACITY = 6;
 
 const SIZE_PATTERN = /\b(\d{1,2}\s*oz)\b/i;
-const SWEETNESS_LEVELS = ["less sugar", "less sweet", "normal", "regular"];
+const LESS_SWEET = "Less Sweet";
+export const REGULAR_SWEETNESS = "Regular Sweetness";
+// The default sweetness; the model stores it as null
+const REGULAR_SWEETNESS_PATTERN = /\bregular\s+sweetness\b/i;
+const LESS_SWEET_PATTERN = /\bless\s+sweet\b/i;
 const NAYAX_FLAVOR_CODES = {
-  APPL: "Apple",
+  APPL: "Apple Crisp Latte",
   BLAC: "Black Tea",
   BROW: "Brown Sugar Milk Tea",
-  CELE: "Celestial Jasmine",
+  COLD: "Cold Brew",
   HORC: "Horchata",
+  JASM: "Celestial Jasmine",
   MANG: "Mango Passion Fruit Tea",
   MATC: "Matcha",
-  STRA: "Strawberry Matcha",
+  MOCHA: "Mocha Latte",
+  SMAT: "Strawberry Matcha",
   TARO: "Taro Tea",
   THAI: "Thai Tea",
   VIET: "Viet Latte",
 };
 
 const NAYAX_TOPPING_CODES = {
+  ALO: "Aloe",
   LYC: "Lychee",
 };
 
 const NAYAX_SWEETNESS_CODES = {
-  LESS: "Less Sugar",
-  REG: null,
+  LESS: LESS_SWEET,
+  REG: REGULAR_SWEETNESS,
 };
 
 export function normalizeDrinkName(value) {
@@ -67,14 +74,14 @@ export function parseDrinkName(value) {
   const toppingMatch = drink.match(
     /\b(?:w\/|with)\s+(.+?)(?:\s+\d{1,2}\s*oz\b|$)/i,
   );
-  const sweetness = SWEETNESS_LEVELS.find((level) =>
-    drink.toLowerCase().includes(level),
-  );
+  const lessSweet = LESS_SWEET_PATTERN.test(drink);
 
   let flavor = drink;
   if (sizeMatch) flavor = flavor.replace(sizeMatch[0], "");
   if (toppingMatch) flavor = flavor.replace(/\b(?:w\/|with)\s+.+$/i, "");
-  if (sweetness) flavor = flavor.replace(new RegExp(sweetness, "i"), "");
+  flavor = flavor
+    .replace(LESS_SWEET_PATTERN, "")
+    .replace(REGULAR_SWEETNESS_PATTERN, "");
   flavor = normalizeDrinkName(flavor.replace(/\bw\/\b/i, ""));
 
   // Strawberry is a topping in the catalog: "Strawberry Matcha" is Matcha
@@ -90,9 +97,7 @@ export function parseDrinkName(value) {
     flavor: flavor || drink,
     size,
     topping,
-    sweetness: sweetness
-      ? sweetness.replace(/\b\w/g, (letter) => letter.toUpperCase())
-      : null,
+    sweetness: lessSweet ? LESS_SWEET : null,
   };
 }
 
@@ -114,16 +119,13 @@ export function canonicalDrinkKeyFromSlot(slot) {
   return canonicalDrinkKeyFromValues({
     flavor: slot.flavor,
     size: slot.size,
-    sweetness: slot.sweetnessLevel,
+    sweetness: slot.sweetness,
     topping: slot.topping,
   });
 }
 
 function canonicalDrinkKeyFromValues({ flavor, size, sweetness, topping }) {
-  const normalizedSweetness = sweetness
-    ?.replace(/Less Sweet/i, "Less Sugar")
-    .replace(/Regular|Normal/i, "");
-  return [flavor, size, normalizedSweetness || null, topping]
+  return [flavor, size, sweetness, topping]
     .filter(Boolean)
     .map((part) => part.toLowerCase())
     .join("|");
@@ -142,7 +144,6 @@ export function slotCapacityForDrinkParts(parts) {
     parts.flavor,
     parts.size,
     parts.sweetness,
-    parts.sweetnessLevel,
     parts.topping,
   ]
     .filter(Boolean)

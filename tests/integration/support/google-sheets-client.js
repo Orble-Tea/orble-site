@@ -250,12 +250,23 @@ export async function readSheetValues(
   return payload.values || [];
 }
 
+// One write per seed: blanks cover what the tab holds now, so old cells are cleared
 export async function seedSheet(spreadsheetId, sheetName, values) {
   await ensureSheet(spreadsheetId, sheetName);
-  await clearSheetRange(spreadsheetId, sheetName);
-  if (values.length > 0) {
-    await writeSheetValues(spreadsheetId, sheetName, values);
-  }
+  const current = await readSheetValues(spreadsheetId, sheetName);
+  const rows = Math.max(current.length, values.length);
+  const columns = Math.max(
+    0,
+    ...[...current, ...values].map((row) => row.length),
+  );
+  if (rows === 0) return;
+  await writeSheetValues(
+    spreadsheetId,
+    sheetName,
+    Array.from({ length: rows }, (_, r) =>
+      Array.from({ length: columns }, (_, c) => values[r]?.[c] ?? ""),
+    ),
+  );
 }
 
 export async function seedLatestSheet(spreadsheetId, values) {

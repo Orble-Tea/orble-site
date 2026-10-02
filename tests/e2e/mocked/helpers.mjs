@@ -22,7 +22,7 @@ export function slot(overrides) {
     flavor: null,
     size: null,
     topping: null,
-    sweetnessLevel: null,
+    sweetness: null,
     previous: 0,
     waste: 0,
     expectedNew: 0,
@@ -43,11 +43,11 @@ export function loadPayload() {
       // swap: Thai Tea goes out, Matcha goes in -> "replacing" line
       slot({
         slot: 1,
-        previousDrink: "Thai Tea 16oz Less Sugar w/ Lychee",
+        previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
         flavor: "Matcha",
         size: "16oz",
         topping: "Lychee",
-        sweetnessLevel: "Less Sugar",
+        sweetness: "Less Sweet",
         previous: 3,
         waste: 3,
         expectedNew: 3,
@@ -56,10 +56,10 @@ export function loadPayload() {
       // same drink stays -> no replacing line
       slot({
         slot: 2,
-        previousDrink: "Matcha 16oz Less Sugar",
+        previousDrink: "Matcha 16oz Less Sweet",
         flavor: "Matcha",
         size: "16oz",
-        sweetnessLevel: "Less Sugar",
+        sweetness: "Less Sweet",
         previous: 2,
         waste: 2,
         expectedNew: 2,
@@ -85,7 +85,7 @@ export async function mockData(page, payload, status = 200) {
 }
 
 /** Intercepts POST /api/restock-submit, capturing bodies. Returns the capture list. */
-export async function mockSubmit(page, { status = 200 } = {}) {
+export async function mockSubmit(page, { status = 200, body } = {}) {
   const posts = [];
   await page.route("**/api/restock-submit", (route) => {
     posts.push(route.request().postDataJSON());
@@ -93,7 +93,7 @@ export async function mockSubmit(page, { status = 200 } = {}) {
       status,
       contentType: "application/json",
       body: JSON.stringify(
-        status === 200 ? { success: true } : { error: "nope" },
+        body ?? (status === 200 ? { success: true } : { error: "nope" }),
       ),
     });
   });
