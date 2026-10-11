@@ -5,6 +5,7 @@ import "~/styles/index.css";
 import Path from "path";
 import { Image } from "astro:assets";
 import type { NavItem, SectionInfo } from "~/types";
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
 
 import Header from "$components/header.astro";
 import Splash from "$components/splash.astro";
@@ -131,7 +132,7 @@ const sections = sectionData.map((s) => ({
     subtitle: s.frontmatter.subtitle,
     Body: s.Content,
   } as SectionInfo,
-  Layout: s.layout,
+  Layout: (s as unknown as { layout: AstroComponentFactory }).layout,
 }));
 
 const navItems: NavItem[] = sections.map((s) => ({

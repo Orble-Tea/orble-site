@@ -16,6 +16,7 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@astrojs/tailwind": "^6.0.2",
     "@types/dompurify": "^3.0.5",
     "@types/micromodal": "^0.3.3",
@@ -60,6 +61,7 @@
     "isomorphic-dompurify": "^2.14.0",
     "mailgun.js": "^12.1.1",
     "micromodal": "^0.4.10",
+    "nanostores": "1.5.3",
     "ogl": "^0.0.103",
     "sharp": "^0.34.4",
     "tailwindcss": "^3.2.4",

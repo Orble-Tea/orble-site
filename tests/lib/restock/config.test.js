@@ -24,7 +24,7 @@ describe("restock config", () => {
   });
 
   it("finds machines by label", () => {
-    expect(getMachineConfig("30th")?.label).toBe("30TH");
+    expect(getMachineConfig("30th")?.label).toBe("30th");
     expect(getMachineConfig("towne")?.label).toBe("Towne");
     expect(getMachineConfig("missing")).toBeUndefined();
   });
@@ -33,8 +33,8 @@ describe("restock config", () => {
     const thirtyMachine = getMachineConfig("30th");
     const towneMachine = getMachineConfig("towne");
 
-    expect(getAmountHeader(thirtyMachine)).toBe("Amount to 30TH");
-    expect(getSlotHeader(thirtyMachine)).toBe("Slot (30TH)");
+    expect(getAmountHeader(thirtyMachine)).toBe("Amount to 30th");
+    expect(getSlotHeader(thirtyMachine)).toBe("Slot (30th)");
     expect(getMachineSlotCount(thirtyMachine)).toBe(35);
     expect(getAmountHeader(towneMachine)).toBe("Amount to Towne");
     expect(getSlotHeader(towneMachine)).toBe("Slot (Towne)");

@@ -1,18 +1,39 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*", ".prettierrc.cjs"],
-  "exclude": ["dist"],
+  "include": [
+    ".astro/types.d.ts",
+    "**/*",
+    ".prettierrc.cjs"
+  ],
+  "exclude": [
+    "dist",
+    "public"
+  ],
   "compilerOptions": {
     "target": "es2020",
     "module": "es2020",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["src/*"],
-      "$assets/*": ["assets/*"],
-      "$components/*": ["src/components/*"],
-      "$layouts/*": ["src/layouts/*"],
-      "$content/*": ["src/content/*"]
+      "~/*": [
+        "src/*"
+      ],
+      "$assets/*": [
+        "assets/*"
+      ],
+      "$components/*": [
+        "src/components/*"
+      ],
+      "$layouts/*": [
+        "src/layouts/*"
+      ],
+      "$content/*": [
+        "src/content/*"
+      ]
     },
-    "types": ["astro/client", "vite-plugin-glsl/ext", "vite/client"]
+    "types": [
+      "astro/client",
+      "vite-plugin-glsl/ext",
+      "vite/client"
+    ]
   }
 }

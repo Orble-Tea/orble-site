@@ -148,8 +148,7 @@ function updateSlotTotals(slot) {
   slot.total = Math.max(slot.previous - slot.waste + slot.expectedNew, 0);
 }
 
-async function buildMachineSlots(machineConfig, event, warnings) {
-  const machineProducts = await getMachineProducts(machineConfig.machineId);
+function buildMachineSlots(machineProducts, machineConfig, event, warnings) {
   const productBySlot = toSlotMap(machineProducts);
   return Array.from(
     { length: getMachineSlotCount(machineConfig) },
@@ -189,9 +188,7 @@ function normalizeRequestedMode(mode) {
 }
 
 function getPlanVariation(row) {
-  return (
-    getRowValue(row, "Drink Variation") || getRowValue(row, "Variation")
-  );
+  return getRowValue(row, "Drink Variation") || getRowValue(row, "Variation");
 }
 
 function getInventoryMachineHeader(machineConfig) {
@@ -282,25 +279,29 @@ export async function determineEvent(batchId, options = {}) {
   const rows = await readRestockLogRows();
   const hasLoad = rows.some(
     (row) =>
-      getRowValue(row, "Batch ID") === batchId &&
+      String(getRowValue(row, "Batch ID")).toLowerCase() ===
+        batchId.toLowerCase() &&
       String(getRowValue(row, "Event")).toLowerCase() ===
         RESTOCK_EVENTS.load.toLowerCase(),
   );
   const hasTopoff = rows.some(
     (row) =>
-      getRowValue(row, "Batch ID") === batchId &&
+      String(getRowValue(row, "Batch ID")).toLowerCase() ===
+        batchId.toLowerCase() &&
       String(getRowValue(row, "Event")).toLowerCase() ===
         RESTOCK_EVENTS.topoff.toLowerCase(),
   );
   const loadEntry = rows.find(
     (row) =>
-      getRowValue(row, "Batch ID") === batchId &&
+      String(getRowValue(row, "Batch ID")).toLowerCase() ===
+        batchId.toLowerCase() &&
       String(getRowValue(row, "Event")).toLowerCase() ===
         RESTOCK_EVENTS.load.toLowerCase(),
   );
   const clearoutEntry = rows.find(
     (row) =>
-      getRowValue(row, "Batch ID") === batchId &&
+      String(getRowValue(row, "Batch ID")).toLowerCase() ===
+        batchId.toLowerCase() &&
       String(getRowValue(row, "Event")).toLowerCase() ===
         RESTOCK_EVENTS.clearout.toLowerCase(),
   );
@@ -328,9 +329,7 @@ export async function determineEvent(batchId, options = {}) {
   if (!hasLoad) return RESTOCK_EVENTS.load;
   if (!hasTopoff) return RESTOCK_EVENTS.topoff;
 
-  const existing = rows.find(
-    (row) => getRowValue(row, "Batch ID") === batchId,
-  );
+  const existing = rows.find((row) => getRowValue(row, "Batch ID") === batchId);
   throw new AlreadySubmittedError(
     "This event has already been submitted for this batch.",
     existing?._rowNumber,
@@ -342,8 +341,23 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   const batchId = `${machineConfig.label}-${date}`;
   const event = await determineEvent(batchId, options);
 
+  // call Nayax and sheets in parallel to reduce latency
+  const [machineProducts, sheetRows] = await Promise.all([
+    getMachineProducts(machineConfig.machineId),
+    event === RESTOCK_EVENTS.load
+      ? loadProductionPlanRows()
+      : event === RESTOCK_EVENTS.topoff
+        ? readInventoryRows()
+        : null,
+  ]);
+
   const warnings = [];
-  const slots = await buildMachineSlots(machineConfig, event, warnings);
+  const slots = buildMachineSlots(
+    machineProducts,
+    machineConfig,
+    event,
+    warnings,
+  );
 
   if (event === RESTOCK_EVENTS.load) {
     for (const slot of slots) {
@@ -356,7 +370,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       updateSlotTotals(slot);
     }
 
-    const rows = await loadProductionPlanRows();
+    const rows = sheetRows;
     const amountHeader = getAmountHeader(machineConfig);
     const slotHeader = getSlotHeader(machineConfig);
     for (const row of rows) {
@@ -370,6 +384,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       )) {
         const slot = slots[allocation.slot - 1];
         if (!slot) continue;
+        if (allocation.quantity === 0) continue;
         const parsedDrink = parseDrinkName(drink);
         Object.assign(slot, {
           flavor: parsedDrink.flavor || null,
@@ -384,7 +399,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   }
 
   if (event === RESTOCK_EVENTS.topoff) {
-    const inventoryRows = await readInventoryRows();
+    const inventoryRows = sheetRows;
     const inventoryMachineHeader = getInventoryMachineHeader(machineConfig);
     const hasMachineAllocationColumn = inventoryRows.some((row) =>
       findColumnName(row, inventoryMachineHeader),
@@ -397,7 +412,9 @@ export async function buildRestockData(machineConfig, date, options = {}) {
         availableColumns: [
           ...new Set(
             inventoryRows.flatMap((row) =>
-              Object.keys(row).filter((columnName) => columnName !== "_rowNumber"),
+              Object.keys(row).filter(
+                (columnName) => columnName !== "_rowNumber",
+              ),
             ),
           ),
         ],
