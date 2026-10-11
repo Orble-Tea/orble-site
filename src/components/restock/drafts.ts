@@ -14,6 +14,7 @@ export function saveDraft() {
     topping: s.topping,
     sweetnessLevel: s.sweetnessLevel,
     previousDrink: s.previousDrink,
+    warning: s.warning ?? null,
   }));
   try {
     localStorage.setItem(

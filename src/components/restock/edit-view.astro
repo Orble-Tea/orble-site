@@ -145,7 +145,7 @@
             `<option ${!s.warning && f === s.flavor ? "selected" : ""}>${esc(f)}</option>`,
         )
         .join("") +
-      `<option value="__empty__" ${retiring ? "selected" : ""}>— Empty (clear slot) —</option>`;
+      `<option value="__empty__" ${!s.warning && !s.flavor ? "selected" : ""}>— Empty (clear slot) —</option>`;
     let replacing = "";
     if (s.previousDrink) {
       const prev = parseDrinkName(s.previousDrink);

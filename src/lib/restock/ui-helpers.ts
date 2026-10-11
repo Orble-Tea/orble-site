@@ -22,7 +22,7 @@ export type Slot = ServerSlot & {
   newCount: number;
   approved: boolean;
   edited: boolean;
-  warning?: string;
+  warning?: string | null;
 };
 
 // HTTP statuses the restock endpoints return; 409 is read by two views.
