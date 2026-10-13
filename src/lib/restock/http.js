@@ -1,3 +1,8 @@
+// HTTP responses for the restock routes. Statuses and messages live in
+// errors.js; this file only serializes them.
+import { ERRORS, RestockError } from "./errors.js";
+
+/** A JSON response the browser must not cache. */
 export function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -8,37 +13,21 @@ export function json(data, status = 200) {
   });
 }
 
-export function invalidKey() {
-  return json({ error: "Invalid RESTOCK_SECRET_KEY" }, 403);
+/**
+ * The response for a thrown error: a RestockError answers with its own status
+ * and message plus any extra fields; anything else is a generic 500.
+ */
+export function errorResponse(error) {
+  if (error instanceof RestockError)
+    return json({ error: error.message, ...error.extra }, error.status);
+  return json({ error: ERRORS.internal.message }, ERRORS.internal.status);
 }
 
-export function badRequest(message) {
-  return json({ error: message }, 400);
-}
-
-export function conflict(message, existingEntryRow, existingEntryUrl) {
-  return json(
-    {
-      error: message,
-      existingEntryRow,
-      ...(existingEntryUrl ? { existingEntryUrl } : {}),
-    },
-    409,
-  );
-}
-
-export function serverError(message = "Internal server error") {
-  return json({ error: message }, 500);
-}
-
-export function upstreamError(message, details) {
-  return json({ error: message, ...(details ? { details } : {}) }, 502);
-}
-
+/** The request body as JSON, or a 400 RestockError when it does not parse. */
 export async function parseJson(request) {
   try {
     return await request.json();
   } catch {
-    throw new Error("Invalid JSON body");
+    throw new RestockError(ERRORS.invalidJson);
   }
 }

@@ -2,7 +2,7 @@
 // Restock form: start -> slot table (Load/Topoff) -> edit slot -> submitted.
 // Each view lives in src/components/restock as markup plus its own script.
 // Data comes from GET /api/restock-data and submit posts the whole form
-// as-is to the stub POST /api/restock-submit.
+// as the confirmed slot state to POST /api/restock-submit.
 import "~/styles/index.css";
 import { MACHINE_CONFIG } from "~/lib/restock/config.js";
 import StartView from "~/components/restock/start-view.astro";

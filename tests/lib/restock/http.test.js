@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  badRequest,
-  conflict,
-  invalidKey,
+  ERRORS,
+  RestockError,
+  UpstreamServiceError,
+  couldntSubmit,
+} from "../../../src/lib/restock/errors.js";
+import {
+  errorResponse,
   json,
   parseJson,
-  serverError,
-  upstreamError,
 } from "../../../src/lib/restock/http.js";
 
 describe("http helpers", () => {
@@ -20,35 +22,43 @@ describe("http helpers", () => {
     expect(await response.json()).toEqual({ ok: true });
   });
 
-  it("formats shared error responses", async () => {
-    await expect(invalidKey().json()).resolves.toEqual({
-      error: "Invalid RESTOCK_SECRET_KEY",
-    });
-    await expect(badRequest("Bad input").json()).resolves.toEqual({
-      error: "Bad input",
-    });
-    await expect(conflict("Already submitted", 12).json()).resolves.toEqual({
-      error: "Already submitted",
+  it("answers a RestockError with its own status, message, and extra fields", async () => {
+    const plain = errorResponse(new RestockError(ERRORS.invalidKey));
+    expect(plain.status).toBe(ERRORS.invalidKey.status);
+    await expect(plain.json()).resolves.toEqual({ error: ERRORS.invalidKey.message });
+    expect(couldntSubmit("slot 12: new 9 exceeds the 6 free")).toBe(
+      "Couldn't submit: slot 12: new 9 exceeds the 6 free. Your current draft is saved on page refreshes.",
+    );
+
+    const withExtra = errorResponse(
+      new RestockError(ERRORS.alreadySubmitted, { existingEntryRow: 12 }),
+    );
+    expect(withExtra.status).toBe(409);
+    await expect(withExtra.json()).resolves.toEqual({
+      error: ERRORS.alreadySubmitted.message,
       existingEntryRow: 12,
     });
-    await expect(serverError().json()).resolves.toEqual({
-      error: "Internal server error",
-    });
-    await expect(
-      upstreamError("NAYAX_API_TOKEN is not authorized", {
+
+    const upstream = errorResponse(
+      new UpstreamServiceError("NAYAX_API_TOKEN is not authorized", {
         service: "nayax",
         status: 403,
-      }).json(),
-    ).resolves.toEqual({
+      }),
+    );
+    expect(upstream.status).toBe(502);
+    await expect(upstream.json()).resolves.toEqual({
       error: "NAYAX_API_TOKEN is not authorized",
-      details: {
-        service: "nayax",
-        status: 403,
-      },
+      details: { service: "nayax", status: 403 },
     });
   });
 
-  it("parses valid JSON and rejects invalid JSON", async () => {
+  it("answers any other error as a generic 500", async () => {
+    const response = errorResponse(new Error("GOOGLE_PRIVATE_KEY is unreadable"));
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({ error: ERRORS.internal.message });
+  });
+
+  it("parses valid JSON and rejects invalid JSON as a 400", async () => {
     await expect(
       parseJson(
         new Request("https://orble.test", {
@@ -61,6 +71,9 @@ describe("http helpers", () => {
       parseJson(
         new Request("https://orble.test", { method: "POST", body: "{bad" }),
       ),
-    ).rejects.toThrow("Invalid JSON body");
+    ).rejects.toMatchObject({
+      status: ERRORS.invalidJson.status,
+      message: ERRORS.invalidJson.message,
+    });
   });
 });

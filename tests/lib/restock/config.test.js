@@ -5,6 +5,7 @@ import {
   getAmountHeader,
   getMachineConfig,
   getMachineSlotCount,
+  getMachineSlots,
   getSlotHeader,
   NAYAX_BASE_URL,
   requireRestockSecretKey,
@@ -55,5 +56,20 @@ describe("restock config", () => {
     expect(() => assertConfigured("", "TEST_VALUE")).toThrow(
       "Missing required environment variable: TEST_VALUE",
     );
+  });
+
+  it("lists slots 1..rows*columns by default", () => {
+    const slots = getMachineSlots(getMachineConfig("towne"));
+    expect(slots).toHaveLength(35);
+    expect(slots[0]).toBe(1);
+    expect(slots.at(-1)).toBe(35);
+  });
+
+  it("uses an explicit slot list from RESTOCK_SLOTS_<MACHINE> when set", () => {
+    // Test-only seam: the live integration test targets Towne slot 50
+    // until the MDB-code-to-slot mapping replaces the rows*columns model.
+    vi.stubEnv("RESTOCK_SLOTS_TOWNE", "50");
+    expect(getMachineSlots(getMachineConfig("towne"))).toEqual([50]);
+    expect(getMachineSlots(getMachineConfig("30th"))).toHaveLength(35);
   });
 });
