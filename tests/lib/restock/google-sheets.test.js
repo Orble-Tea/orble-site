@@ -3,7 +3,7 @@ import { generateKeyPairSync } from "node:crypto";
 
 import {
   appendSheetValues,
-  readLatestSheetValues,
+  findSheetNameForDate,
   readSheetValues,
   rowsToObjects,
   updateSheetValues,
@@ -99,51 +99,30 @@ describe("google sheets helpers", () => {
     });
   });
 
-  it("reads values from the newest date-named sheet in a workbook", async () => {
+  it("finds the workbook tab named for a date, in either title format", async () => {
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
-    const fetchMock = vi.spyOn(globalThis, "fetch");
-    fetchMock
-      .mockResolvedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      async () =>
         new Response(
           JSON.stringify({
             sheets: [
               { properties: { title: "Sheet1", index: 0 } },
               { properties: { title: "09/02/2026", index: 1 } },
-              { properties: { title: "08/24/2026", index: 2 } },
-              { properties: { title: "08/21/2026", index: 3 } },
+              { properties: { title: "2026-08-24", index: 2 } },
             ],
           }),
-          { status: 200 },
         ),
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ values: [["Drink"], ["Thai Tea"]] }), {
-          status: 200,
-        }),
-      );
+    );
 
-    await expect(readLatestSheetValues("sheet-id")).resolves.toEqual([
-      ["Drink"],
-      ["Thai Tea"],
-    ]);
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      1,
-      "https://sheets.googleapis.com/v4/spreadsheets/sheet-id",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Bearer sheets-token",
-        }),
-      }),
+    await expect(findSheetNameForDate("sheet-id", "2026-09-02")).resolves.toBe(
+      "09/02/2026",
     );
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
-      "https://sheets.googleapis.com/v4/spreadsheets/sheet-id/values/'09%2F02%2F2026'",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Bearer sheets-token",
-        }),
-      }),
+    await expect(findSheetNameForDate("sheet-id", "2026-08-24")).resolves.toBe(
+      "2026-08-24",
     );
+    await expect(
+      findSheetNameForDate("sheet-id", "2026-08-25"),
+    ).resolves.toBeNull();
   });
 
   it("can request a service-account token before reading sheets", async () => {
