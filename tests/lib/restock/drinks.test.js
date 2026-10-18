@@ -7,10 +7,12 @@ import {
   canonicalDrinkKeyFromSlot,
   DEFAULT_DRINK_SLOT_CAPACITY,
   expandNayaxDrinkCode,
+  formatDrinkName,
   parseDrinkName,
   slotCapacityForDrink,
   slotCapacityForDrinkParts,
 } from "../../../src/lib/restock/drinks.js";
+import { MATCHA, THAI } from "./fixtures.js";
 
 describe("drink parsing", () => {
   it("parses a full drink variation into restock slot fields", () => {
@@ -24,19 +26,19 @@ describe("drink parsing", () => {
 
   it("expands Nayax product codes into sheet-style drink names", () => {
     expect(expandNayaxDrinkCode("THAI_16_LESS_LYC")).toBe(
-      "Thai Tea 16oz Less Sugar w/ Lychee",
+      "Thai Tea 16oz Less Sweet w/ Lychee",
     );
     expect(expandNayaxDrinkCode("MANG_16_REG_LYC")).toBe(
-      "Mango Passion Fruit Tea 16oz w/ Lychee",
+      "Mango Passion Fruit Tea 16oz Regular Sweetness w/ Lychee",
     );
   });
 
   it("uses the same canonical key for Nayax codes and sheet drink names", () => {
     expect(canonicalDrinkKey("THAI_16_LESS_LYC")).toBe(
-      canonicalDrinkKey("Thai Tea 16oz Less Sugar w/ Lychee"),
+      canonicalDrinkKey("Thai Tea 16oz Less Sweet w/ Lychee"),
     );
     expect(canonicalDrinkKey("MANG_16_REG_LYC")).toBe(
-      canonicalDrinkKey("Mango Passion Fruit Tea 16oz w/ Lychee"),
+      canonicalDrinkKey("Mango Passion Fruit Tea 16oz Regular Sweetness w/ Lychee"),
     );
   });
 
@@ -49,7 +51,7 @@ describe("drink parsing", () => {
       canonicalDrinkKeyFromSlot({
         flavor: "Thai Tea",
         size: "16oz",
-        sweetnessLevel: "Less Sweet",
+        sweetness: "Less Sweet",
         topping: "Lychee",
       }),
     ).toBe(canonicalDrinkKey("THAI_16_LESS_LYC"));
@@ -63,5 +65,13 @@ describe("drink parsing", () => {
     expect(slotCapacityForDrink("Thai Tea Less Sweet 16oz")).toBe(
       DEFAULT_DRINK_SLOT_CAPACITY,
     );
+  });
+});
+
+describe("formatDrinkName", () => {
+  it("formats drink parts the way Nayax codes expand", () => {
+    expect(formatDrinkName(THAI)).toBe("Thai Tea 16oz Less Sweet w/ Lychee");
+    expect(formatDrinkName(MATCHA)).toBe("Matcha 16oz Less Sweet");
+    expect(formatDrinkName({ flavor: null })).toBe("");
   });
 });

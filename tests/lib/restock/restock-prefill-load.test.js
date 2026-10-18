@@ -1,21 +1,13 @@
+// GET prefill for a Load: Production Plan allocation and Nayax slot warnings.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { loadPrefill } from "./prefill-setup.js";
 
-describe("restock service", () => {
+describe("prefill: Load", () => {
   let buildRestockData;
   let getMachineConfig;
 
   beforeEach(async () => {
-    vi.resetModules();
-    vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
-    vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
-    vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
-    vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
-    vi.stubEnv("INVENTORY_SHEET_ID", "inventory-sheet");
-    vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
-
-    ({ getMachineConfig } = await import("../../../src/lib/restock/config.js"));
-    ({ buildRestockData } =
-      await import("../../../src/lib/restock/restock-service.js"));
+    ({ buildRestockData, getMachineConfig } = await loadPrefill());
   });
 
   afterEach(() => {
@@ -67,7 +59,7 @@ describe("restock service", () => {
       flavor: "Thai Tea",
       size: "16oz",
       topping: "Lychee",
-      sweetnessLevel: "Less Sweet",
+      sweetness: "Less Sweet",
       previous: 2,
       waste: 2,
       expectedNew: 4,
@@ -91,7 +83,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-              ["Thai Tea Normal 16oz", 9, "1, 2, 3"],
+              ["Thai Tea 16oz Regular", 9, "1, 2, 3"],
             ],
           }),
         );
@@ -119,7 +111,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-              ["Thai Tea 16oz Less Sugar w/ Lychee", 4, "8"],
+              ["Thai Tea 16oz Less Sweet w/ Lychee", 4, "8"],
             ],
           }),
         );
@@ -143,11 +135,11 @@ describe("restock service", () => {
 
     expect(data.slots[2]).toMatchObject({
       slot: 3,
-      previousDrink: "Thai Tea 16oz Less Sugar w/ Lychee",
+      previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
       flavor: null,
       size: null,
       topping: null,
-      sweetnessLevel: null,
+      sweetness: null,
       previous: 3,
       waste: 3,
       expectedNew: 0,
@@ -159,7 +151,7 @@ describe("restock service", () => {
       flavor: "Thai Tea",
       size: "16oz",
       topping: "Lychee",
-      sweetnessLevel: "Less Sugar",
+      sweetness: "Less Sweet",
       previous: 0,
       waste: 0,
       expectedNew: 4,
@@ -205,246 +197,6 @@ describe("restock service", () => {
       size: "16oz",
       expectedNew: 4,
       total: 4,
-    });
-  });
-
-  it("prefills Topoff quantities from the Inventory column for the requested machine", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-      const urlText = String(url);
-      if (urlText.includes("Restock%20Log")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["Batch ID", "Event"],
-              ["30th-2026-07-10", "Load"],
-            ],
-          }),
-        );
-      }
-      if (urlText.endsWith("/inventory-sheet")) {
-        return new Response(
-          JSON.stringify({
-            sheets: [
-              { properties: { title: "Inventory-2026-08-17", index: 0 } },
-              { properties: { title: "Inventory-2026-08-18", index: 1 } },
-            ],
-          }),
-        );
-      }
-      if (urlText.includes("Inventory-2026-08-18")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["Drink", "Storage", "To 30th", "To Towne"],
-              ["Thai Tea 16oz Less Sugar w/ Lychee", 8, 2, 6],
-            ],
-          }),
-        );
-      }
-      return new Response(
-        JSON.stringify([
-          {
-            MDBCode: 1,
-            PAR: 4,
-            MissingStockByMDB: 2,
-            DEXProductName: "THAI_16_LESS_LYC",
-          },
-        ]),
-      );
-    });
-
-    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
-
-    expect(data.event).toBe("Topoff");
-    expect(data.slots[0]).toMatchObject({
-      previousDrink: "Thai Tea 16oz Less Sugar w/ Lychee",
-      flavor: "Thai Tea",
-      size: "16oz",
-      topping: "Lychee",
-      sweetnessLevel: "Less Sugar",
-      previous: 2,
-      waste: 0,
-      expectedNew: 2,
-      total: 4,
-    });
-    expect(data.slots[0]).not.toHaveProperty("drink");
-    expect(data.slots[0].expectedNew).toBe(2);
-  });
-
-  it("matches Inventory allocation columns regardless of capitalization or spacing", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-      const urlText = String(url);
-      if (urlText.includes("Restock%20Log")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["batch id", "EVENT"],
-              ["30th-2026-07-10", "load"],
-            ],
-          }),
-        );
-      }
-      if (urlText.endsWith("/inventory-sheet")) {
-        return new Response(
-          JSON.stringify({
-            sheets: [
-              { properties: { title: "Inventory-2026-08-18", index: 0 } },
-            ],
-          }),
-        );
-      }
-      if (urlText.includes("Inventory-2026-08-18")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["DRINK", "storage", "To-30 th"],
-              ["Thai Tea 16oz Less Sugar w/ Lychee", 2, 2],
-            ],
-          }),
-        );
-      }
-      return new Response(
-        JSON.stringify([
-          {
-            MDBCode: 1,
-            PAR: 4,
-            MissingStockByMDB: 4,
-            DEXProductName: "THAI_16_LESS_LYC",
-          },
-        ]),
-      );
-    });
-
-    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
-
-    expect(data.event).toBe("Topoff");
-    expect(data.slots[0]).toMatchObject({
-      previous: 0,
-      expectedNew: 2,
-      total: 2,
-    });
-    expect(data.warnings).toEqual([]);
-  });
-
-  it("does not use Inventory amounts assigned to a different machine for Topoff", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-      const urlText = String(url);
-      if (urlText.includes("Restock%20Log")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["Batch ID", "Event"],
-              ["30th-2026-07-10", "Load"],
-            ],
-          }),
-        );
-      }
-      if (urlText.endsWith("/inventory-sheet")) {
-        return new Response(
-          JSON.stringify({
-            sheets: [
-              { properties: { title: "Inventory-2026-08-18", index: 0 } },
-            ],
-          }),
-        );
-      }
-      if (urlText.includes("Inventory-2026-08-18")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["Drink", "Storage", "To 30th", "To Towne"],
-              ["Thai Tea 16oz Less Sugar w/ Lychee", 3, 0, 3],
-            ],
-          }),
-        );
-      }
-      return new Response(
-        JSON.stringify([
-          {
-            MDBCode: 1,
-            PAR: 4,
-            MissingStockByMDB: 4,
-            DEXProductName: "THAI_16_LESS_LYC",
-          },
-        ]),
-      );
-    });
-
-    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
-
-    expect(data.event).toBe("Topoff");
-    expect(data.slots[0]).toMatchObject({
-      slot: 1,
-      previous: 0,
-      expectedNew: 0,
-      total: 0,
-    });
-  });
-
-  it("allocates the requested machine Topoff amount to its emptiest matching slots", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-      const urlText = String(url);
-      if (urlText.includes("Restock%20Log")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["Batch ID", "Event"],
-              ["30th-2026-07-10", "Load"],
-            ],
-          }),
-        );
-      }
-      if (urlText.endsWith("/inventory-sheet")) {
-        return new Response(
-          JSON.stringify({
-            sheets: [
-              { properties: { title: "Inventory-2026-08-18", index: 0 } },
-            ],
-          }),
-        );
-      }
-      if (urlText.includes("Inventory-2026-08-18")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["Drink", "Storage", "To 30th", "To Towne"],
-              ["Thai Tea 16oz Less Sugar w/ Lychee", 6, 3, 3],
-            ],
-          }),
-        );
-      }
-      return new Response(
-        JSON.stringify([
-          {
-            MDBCode: 1,
-            PAR: 4,
-            MissingStockByMDB: 1,
-            DEXProductName: "THAI_16_LESS_LYC",
-          },
-          {
-            MDBCode: 2,
-            PAR: 4,
-            MissingStockByMDB: 4,
-            DEXProductName: "THAI_16_LESS_LYC",
-          },
-        ]),
-      );
-    });
-
-    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
-
-    expect(data.event).toBe("Topoff");
-    expect(data.slots[0]).toMatchObject({
-      slot: 1,
-      previous: 3,
-      expectedNew: 0,
-      total: 3,
-    });
-    expect(data.slots[1]).toMatchObject({
-      slot: 2,
-      previous: 0,
-      expectedNew: 3,
-      total: 3,
     });
   });
 
@@ -533,7 +285,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Drink", "Storage", "To 30th"],
-              ["Thai Tea 16oz Less Sugar w/ Lychee", 2, 2],
+              ["Thai Tea 16oz Less Sweet w/ Lychee", 2, 2],
             ],
           }),
         );
@@ -618,7 +370,7 @@ describe("restock service", () => {
       previousDrink: null,
       flavor: null,
       topping: null,
-      sweetnessLevel: null,
+      sweetness: null,
       previous: 0,
     });
     expect(data.warnings).toEqual([
@@ -633,110 +385,5 @@ describe("restock service", () => {
       "restock-data warning:",
       expect.objectContaining({ code: "MISSING_NAYAX_PRODUCT_NAME" }),
     );
-  });
-
-  it("returns Clearout when explicitly requested for an existing batch", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
-      const urlText = String(url);
-      if (urlText.includes("Restock%20Log")) {
-        return new Response(
-          JSON.stringify({
-            values: [
-              ["Batch ID", "Event"],
-              ["30th-2026-07-10", "Load"],
-            ],
-          }),
-        );
-      }
-      return new Response(
-        JSON.stringify([
-          {
-            MDBCode: 1,
-            PAR: 4,
-            MissingStockByMDB: 3,
-            DEXProductName: "Thai Tea Less Sweet w/ Lychee 16oz",
-          },
-        ]),
-      );
-    });
-
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-      {
-        mode: "clearout",
-      },
-    );
-
-    expect(data.event).toBe("Clearout");
-    expect(data.slots[0]).toMatchObject({
-      previousDrink: "Thai Tea Less Sweet w/ Lychee 16oz",
-      flavor: "Thai Tea",
-      topping: "Lychee",
-      sweetnessLevel: "Less Sweet",
-      previous: 1,
-      waste: 1,
-      expectedNew: 0,
-      total: 0,
-    });
-  });
-
-  it("requires a prior Load before returning Clearout", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ values: [["Batch ID", "Event"]] })),
-    );
-
-    await expect(
-      buildRestockData(getMachineConfig("30th"), "2026-07-10", {
-        mode: "clearout",
-      }),
-    ).rejects.toMatchObject({
-      clearoutRequiresLoad: true,
-      message: "Clearout requires a Load event for this batch.",
-    });
-  });
-
-  it("does not return Clearout when Clearout is already logged for the batch", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          values: [
-            ["Batch ID", "Event"],
-            ["30th-2026-07-10", "Load"],
-            ["30th-2026-07-10", "Clearout"],
-          ],
-        }),
-      ),
-    );
-
-    await expect(
-      buildRestockData(getMachineConfig("30th"), "2026-07-10", {
-        mode: "clearout",
-      }),
-    ).rejects.toMatchObject({
-      alreadySubmitted: true,
-      existingEntryRow: 3,
-    });
-  });
-
-  it("throws an already submitted error after Load and Topoff exist", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          values: [
-            ["Batch ID", "Event"],
-            ["30th-2026-07-10", "Load"],
-            ["30th-2026-07-10", "Topoff"],
-          ],
-        }),
-      ),
-    );
-
-    await expect(
-      buildRestockData(getMachineConfig("30th"), "2026-07-10"),
-    ).rejects.toMatchObject({
-      alreadySubmitted: true,
-      existingEntryRow: 2,
-    });
   });
 });

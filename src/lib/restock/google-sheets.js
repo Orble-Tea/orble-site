@@ -1,7 +1,7 @@
 import { createPrivateKey, createSign } from "node:crypto";
 
 import { assertConfigured } from "./config.js";
-import { UpstreamServiceError } from "./errors.js";
+import { ERRORS, UpstreamServiceError } from "./errors.js";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SHEETS_BASE_URL =
@@ -226,11 +226,20 @@ export async function readSheetValues(spreadsheetId, sheetName) {
   return payload.values || [];
 }
 
-export async function appendSheetValues(spreadsheetId, sheetName, rows) {
-  if (!Array.isArray(rows) || rows.length === 0) return null;
+/**
+ * Appends rows to a sheet.
+ * @returns {Promise<number>} the row number of the first appended row, read
+ *   from the range Sheets reports writing (e.g. "'Restock Log'!A5:F6" -> 5)
+ */
+export async function appendSheetValues(
+  spreadsheetId,
+  sheetName,
+  rows,
+  valueInputOption = "USER_ENTERED",
+) {
   const range = encodeURIComponent(`${quoteSheetName(sheetName)}`);
-  return sheetsFetch(
-    `/${spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED`,
+  const response = await sheetsFetch(
+    `/${spreadsheetId}/values/${range}:append?valueInputOption=${valueInputOption}`,
     {
       method: "POST",
       body: JSON.stringify({ values: rows }),
@@ -240,6 +249,15 @@ export async function appendSheetValues(spreadsheetId, sheetName, rows) {
       },
     },
   );
+  const firstRowNumber = Number(
+    response?.updates?.updatedRange?.match(/![A-Z]+(\d+)/)?.[1],
+  );
+  if (!firstRowNumber)
+    throw new UpstreamServiceError(ERRORS.appendRangeMissing.message, {
+      service: "google_sheets",
+      operation: `appending ${sheetName}`,
+    });
+  return firstRowNumber;
 }
 
 export async function updateSheetValues(
@@ -247,10 +265,11 @@ export async function updateSheetValues(
   sheetName,
   rangeA1,
   rows,
+  valueInputOption = "USER_ENTERED",
 ) {
   const range = encodeURIComponent(`${quoteSheetName(sheetName)}!${rangeA1}`);
   return sheetsFetch(
-    `/${spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`,
+    `/${spreadsheetId}/values/${range}?valueInputOption=${valueInputOption}`,
     {
       method: "PUT",
       body: JSON.stringify({ values: rows }),
@@ -271,4 +290,26 @@ export function rowsToObjects(values) {
     });
     return object;
   });
+}
+
+/**
+ * Maps a row object onto a sheet's header order; unknown columns stay blank.
+ * @param {string[]} header the sheet's header row
+ * @param {Record<string, unknown>} row values keyed by column name
+ * @returns {unknown[]} one sheet row in header order
+ */
+export function toSheetRow(header, row) {
+  return header.map((column) => row[String(column).trim()] ?? "");
+}
+
+/**
+ * The A1 column letters for a zero-based index, for Sheets ranges.
+ * @param {number} index 0 = A, 25 = Z, 26 = AA
+ * @returns {string}
+ */
+export function columnLetter(index) {
+  let letters = "";
+  for (let n = index + 1; n > 0; n = Math.floor((n - 1) / 26))
+    letters = String.fromCharCode(65 + ((n - 1) % 26)) + letters;
+  return letters;
 }

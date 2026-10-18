@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ERRORS } from "../../../src/lib/restock/errors.js";
 
-describe("GET /api/restock-data", () => {
+describe("GET /api/restock", () => {
   beforeEach(() => {
     vi.resetModules();
   });
@@ -11,12 +12,12 @@ describe("GET /api/restock-data", () => {
   });
 
   it("rejects requests with an invalid secret key", async () => {
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=bad&machine=30th&date=2026-07-10",
+        "https://orble.test/api/restock?key=bad&machine=30th&date=2026-07-10",
       ),
     });
 
@@ -27,12 +28,12 @@ describe("GET /api/restock-data", () => {
   });
 
   it("rejects unknown machines", async () => {
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=campus&date=2026-07-10",
+        "https://orble.test/api/restock?key=secret&machine=campus&date=2026-07-10",
       ),
     });
 
@@ -41,13 +42,13 @@ describe("GET /api/restock-data", () => {
   });
 
   it("rejects invalid dates before calling external services", async () => {
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
     vi.stubEnv("NAYAX_MACHINE_30TH_ID", "123");
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=30th&date=07-10-2026",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=07-10-2026",
       ),
     });
 
@@ -56,12 +57,12 @@ describe("GET /api/restock-data", () => {
   });
 
   it("returns a server error when a known machine is missing deployment config", async () => {
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10",
       ),
     });
 
@@ -72,12 +73,12 @@ describe("GET /api/restock-data", () => {
   });
 
   it("recognizes Towne as a known machine", async () => {
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=towne&date=2026-07-10",
+        "https://orble.test/api/restock?key=secret&machine=towne&date=2026-07-10",
       ),
     });
 
@@ -96,7 +97,7 @@ describe("GET /api/restock-data", () => {
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
     vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       const urlText = String(url);
@@ -129,7 +130,7 @@ describe("GET /api/restock-data", () => {
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10",
       ),
     });
 
@@ -145,7 +146,7 @@ describe("GET /api/restock-data", () => {
           previousDrink: "Thai Tea Less Sweet w/ Lychee 16oz",
           flavor: "Thai Tea",
           topping: "Lychee",
-          sweetnessLevel: "Less Sweet",
+          sweetness: "Less Sweet",
         }),
       ]),
     });
@@ -160,7 +161,7 @@ describe("GET /api/restock-data", () => {
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
     vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       const urlText = String(url);
@@ -188,7 +189,7 @@ describe("GET /api/restock-data", () => {
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10&mode=clearout",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10&mode=clearout",
       ),
     });
 
@@ -207,7 +208,7 @@ describe("GET /api/restock-data", () => {
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
     vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
 
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ values: [["Batch ID", "Event"]] })),
@@ -215,13 +216,46 @@ describe("GET /api/restock-data", () => {
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10&mode=clearout",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10&mode=clearout",
       ),
     });
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({
-      error: "Clearout requires a Load event for this batch.",
+      error: ERRORS.needsEventFirst("Load", "Clearout").message,
+    });
+  });
+
+  it("returns a conflict for a batch that was already cleared out", async () => {
+    vi.resetModules();
+    vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
+    vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
+    vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
+    vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
+    vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
+    const { GET } = await import("../../../src/pages/api/restock.js");
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          values: [
+            ["Batch ID", "Event"],
+            ["30th-2026-07-10", "Load"],
+            ["30th-2026-07-10", "Clearout"],
+          ],
+        }),
+      ),
+    );
+
+    const response = await GET({
+      url: new URL(
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10",
+      ),
+    });
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: ERRORS.batchClearedOut.message,
     });
   });
 
@@ -233,7 +267,7 @@ describe("GET /api/restock-data", () => {
     vi.stubEnv("INVENTORY_SHEET_ID", "inventory-sheet");
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
 
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
@@ -249,14 +283,14 @@ describe("GET /api/restock-data", () => {
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10",
       ),
     });
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({
-      error: "This event has already been submitted for this batch.",
-      existingEntryRow: 2,
+      error: ERRORS.alreadySubmitted.message,
+      details: { existingEntryRow: 3 },
     });
   });
 
@@ -270,7 +304,7 @@ describe("GET /api/restock-data", () => {
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
     vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
     vi.spyOn(console, "error").mockImplementation(() => {});
-    const { GET } = await import("../../../src/pages/api/restock-data.js");
+    const { GET } = await import("../../../src/pages/api/restock.js");
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       if (String(url).includes("Restock%20Log")) {
@@ -283,7 +317,7 @@ describe("GET /api/restock-data", () => {
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10",
       ),
     });
 

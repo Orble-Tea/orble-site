@@ -2,6 +2,7 @@
 // response and the copy the restocker must see; a loop makes nine states
 // cost roughly one test's worth of code.
 import { test, expect } from "@playwright/test";
+import { ERRORS, MESSAGES, couldntSubmit } from "../../../src/lib/restock/errors.js";
 import {
   loadPayload,
   mockData,
@@ -21,8 +22,17 @@ const START_ERRORS = [
   {
     name: "batch fully logged (409)",
     status: 409,
-    body: { error: "This event has already been submitted for this batch." },
+    body: { error: ERRORS.alreadySubmitted.message },
     copy: /already loaded and topped off/i,
+  },
+  {
+    name: "older batch than the newest Load (409)",
+    status: 409,
+    body: {
+      error: "fixture: the server's reason",
+      details: { newestBatchId: "30th-2026-07-17" },
+    },
+    copy: /fixture: the server's reason/i,
   },
   {
     name: "upstream Nayax down (502)",
@@ -50,7 +60,7 @@ for (const err of START_ERRORS) {
 test("start log: network failure keeps selections and offers retry", async ({
   page,
 }) => {
-  await page.route("**/api/restock-data*", (route) =>
+  await page.route("**/api/restock*", (route) =>
     route.abort("connectionfailed"),
   );
   await startLog(page, "2026-07-10");
@@ -59,30 +69,38 @@ test("start log: network failure keeps selections and offers retry", async ({
   await expect(page.locator("#batch-date")).toHaveValue("2026-07-10");
 });
 
-test("submit failure keeps all entries and never loses work", async ({
-  page,
-}) => {
-  await mockData(page, loadPayload());
-  await mockSubmit(page, { status: 502 });
-  await startLog(page, "2026-07-10");
-  await approveAll(page);
-  await page.click("#complete");
-  await expect(page.locator("#complete-hint")).toContainText(
-    /Nothing was sent/i,
-  );
-  // The table is still there with every approval intact.
-  await expect(page.locator("#view-table")).toBeVisible();
-  for (const box of await page.locator("[data-approve]").all())
-    await expect(box).toBeChecked();
-});
+// The server's reason is shown as sent; what the reasons say is unit-tested in errors.js
+const REASON = "fixture: the server's reason for refusing";
 
-test("submit race (409): someone else already submitted", async ({ page }) => {
+// Each row is a submit response and the exact message the restocker sees
+const SUBMIT_ERRORS = [
+  { name: "upstream failure (502)", status: 502, body: { error: "Google Sheets request failed" }, message: MESSAGES.retrySubmission },
+  { name: "rejected (400)", status: 400, body: { error: REASON }, message: couldntSubmit(REASON) },
+  { name: "already submitted (409)", status: 409, body: { error: ERRORS.alreadySubmitted.message }, message: ERRORS.alreadySubmitted.message },
+  { name: "conflict without a reason (409)", status: 409, body: {}, message: ERRORS.alreadySubmitted.message },
+];
+
+for (const err of SUBMIT_ERRORS) {
+  test(`submit ${err.name}: shows the right message and keeps every entry`, async ({ page }) => {
+    await mockData(page, loadPayload());
+    await mockSubmit(page, { status: err.status, body: err.body });
+    await startLog(page, "2026-07-10");
+    await approveAll(page);
+    await page.click("#complete");
+    await expect(page.locator("#complete-hint")).toHaveText(err.message);
+    await expect(page.locator("#loading-overlay")).toBeHidden();
+    // The table is still there with every approval intact.
+    await expect(page.locator("#view-table")).toBeVisible();
+    for (const box of await page.locator("[data-approve]").all())
+      await expect(box).toBeChecked();
+  });
+}
+
+test("submit with no response: asks for a retry", async ({ page }) => {
   await mockData(page, loadPayload());
-  await mockSubmit(page, { status: 409 });
+  await page.route("**/api/restock", (route) => route.abort("connectionfailed"));
   await startLog(page, "2026-07-10");
   await approveAll(page);
   await page.click("#complete");
-  await expect(page.locator("#complete-hint")).toContainText(
-    /already submitted/i,
-  );
+  await expect(page.locator("#complete-hint")).toHaveText(MESSAGES.retrySubmission);
 });
