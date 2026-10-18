@@ -1,15 +1,28 @@
 ---
 import bob from "~/assets/images/logo_inkscape.svg";
+import {
+  KNOWN_FLAVORS,
+  KNOWN_SIZES,
+  KNOWN_TOPPINGS,
+  LESS_SWEET,
+  REGULAR_SWEETNESS,
+} from "~/lib/restock/drink-parsing.js";
 
 interface Props {
   machines: { label: string; machineId?: string }[];
   today: string;
 }
 const { machines, today } = Astro.props;
+const drinkNameRules: [string, string[]][] = [
+  ["Valid flavor", [...KNOWN_FLAVORS].sort()],
+  ["Valid size", KNOWN_SIZES],
+  ["Valid sweetness", [LESS_SWEET, REGULAR_SWEETNESS]],
+  ["Valid topping", KNOWN_TOPPINGS.map((topping) => `w/ ${topping}`)],
+];
 ---
 
 <script src="/lottie-player.js" defer is:inline></script>
-<!-- ============ loading overlay: bob waves while the log loads ============ -->
+<!-- ============ loading overlay: bob waves while the log loads or submits ============ -->
 <div
   id="loading-overlay"
   class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-white/85 backdrop-blur-sm"
@@ -19,7 +32,7 @@ const { machines, today } = Astro.props;
     autoplay
     loop
     style="width: 220px; height: 220px;"></lottie-player>
-  <div class="font-semibold text-orble-ink">Loading…</div>
+  <div id="loading-label" class="font-semibold text-orble-ink">Loading…</div>
 </div>
 <section
   id="view-start"
@@ -31,7 +44,10 @@ const { machines, today } = Astro.props;
     <div class="text-gray-400 text-sm">Restock Portal</div>
   </div>
 
-  <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-md">
+  <div
+    id="start-card"
+    class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-md"
+  >
     <div id="start-status" class="mb-4 hidden rounded-xl px-3 py-2 text-[13px]">
     </div>
 
@@ -99,11 +115,63 @@ const { machines, today } = Astro.props;
       Start log
     </button>
   </div>
+
+  <div
+    id="drink-help"
+    class="hidden w-full max-w-sm rounded-3xl bg-white p-6 shadow-md"
+  >
+    <div class="mb-4 flex items-center gap-3">
+      <button
+        id="drink-help-close"
+        aria-label="Close"
+        class="h-8 w-8 shrink-0 rounded-full bg-gray-100 font-bold text-gray-600 text-base active:bg-gray-200"
+        >×</button
+      >
+      <div class="font-semibold text-gray-900 text-base">
+        What are valid drink names?
+      </div>
+    </div>
+
+    <p class="mb-4 leading-snug text-[13px] text-gray-500">
+      A drink name is a flavor and a size with option values for sweetness and
+      topping.
+    </p>
+    {
+      drinkNameRules.map(([part, allowed]) => (
+        <div class="mb-4">
+          <div class="mb-2 font-semibold uppercase tracking-wide text-gray-500 text-xs">
+            {part}
+          </div>
+          <div class="flex flex-wrap gap-2">
+            {allowed.map((value) => (
+              <span class="rounded-full bg-gray-100 px-4 py-2 text-gray-700 text-sm">
+                {value}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))
+    }
+    <div
+      class="mb-2 font-semibold uppercase tracking-wide text-gray-500 text-xs"
+    >
+      Examples
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <span class="rounded-full bg-orble-tint px-4 py-2 text-orble-ink text-sm">
+        Thai Tea 16oz Less Sweet w/ Lychee
+      </span>
+      <span class="rounded-full bg-orble-tint px-4 py-2 text-orble-ink text-sm">
+        Matcha 22oz
+      </span>
+    </div>
+  </div>
 </section>
 
 <script>
   import { batch } from "nanostores";
-  import { HTTP, plannedNew, type Slot } from "~/lib/restock/ui-helpers";
+  import { HTTP, esc, plannedNew, type Slot } from "~/lib/restock/ui-helpers";
+  import { MESSAGES } from "~/lib/restock/errors.js";
   import {
     $,
     $payload,
@@ -121,15 +189,12 @@ const { machines, today } = Astro.props;
       "No connection. Check your signal and try again. Nothing was lost.",
     invalidKey:
       "This link isn't valid. Ask for the current restock link and re-save your bookmark.",
-    batchFullyLogged:
-      "This batch was already loaded and topped off. Please check your batch date.",
     nayaxUnreachable: "Couldn't reach Nayax",
     keptForRetry: "Your machine and date are kept. Try again.",
     notConnected: (machine: string) =>
       `${machine} isn't connected to Nayax yet.`,
     genericError: "Something went wrong. Try again.",
-    unrecognizedCode:
-      "unrecognized flavor code: pick one of the valid flavors",
+    drinkHelp: "What are valid drink names?",
   };
 
   const STATUS_STYLES: Record<string, string> = {
@@ -150,15 +215,52 @@ const { machines, today } = Astro.props;
     el.classList.remove("hidden");
   }
 
+  /** The invalid-drinks 409 as a list: one bullet per unreadable Inventory row. */
+  function invalidDrinksHtml(details: {
+    sheet: string;
+    machine: string;
+    invalidDrinks: { name: string; reason: string }[];
+  }) {
+    const items = details.invalidDrinks
+      .map((row) => `<li>${esc(row.name)} (${esc(row.reason)})</li>`)
+      .join("");
+    return `<div>${esc(MESSAGES.invalidDrinksIntro(details.sheet, details.machine))}</div>
+      <ul class="my-1.5 list-disc pl-5">${items}</ul>
+      <div>${MESSAGES.fixDrinkNames}</div>`;
+  }
+
+  /** Appends the "What are valid drink names?" button to the status box. */
+  function showDrinkHelpButton() {
+    const button = document.createElement("button");
+    button.id = "drink-help-open";
+    button.className =
+      "mt-2 flex w-fit items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-orble-ink active:bg-white";
+    button.innerHTML = `<span class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px] font-bold">?</span>${STRINGS.drinkHelp}`;
+    button.addEventListener("click", () => toggleDrinkHelp(true));
+    $("start-status").append(button);
+  }
+
+  /** Swaps the start card for the drink-name help card, or back. */
+  function toggleDrinkHelp(open: boolean) {
+    $("start-card").classList.toggle("hidden", open);
+    $("drink-help").classList.toggle("hidden", !open);
+  }
+
   /** Builds editable slots from the payload, applying backend warnings. */
   function initSlots(payload: RestockPayload): Slot[] {
-    const warned = new Set((payload.warnings || []).map((w) => w.slot));
+    const warned = new Map(
+      (payload.warnings || [])
+        .filter((w) => w.slot !== undefined)
+        .map((w) => [w.slot, w]),
+    );
     return payload.slots.map((s: any) => ({
       ...s,
       newCount: plannedNew(s),
       approved: false,
       edited: false,
-      warning: warned.has(s.slot) ? STRINGS.unrecognizedCode : undefined,
+      warning: warned.get(s.slot)?.code,
+      warningReason: warned.get(s.slot)?.reason,
+      warningMessage: warned.get(s.slot)?.message,
     }));
   }
 
@@ -172,13 +274,14 @@ const { machines, today } = Astro.props;
         ?.value || "";
     const date = ($("batch-date") as HTMLInputElement).value;
     if (!machine || !date) return;
+    document.getElementById("loading-label")!.textContent = "Loading…";
     document
       .getElementById("loading-overlay")!
       .classList.replace("hidden", "flex");
     let response: Response;
     try {
       response = await fetch(
-        `/api/restock-data?key=${encodeURIComponent(KEY)}&machine=${encodeURIComponent(machine)}&date=${encodeURIComponent(date)}`,
+        `/api/restock?key=${encodeURIComponent(KEY)}&machine=${encodeURIComponent(machine)}&date=${encodeURIComponent(date)}`,
       );
     } catch {
       startStatus("error", STRINGS.noConnection);
@@ -194,7 +297,12 @@ const { machines, today } = Astro.props;
       if (response.status === HTTP.FORBIDDEN) {
         startStatus("error", STRINGS.invalidKey);
       } else if (response.status === HTTP.CONFLICT) {
-        startStatus("info", STRINGS.batchFullyLogged);
+        if (body.details?.invalidDrinks) {
+          startStatus("info", invalidDrinksHtml(body.details));
+          showDrinkHelpButton();
+        } else {
+          startStatus("info", body.error || STRINGS.genericError);
+        }
       } else if (response.status === HTTP.BAD_GATEWAY) {
         startStatus(
           "warn",
@@ -224,4 +332,5 @@ const { machines, today } = Astro.props;
   }
 
   $("start-log").addEventListener("click", startLog);
+  $("drink-help-close").addEventListener("click", () => toggleDrinkHelp(false));
 </script>
