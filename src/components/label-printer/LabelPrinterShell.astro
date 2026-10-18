@@ -24,6 +24,33 @@ const tableHeadClass = "sticky top-0 z-10 border-b border-default bg-offset px-2
     </p>
   </header>
 
+  <details class="mt-6 rounded-lg border border-default bg-default text-default">
+    <summary class="cursor-pointer rounded-lg px-4 py-3 font-bold text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+      <span aria-hidden="true" class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary">?</span>
+      Help: printing labels
+    </summary>
+    <div class="space-y-4 border-t border-default px-4 py-4 text-sm">
+      <section aria-labelledby="printing-help-steps">
+        <h2 id="printing-help-steps" class="m-0 font-bold text-accent text-base">How to print</h2>
+        <ol class="mb-0 mt-2 list-decimal space-y-2 pl-5">
+          <li>Use Chrome or Edge on the computer connected to the Brother QL-600. Turn on the printer and load DK-1204 labels.</li>
+          <li>Review the drinks and quantities from the Production Plan. Uncheck drinks you do not want to print, or use Select everything. Each drink variation includes one backup label.</li>
+          <li>Click Connect QL-600 and choose the printer in the browser permission window. If permission is already saved, the page tries to reconnect automatically.</li>
+          <li>Click Print Selected to print the checked drinks. Print Test Label prints only the label entered in the preview fields.</li>
+        </ol>
+      </section>
+      <section aria-labelledby="printing-help-troubleshooting">
+        <h2 id="printing-help-troubleshooting" class="m-0 font-bold text-accent text-base">Troubleshooting</h2>
+        <ul class="mb-0 mt-2 list-disc space-y-2 pl-5">
+          <li>Printer missing? Check its power and USB cable, use Chrome or Edge, and click Connect QL-600 again.</li>
+          <li>Cannot connect? Close other apps or tabs using the printer, reconnect the USB cable, and try again.</li>
+          <li>Plan missing or out of date? Check your connection, then click Reload. Reload selects all drinks again.</li>
+          <li>Printing stopped? Check the label roll and Status Log. Check which labels printed before retrying to avoid duplicates.</li>
+        </ul>
+      </section>
+    </div>
+  </details>
+
   <div class="grid gap-6 pt-6 lg:grid-cols-[minmax(560px,1fr)_minmax(330px,390px)]">
     <section class={panelClass} aria-labelledby="productionHeading">
       <div class={headingClass}>
@@ -42,7 +69,7 @@ const tableHeadClass = "sticky top-0 z-10 border-b border-default bg-offset px-2
         Includes one extra backup label for each drink variation.
       </p>
 
-      <label class="mx-4 my-4 flex items-center gap-3 font-extrabold text-accent">
+      <label class="my-4 flex items-center gap-3 pl-6 pr-4 font-extrabold text-accent">
         <input id="selectEverything" class="h-[18px] w-[18px] accent-primary" type="checkbox" checked />
         <span>Select everything</span>
       </label>
