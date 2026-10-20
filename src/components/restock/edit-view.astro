@@ -275,9 +275,8 @@
         size: null,
         topping: null,
         sweetnessLevel: null,
-        newCount: 0,
-        // clearing a slot pulls everything still in it
-        waste: Math.max(editState.waste, s.previous),
+        ...editState,
+        warning: undefined,
       };
     } else if (flavorEl.value) {
       const topping = pick("Topping");
@@ -305,6 +304,7 @@
     const orig = $payload.get()!.slots[editingIndex];
     const origNew = plannedNew(orig);
     patch.edited =
+      Boolean(s.warning && !next.warning) ||
       next.waste !== orig.waste ||
       next.newCount !== origNew ||
       next.flavor !== (orig.flavor ?? null) ||
