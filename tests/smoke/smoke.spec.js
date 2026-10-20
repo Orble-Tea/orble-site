@@ -5,7 +5,7 @@ import {
   canonicalDrinkKey,
   canonicalDrinkKeyFromParts,
   parseDrinkName,
-} from "../../src/lib/restock/drinks.js";
+} from "../../src/lib/restock/drink-parsing.js";
 
 const KEY = required("RESTOCK_SECRET_KEY");
 const DATE = required("SMOKE_DATE"); // batch date that exists for machine 30th
@@ -187,8 +187,8 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
     }
   } else {
     // Topoff: you cannot top off with more of a drink than cold storage has.
-    // The Inventory workbook keeps one sheet per day; use the latest
-    // date-named tab, matching how the workbook is organized.
+    // The Inventory workbook keeps one sheet per day, named MM/DD/YYYY; read
+    // the batch date's tab, the same one the app allocates from.
     const invId = required("INVENTORY_SHEET_ID");
     const metaRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${invId}`,
@@ -197,12 +197,13 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
     const sheetTitles = ((await metaRes.json()).sheets || [])
       .map((sh) => sh.properties?.title)
       .filter(Boolean);
-    const latest =
-      sheetTitles
-        .filter((t) => !Number.isNaN(Date.parse(t)))
-        .sort((a, b) => Date.parse(a) - Date.parse(b))
-        .at(-1) || sheetTitles.at(-1);
-    const inventory = toObjects(await readSheet(token, invId, `'${latest}'`));
+    const [year, month, day] = DATE.split("-");
+    const tabName = `${month}/${day}/${year}`;
+    expect(
+      sheetTitles,
+      `Inventory workbook has no tab named ${tabName}; tabs: ${sheetTitles.join(", ")}`,
+    ).toContain(tabName);
+    const inventory = toObjects(await readSheet(token, invId, `'${tabName}'`));
     const stockByDrink = new Map();
     for (const row of inventory) {
       const drink = cell(row, "Drink");

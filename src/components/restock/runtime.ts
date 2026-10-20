@@ -10,7 +10,13 @@ export type RestockPayload = {
   event: string;
   machine: string;
   date: string;
-  warnings?: { slot: number; code: string }[];
+  warnings?: {
+    slot?: number;
+    code: string;
+    reason?: string;
+    message?: string;
+    batchId?: string;
+  }[];
   slots: ServerSlot[];
 };
 
