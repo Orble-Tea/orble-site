@@ -1,6 +1,11 @@
 // This is a live smoke test. Look at the README for guidance and proceed with caution.
 import { test, expect } from "@playwright/test";
 import { createSign } from "node:crypto";
+import {
+  canonicalDrinkKey,
+  canonicalDrinkKeyFromParts,
+  parseDrinkName,
+} from "../../src/lib/restock/drinks.js";
 
 const KEY = required("RESTOCK_SECRET_KEY");
 const DATE = required("SMOKE_DATE"); // batch date that exists for machine 30th
@@ -63,29 +68,50 @@ function toObjects(values) {
   );
 }
 
-// Aggregation key is the FLAVOR (first word-group before the size token).
-// Deliberately coarse: the smoke checks that no unit of any drink is lost or
-// invented end to end. Slot-level placement is the Integration tests' job.
-function flavorOf(variation) {
-  return String(variation)
-    .split(/\s+\d+oz\b/i)[0]
-    .trim()
-    .toLowerCase();
+/** Sheet headers are hand-typed, so match them case-insensitively. */
+function cell(row, header) {
+  const key = Object.keys(row).find(
+    (k) => k.trim().toLowerCase() === header.toLowerCase(),
+  );
+  return key ? row[key] : "";
 }
 
-// ---- what the page actually rendered, scraped per slot card ----
-async function renderedByFlavor(page) {
-  const cards = await page.locator("#slot-list > div").allInnerTexts();
-  const byFlavor = new Map();
-  const rows = [];
-  for (const text of cards) {
-    if (/^\s*Empty/m.test(text)) continue;
-    const title = text.split("\n")[0].trim().toLowerCase();
-    const newCount = Number(text.match(/new:\s*(\d+)/)?.[1] ?? 0);
-    rows.push({ title, newCount, text: text.replace(/\n/g, " | ") });
-    byFlavor.set(title, (byFlavor.get(title) || 0) + newCount);
+/**
+ * Deliberately coarse: the smoke checks that no unit of any drink is lost or
+ * invented end to end. Slot-level placement is the Integration tests' job.
+ */
+function canonicalDrinkKeyFromCard(title, quals) {
+  const parts = { flavor: title, size: null, topping: null, sweetness: null };
+  for (const qual of quals) {
+    const parsed = parseDrinkName(qual);
+    if (parsed.size) parts.size = parsed.size;
+    else if (parsed.sweetness) parts.sweetness = parsed.sweetness;
+    else parts.topping = qual;
   }
-  return { byFlavor, rows };
+  return canonicalDrinkKeyFromParts(parts);
+}
+
+/**
+ * Sums the rendered "new" count per drink. Each slot card's body holds the
+ * flavor title, then one small line per size/topping/sweetness.
+ */
+async function renderedByDrink(page) {
+  const cards = page.locator("#slot-list > div");
+  const byDrink = new Map();
+  const rows = [];
+  for (let i = 0; i < (await cards.count()); i++) {
+    const card = cards.nth(i);
+    const body = card.locator(".flex-1").first();
+    const title = (await body.locator("> div").first().innerText()).trim();
+    if (title === "Empty") continue;
+    const quals = await body.locator("> div.text-xs").allInnerTexts();
+    const text = (await card.innerText()).replace(/\n/g, " | ");
+    const key = canonicalDrinkKeyFromCard(title, quals);
+    const newCount = Number(text.match(/new:\s*(\d+)/)?.[1] ?? 0);
+    rows.push({ key, newCount, text });
+    byDrink.set(key, (byDrink.get(key) || 0) + newCount);
+  }
+  return { byDrink, rows };
 }
 
 test("live derivation: rendered table corresponds to Production Plan / Inventory", async ({
@@ -107,8 +133,8 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
   // Expected event, derived naively from the raw log.
   const batchId = `${MACHINE}-${DATE}`;
   const events = log
-    .filter((r) => r["Batch ID"] === batchId)
-    .map((r) => String(r["Event"]).toLowerCase());
+    .filter((r) => cell(r, "Batch ID") === batchId)
+    .map((r) => String(cell(r, "Event")).toLowerCase());
   const expectedEvent = !events.includes("load")
     ? "Load"
     : !events.includes("topoff")
@@ -123,10 +149,17 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
   await page.goto(`/restock?key=${KEY}`);
   await page.fill("#batch-date", DATE);
   await page.click("#start-log");
-  await expect(page.locator("#view-table")).toBeVisible({ timeout: 60_000 });
+  // The backend may refuse the batch (unreadable sheet rows, auth). Fail with
+  // its message rather than a 60s timeout on the table.
+  await expect(
+    page.locator("#view-table:not(.hidden), #start-status:not(.hidden)"),
+  ).toBeVisible({ timeout: 60_000 });
+  const refusal = page.locator("#start-status:not(.hidden)");
+  if (await refusal.isVisible())
+    throw new Error(`page refused the batch: ${await refusal.innerText()}`);
   await expect(page.locator("#table-event")).toHaveText(expectedEvent);
 
-  const { byFlavor, rows } = await renderedByFlavor(page);
+  const { byDrink, rows } = await renderedByDrink(page);
   await page.screenshot({ path: "smoke-table.png", fullPage: true });
   const dump = () =>
     `rendered:\n${rows.map((r) => `  ${r.text}`).join("\n")}\nsee smoke-table.png`;
@@ -135,29 +168,21 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
     // Per drink: units the plan calls for == units the table tells the
     // restocker to load. A mismatch means the derivation lost or invented
     // drinks somewhere between the sheet and the screen.
-    const planByFlavor = new Map();
+    const planByDrink = new Map();
     for (const row of plan) {
-      const variation = row["Drink Variation"] || row["Variation"];
-      // Sheet headers may case the machine name differently (e.g. "30TH");
-      // match the column case-insensitively without importing backend code.
-      const amountKey = Object.keys(row).find(
-        (k) => k.toLowerCase() === `amount to ${MACHINE}`.toLowerCase(),
-      );
-      const amount = Number((amountKey && row[amountKey]) || 0);
+      const variation = cell(row, "Drink Variation") || cell(row, "Variation");
+      const amount = Number(cell(row, `Amount to ${MACHINE}`) || 0);
       if (!variation || !amount) continue;
-      const flavor = flavorOf(variation);
-      planByFlavor.set(flavor, (planByFlavor.get(flavor) || 0) + amount);
+      const key = canonicalDrinkKey(variation);
+      planByDrink.set(key, (planByDrink.get(key) || 0) + amount);
     }
     expect(
-      planByFlavor.size,
+      planByDrink.size,
       "Production Plan has no rows for this machine; pick a planned SMOKE_DATE",
     ).toBeGreaterThan(0);
-    for (const [flavor, amount] of planByFlavor) {
+    for (const [key, amount] of planByDrink) {
       expect
-        .soft(
-          byFlavor.get(flavor) || 0,
-          `plan says ${amount}x ${flavor}\n${dump()}`,
-        )
+        .soft(byDrink.get(key) || 0, `plan says ${amount}x ${key}\n${dump()}`)
         .toBe(amount);
     }
   } else {
@@ -178,23 +203,24 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
         .sort((a, b) => Date.parse(a) - Date.parse(b))
         .at(-1) || sheetTitles.at(-1);
     const inventory = toObjects(await readSheet(token, invId, `'${latest}'`));
-    const stockByFlavor = new Map();
+    const stockByDrink = new Map();
     for (const row of inventory) {
-      if (!row["Drink"]) continue;
-      const flavor = flavorOf(row["Drink"]);
-      stockByFlavor.set(
-        flavor,
-        (stockByFlavor.get(flavor) || 0) + Number(row[`To ${MACHINE}`] || 0),
+      const drink = cell(row, "Drink");
+      if (!drink) continue;
+      const key = canonicalDrinkKey(drink);
+      stockByDrink.set(
+        key,
+        (stockByDrink.get(key) || 0) + Number(cell(row, `To ${MACHINE}`) || 0),
       );
     }
-    for (const [flavor, added] of byFlavor) {
+    for (const [key, added] of byDrink) {
       if (added === 0) continue;
       expect
         .soft(
           added,
-          `table adds ${added}x ${flavor} but storage has ${stockByFlavor.get(flavor) || 0}\n${dump()}`,
+          `table adds ${added}x ${key} but storage has ${stockByDrink.get(key) || 0}\n${dump()}`,
         )
-        .toBeLessThanOrEqual(stockByFlavor.get(flavor) || 0);
+        .toBeLessThanOrEqual(stockByDrink.get(key) || 0);
     }
   }
 });

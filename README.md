@@ -60,7 +60,7 @@ Rules the smoke lives by:
 
 - **Not in CI, on purpose.** It depends on live third parties and real data, and is run by a human who knows what the sheets say today. Run it before merging risky changes, after Netlify env changes, or when the machine misbehaves and you want to rule out software in one command.
 - **Read-only.** It never taps Complete. Once the real submit ships, Complete writes actual Restock Log rows and Nayax updates.
-- **Independent derivation.** `tests/smoke/smoke.spec.js` must never import from `src/lib/restock`. Its expectations are computed naively from raw sheet values; reusing the backend's own code would let a derivation bug agree with itself and pass.
+- **Independent derivation.** `tests/smoke/smoke.spec.js` must never reuse the backend's derivation (`restock-service`, the prefill, the submit routes). Its expectations are plain sums over raw sheet values; reusing the derivation would let a bug agree with itself and pass. The drink parser (`drinks.js`) is shared on purpose: it only names a drink, and its own unit tests cover it.
 - **Aggregate-level.** It checks that no unit of any drink is lost or invented end to end. Slot-level placement is covered by the fixture-backed browser tests.
 
 ## Credits
