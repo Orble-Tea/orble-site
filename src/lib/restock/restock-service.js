@@ -31,14 +31,14 @@ import {
   slotCapacityForDrinkParts,
 } from "./drinks.js";
 
-function parseInteger(value, fallback = 0) {
+export function parseInteger(value, fallback = 0) {
   if (value === "" || value === null || typeof value === "undefined")
     return fallback;
   const number = parseInt(value, 10);
   return Number.isInteger(number) && number >= 0 ? number : fallback;
 }
 
-function parseSlots(value) {
+export function parseSlots(value) {
   return String(value || "")
     .split(/[,\s;]+/)
     .map((slot) => Number(slot.trim()))
@@ -52,14 +52,14 @@ function normalizeColumnName(value) {
     .replace(/[^a-z0-9]+/g, "");
 }
 
-function findColumnName(row, expectedColumnName) {
+export function findColumnName(row, expectedColumnName) {
   const expected = normalizeColumnName(expectedColumnName);
   return Object.keys(row).find(
     (columnName) => normalizeColumnName(columnName) === expected,
   );
 }
 
-function getRowValue(row, expectedColumnName) {
+export function getRowValue(row, expectedColumnName) {
   const columnName = findColumnName(row, expectedColumnName);
   return columnName ? row[columnName] : "";
 }
@@ -188,7 +188,7 @@ function normalizeRequestedMode(mode) {
   return normalized || null;
 }
 
-function getPlanVariation(row) {
+export function getPlanVariation(row) {
   return (
     getRowValue(row, "Drink Variation") || getRowValue(row, "Variation")
   );
@@ -199,7 +199,7 @@ function getInventoryMachineHeader(machineConfig) {
 }
 
 /** Reads planned drink rows from the Production Plan sheet. */
-async function loadProductionPlanRows() {
+export async function loadProductionPlanRows() {
   const values = await readSheetValues(
     assertConfigured(SHEET_IDS.productionPlan, "PRODUCTION_PLAN_SHEET_ID"),
     PRODUCTION_PLAN_SHEET,
