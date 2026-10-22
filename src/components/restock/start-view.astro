@@ -323,7 +323,11 @@ const drinkNameRules: [string, string[]][] = [
     $("approve-banner").classList.add("hidden");
     $("complete-hint").classList.add("hidden");
     batch(() => {
-      $payload.set(body);
+      $payload.set({
+        ...body,
+        machine: body.batchId.slice(0, -11),
+        date: body.batchId.slice(-10),
+      });
       $showErrors.set(false);
       $slots.set(initSlots(body));
     });

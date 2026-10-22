@@ -56,8 +56,6 @@ async function post(body) {
       body: JSON.stringify({
         key: process.env.RESTOCK_SECRET_KEY,
         batchId: BATCH_ID,
-        machine: "Towne",
-        date: DATE,
         duration: "1m 0s",
         ...body,
       }),

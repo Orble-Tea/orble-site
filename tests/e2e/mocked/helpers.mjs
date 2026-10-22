@@ -36,8 +36,6 @@ export function loadPayload() {
   return {
     batchId: "30th-2026-07-10",
     event: "Load",
-    machine: "30th",
-    date: "2026-07-10",
     warnings: [],
     slots: [
       // swap: Thai Tea goes out, Matcha goes in -> "replacing" line

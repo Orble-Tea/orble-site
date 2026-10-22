@@ -53,6 +53,11 @@ export function getMachineConfig(machine) {
   );
 }
 
+export function parseBatchId(batchId) {
+  const match = /^(.+)-(\d{4}-\d{2}-\d{2})$/.exec(String(batchId || ""));
+  return match ? { label: match[1], date: match[2] } : null;
+}
+
 export function getAmountHeader(machineConfig) {
   return `Amount to ${machineConfig.label}`;
 }

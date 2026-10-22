@@ -16,6 +16,8 @@ import {
 } from "./google-sheets.js";
 import {
   canonicalDrinkKeyFromSlot,
+  DEFAULT_DRINK_SLOT_CAPACITY,
+  EMPTY_SLOT_MIN_FILL,
   normalizeDrinkName,
   slotCapacityForDrink,
   slotCapacityForDrinkParts,
@@ -160,7 +162,30 @@ export function getTopoffCandidates(machineConfig, slots) {
     .filter((candidate) => candidate.drinkKey && candidate.capacityLeft > 0);
 }
 
-export function allocateTopoffStorage(storageByDrink, candidates) {
+export function emptySlotCandidate(machineLabel, slot) {
+  return {
+    machineLabel,
+    slot: { slot, previous: 0 },
+    drinkKey: "",
+    capacityLeft: DEFAULT_DRINK_SLOT_CAPACITY,
+    allocation: 0,
+  };
+}
+
+function compareCandidates(left, right) {
+  return (
+    left.machineLabel.localeCompare(right.machineLabel) ||
+    left.slot.slot - right.slot.slot
+  );
+}
+
+// One can at a time to the slot with the fewest; when every slot holding the
+// drink is full and EMPTY_SLOT_MIN_FILL or more remain, the next empty slot takes it.
+export function allocateTopoffStorage(
+  storageByDrink,
+  candidates,
+  emptySlots = [],
+) {
   const candidatesByDrink = new Map();
   for (const candidate of candidates) {
     if (!candidatesByDrink.has(candidate.drinkKey)) {
@@ -168,14 +193,21 @@ export function allocateTopoffStorage(storageByDrink, candidates) {
     }
     candidatesByDrink.get(candidate.drinkKey).push(candidate);
   }
+  const unclaimed = [...emptySlots].sort(compareCandidates);
 
   for (const [drinkKey, drinkCandidates] of candidatesByDrink) {
     let remaining = storageByDrink.get(drinkKey) || 0;
     while (remaining > 0) {
-      const openCandidates = drinkCandidates.filter(
+      let openCandidates = drinkCandidates.filter(
         (candidate) => candidate.allocation < candidate.capacityLeft,
       );
-      if (openCandidates.length === 0) break;
+      if (openCandidates.length === 0) {
+        if (remaining < EMPTY_SLOT_MIN_FILL || unclaimed.length === 0) break;
+        const taken = unclaimed.shift();
+        taken.drinkKey = drinkKey;
+        drinkCandidates.push(taken);
+        openCandidates = [taken];
+      }
 
       openCandidates.sort((left, right) => {
         const leftTotal = left.slot.previous + left.allocation;

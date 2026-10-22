@@ -161,7 +161,7 @@ function normalizeRequestedMode(mode) {
 }
 
 /** A stored submit as the form's prefill, so pressing Complete resends it. */
-function prefillFromLogRow(machineConfig, date, batchId, row) {
+function prefillFromLogRow(batchId, row) {
   const slots = JSON.parse(row[RESTOCK_LOG_HEADER.SLOT_DATA] || "[]").map(
     (entry) => {
       const parsed = entry.Drink
@@ -184,8 +184,6 @@ function prefillFromLogRow(machineConfig, date, batchId, row) {
   return {
     batchId,
     event: row[RESTOCK_LOG_HEADER.EVENT],
-    machine: machineConfig.label,
-    date,
     slots,
     warnings: [],
   };
@@ -208,8 +206,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   ).find(
     (row) => row?.[RESTOCK_LOG_HEADER.STATUS] === SUBMIT_STATUS.NAYAX_PENDING,
   );
-  if (unfinished)
-    return prefillFromLogRow(machineConfig, date, batchId, unfinished);
+  if (unfinished) return prefillFromLogRow(batchId, unfinished);
 
   const event = clearoutMode
     ? RESTOCK_EVENTS.CLEAROUT
@@ -375,8 +372,6 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   return {
     batchId,
     event,
-    machine: machineConfig.label,
-    date,
     slots,
     warnings,
   };

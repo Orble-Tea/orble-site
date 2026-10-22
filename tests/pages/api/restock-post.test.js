@@ -29,8 +29,6 @@ function body(event, slots, overrides = {}) {
     key: "secret",
     batchId: BATCH_ID,
     event,
-    machine: "30th",
-    date: "2026-07-10",
     duration: "5m 32s",
     slots,
     ...overrides,

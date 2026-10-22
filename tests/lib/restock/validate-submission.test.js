@@ -14,8 +14,6 @@ describe("validateSubmission", () => {
   const ok = (event, slots, overrides = {}) => ({
     batchId: "30th-2026-07-10",
     event,
-    machine: "30th",
-    date: "2026-07-10",
     slots,
     ...overrides,
   });
@@ -24,7 +22,7 @@ describe("validateSubmission", () => {
   const cases = [
     {
       name: "a body missing a field",
-      input: ok("Load", twoSlots, { date: undefined }),
+      input: ok("Load", twoSlots, { batchId: undefined }),
       error: ERRORS.missingFields.message,
     },
     {
@@ -34,16 +32,8 @@ describe("validateSubmission", () => {
     },
     {
       name: "an unknown machine",
-      input: ok("Load", twoSlots, {
-        machine: "Depot",
-        batchId: "Depot-2026-07-10",
-      }),
+      input: ok("Load", twoSlots, { batchId: "Depot-2026-07-10" }),
       error: ERRORS.unknownMachine("Depot").message,
-    },
-    {
-      name: "a batchId that does not match the machine and date",
-      input: ok("Load", twoSlots, { batchId: "30th-2026-07-03" }),
-      error: ERRORS.batchIdMismatch.message,
     },
     {
       name: "a valid Load",

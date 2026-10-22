@@ -197,7 +197,6 @@ describe("restock data integration", () => {
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Load",
-      machine: "30th",
     });
     for (const slot of [51, 52]) {
       expect(slotOf(body, slot)).toMatchObject({
@@ -243,7 +242,6 @@ describe("restock data integration", () => {
       expect(body).toMatchObject({
         batchId: BATCH_ID,
         event: "Topoff",
-        machine: "30th",
       });
       expect(slotOf(body, 50)).toMatchObject({
         previousDrink: THAI,
@@ -259,6 +257,33 @@ describe("restock data integration", () => {
       });
     });
   }
+
+  it("builds a Split for the kitchen when the Inventory tab has no To columns yet", async () => {
+    // Towne is limited to one slot with no product, so it offers one empty slot
+    vi.stubEnv("RESTOCK_SLOTS_TOWNE", "53");
+    await seedSheet(requireEnv("INVENTORY_SHEET_ID"), INVENTORY_TAB, [
+      ["Drink", "Storage"],
+      [THAI, 6],
+      [MATCHA, 1],
+    ]);
+    await seedRestockLog(logRows("Load"));
+
+    const response = await getRestockData();
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({
+      batchId: `Kitchen-${TEST_DATE}`,
+      event: "Split",
+      drinks: [
+        // slot 50 takes 3 to reach 4; the 3 left open Towne's empty slot
+        { drink: THAI, storage: 6, to30th: 3, toTowne: 3 },
+        // one can is below the empty-slot line, so it tops up slot 51
+        { drink: MATCHA, storage: 1, to30th: 1, toTowne: 0 },
+      ],
+      warnings: [],
+    });
+  });
 
   it("builds a Clearout for the batch after its Load", async () => {
     await seedRestockLog(logRows("Load"));

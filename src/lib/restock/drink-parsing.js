@@ -1,5 +1,6 @@
 export const DEFAULT_DRINK_SLOT_CAPACITY = 4;
 export const BOBA_PACK_SLOT_CAPACITY = 6;
+export const EMPTY_SLOT_MIN_FILL = DEFAULT_DRINK_SLOT_CAPACITY / 2;
 
 const SIZE_PATTERN = /\b(\d{1,2}\s*oz)\b/i;
 export const KNOWN_SIZES = ["12oz", "16oz", "22oz"];

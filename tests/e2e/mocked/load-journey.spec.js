@@ -16,8 +16,6 @@ function topoffPayload() {
   return {
     batchId: "30th-2026-07-13",
     event: "Topoff",
-    machine: "30th",
-    date: "2026-07-13",
     warnings: [],
     slots: [
       slot({
@@ -91,8 +89,6 @@ test("full Load visit: render, gate, edit, fold, submit payload", async ({
   const body = posts[0];
   expect(body.batchId).toBe("30th-2026-07-10");
   expect(body.event).toBe("Load");
-  expect(body.machine).toBe("30th");
-  expect(body.date).toBe("2026-07-10");
   expect(body.duration).toMatch(/^\d+m \d+s$/);
   expect(body.slots.map((s) => s.slot)).toEqual([1, 2, 3, 4]);
   expect(body.slots[0]).toMatchObject({ new: 4, drink: { topping: null } });

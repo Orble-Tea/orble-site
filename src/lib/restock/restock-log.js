@@ -3,6 +3,7 @@
 import {
   getMachineConfig,
   getMachineSlots,
+  parseBatchId,
   RESTOCK_EVENTS,
   RESTOCK_LOG_HEADER,
 } from "./config.js";
@@ -83,16 +84,15 @@ function validateSlot(event, slot) {
  * @returns {ReturnType<typeof getMachineConfig>} the machine the body names
  */
 export function validateSubmission(body) {
-  const required = ["batchId", "event", "machine", "date", "slots"];
+  const required = ["batchId", "event", "slots"];
   if (required.some((field) => !body[field]) || !Array.isArray(body.slots))
     throw new RestockError(ERRORS.missingFields);
 
-  const machineConfig = getMachineConfig(body.machine);
+  const { event, batchId, slots } = body;
+  const parsed = parseBatchId(batchId);
+  const machineConfig = getMachineConfig(parsed?.label);
   if (!machineConfig)
-    throw new RestockError(ERRORS.unknownMachine(body.machine));
-  const { event, date, batchId, slots } = body;
-  if (batchId !== `${machineConfig.label}-${date}`)
-    throw new RestockError(ERRORS.batchIdMismatch);
+    throw new RestockError(ERRORS.unknownMachine(parsed?.label ?? batchId));
 
   const invalid = (problem) =>
     new RestockError(ERRORS.invalidSubmission(problem));
