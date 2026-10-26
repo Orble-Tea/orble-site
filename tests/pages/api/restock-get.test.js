@@ -152,7 +152,7 @@ describe("GET /api/restock", () => {
     expect(body.slots[0]).not.toHaveProperty("drink");
   });
 
-  it("returns a Split for the kitchen when the Inventory tab has no To columns yet", async () => {
+  it("returns a Split after the Load, until the kitchen logs one", async () => {
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
     vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
     vi.stubEnv("NAYAX_MACHINE_TOWNE_ID", "machine-2");

@@ -146,12 +146,12 @@ export async function readInventoryRows(date) {
 }
 
 /**
- * @typedef {object} Candidate a slot that can take cans
+ * @typedef {object} Candidate a slot that can take cups
  * @property {string} machineLabel
  * @property {object} slot the slot state from makeSlotState
  * @property {string} drinkKey the drink held, "" for an empty slot
- * @property {number} capacityLeft cans that still fit
- * @property {number} allocation cans given to it so far
+ * @property {number} capacityLeft cups that still fit
+ * @property {number} allocation cups given to it so far
  */
 
 /**
@@ -184,16 +184,21 @@ export function getTopoffCandidates(machineConfig, slots) {
 }
 
 /**
- * Spreads each drink's storage over its candidates, one can at a time to the
+ * Spreads each drink's storage over its candidate slots, one cup at a time to the
  * slot with the fewest. When every slot holding the drink is full and at least
  * half a slot remains, the next empty slot on a machine that already holds the
- * drink takes it. Mutates each candidate's `allocation` and `drinkKey`.
- * @param {Map<string, number>} storageByDrink drink key -> cans in storage
- * @param {Candidate[]} candidates from getTopoffCandidates, both machines together
+ * drink takes it. The candidate slots are not changed.
+ * @param {Map<string, number>} storageByDrink drink key -> cups in storage
+ * @param {Candidate[]} candidateSlots from getTopoffCandidates, one machine or both
+ * @returns {{ machineLabel: string, slotNumber: number, drinkKey: string, allocation: number }[]} one entry per slot that gets cups
  */
-export function allocateTopoffStorage(storageByDrink, candidates) {
+export function fillSlotsAcrossMachinesFromStorage(
+  storageByDrink,
+  candidateSlots,
+) {
+  const working = candidateSlots.map((candidate) => ({ ...candidate }));
   const candidatesByDrink = new Map();
-  for (const candidate of candidates) {
+  for (const candidate of working) {
     if (!candidate.drinkKey) continue;
     if (!candidatesByDrink.has(candidate.drinkKey)) {
       candidatesByDrink.set(candidate.drinkKey, []);
@@ -202,7 +207,7 @@ export function allocateTopoffStorage(storageByDrink, candidates) {
   }
   // Empty slots are sorted by machine and number with all 30th slots sorted
   // low to high, then all Towne slots low to high.
-  const unclaimed = candidates
+  const unclaimed = working
     .filter((candidate) => !candidate.drinkKey)
     .sort(
       (left, right) =>
@@ -248,4 +253,13 @@ export function allocateTopoffStorage(storageByDrink, candidates) {
       remaining -= 1;
     }
   }
+
+  return working
+    .filter((candidate) => candidate.allocation > 0)
+    .map((candidate) => ({
+      machineLabel: candidate.machineLabel,
+      slotNumber: candidate.slot.slotNumber,
+      drinkKey: candidate.drinkKey,
+      allocation: candidate.allocation,
+    }));
 }

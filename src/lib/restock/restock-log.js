@@ -239,7 +239,7 @@ export function sameSlots(submittedSlots, storedEntries) {
  * from a race is ignored.
  * @param {LogRow[]} rows the whole Restock Log, oldest first
  * @param {string} batchId
- * @returns {{ load?: LogRow, topoff?: LogRow, clearout?: LogRow }}
+ * @returns {{ load?: LogRow, topoff?: LogRow, clearout?: LogRow, split?: LogRow }}
  */
 export function getBatchLogRows(rows, batchId) {
   const found = {};
@@ -252,6 +252,7 @@ export function getBatchLogRows(rows, batchId) {
     load: found[RESTOCK_EVENTS.LOAD],
     topoff: found[RESTOCK_EVENTS.TOPOFF],
     clearout: found[RESTOCK_EVENTS.CLEAROUT],
+    split: found[RESTOCK_EVENTS.SPLIT],
   };
 }
 

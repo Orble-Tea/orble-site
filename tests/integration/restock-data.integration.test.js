@@ -42,11 +42,11 @@ function requireEnv(name) {
 const thirtieth = () => requireEnv("NAYAX_MACHINE_30TH_ID");
 const nayax = () => import("../../src/lib/restock/nayax.js");
 
-/** A Load (and optionally more events) already logged for the batch. */
-const logRows = (...events) => [
+/** Rows already logged, each a [batchId, event] pair. */
+const logRows = (...rows) => [
   Object.values(RESTOCK_LOG_HEADER),
-  ...events.map((event) => [
-    BATCH_ID,
+  ...rows.map(([batchId, event]) => [
+    batchId,
     event,
     TEST_DATE,
     "1m 0s",
@@ -233,7 +233,9 @@ describe("restock data integration", () => {
   for (const c of topoffs) {
     it(`builds a Topoff from the batch date's Inventory tab: ${c.name}`, async () => {
       await seedInventory(c.toThirtieth);
-      await seedRestockLog(logRows("Load"));
+      await seedRestockLog(
+        logRows([BATCH_ID, "Load"], [`Kitchen-${TEST_DATE}`, "Split"]),
+      );
 
       const response = await getRestockData();
 
@@ -258,7 +260,7 @@ describe("restock data integration", () => {
     });
   }
 
-  it("builds a Split for the kitchen when the Inventory tab has no To columns yet", async () => {
+  it("builds a Split after the Load, until the kitchen logs one", async () => {
     // Towne is limited to one slot with no product, so it offers one empty slot
     vi.stubEnv("RESTOCK_SLOTS_TOWNE", "53");
     await seedSheet(requireEnv("INVENTORY_SHEET_ID"), INVENTORY_TAB, [
@@ -266,7 +268,7 @@ describe("restock data integration", () => {
       [THAI, 6],
       [MATCHA, 1],
     ]);
-    await seedRestockLog(logRows("Load"));
+    await seedRestockLog(logRows([BATCH_ID, "Load"]));
 
     const response = await getRestockData();
 
@@ -286,7 +288,7 @@ describe("restock data integration", () => {
   });
 
   it("builds a Clearout for the batch after its Load", async () => {
-    await seedRestockLog(logRows("Load"));
+    await seedRestockLog(logRows([BATCH_ID, "Load"]));
 
     const response = await getRestockData("&mode=clearout");
 

@@ -2,7 +2,7 @@
 // open empty slots for a leftover of half a slot or more.
 import { describe, expect, it } from "vitest";
 import {
-  allocateTopoffStorage,
+  fillSlotsAcrossMachinesFromStorage,
   getTopoffCandidates,
 } from "../../../src/lib/restock/restock-sheets.js";
 
@@ -27,13 +27,13 @@ function empty(slot) {
   return { slotNumber: slot, previous: 0, hasCurrentProduct: false };
 }
 
-function allocations(list, machineLabel) {
-  return list
-    .filter((c) => c.machineLabel === machineLabel)
-    .map((c) => [c.slot.slotNumber, c.drinkKey, c.allocation]);
+function forMachine(slotAllocations, machineLabel) {
+  return slotAllocations
+    .filter((a) => a.machineLabel === machineLabel)
+    .map((a) => [a.slotNumber, a.drinkKey, a.allocation]);
 }
 
-describe("allocateTopoffStorage", () => {
+describe("fillSlotsAcrossMachinesFromStorage", () => {
   it("levels the slots that hold each drink, then opens empty slots only on machines that already hold it", () => {
     const list = [
       ...getTopoffCandidates({ label: "30th" }, [
@@ -52,7 +52,7 @@ describe("allocateTopoffStorage", () => {
       ]),
     ];
 
-    allocateTopoffStorage(
+    const slotAllocations = fillSlotsAcrossMachinesFromStorage(
       new Map([
         [THAI, 2],
         [MATCHA, 3],
@@ -64,13 +64,13 @@ describe("allocateTopoffStorage", () => {
       list,
     );
 
-    expect(allocations(list, "30th")).toEqual([
+    expect(list.every((c) => c.allocation === 0)).toBe(true);
+    expect(forMachine(slotAllocations, "30th")).toEqual([
       [1, THAI, 2],
-      [2, MATCHA, 0],
       [3, MANGO, 2],
       [4, MANGO, 4],
     ]);
-    expect(allocations(list, "Towne")).toEqual([
+    expect(forMachine(slotAllocations, "Towne")).toEqual([
       [1, MATCHA, 3],
       [2, TARO, 2],
       [3, BLACK, 1],

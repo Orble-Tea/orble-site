@@ -210,6 +210,7 @@ describe("prefill: Load", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -265,6 +266,7 @@ describe("prefill: Load", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -327,6 +329,7 @@ describe("prefill: Load", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );

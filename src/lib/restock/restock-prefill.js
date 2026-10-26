@@ -17,7 +17,7 @@ import {
   SUBMIT_STATUS,
 } from "./restock-log.js";
 import {
-  allocateTopoffStorage,
+  fillSlotsAcrossMachinesFromStorage,
   distributeAcrossSlots,
   findColumnName,
   getInventoryMachineHeader,
@@ -62,10 +62,10 @@ function assertReadableDrinks(
   machineLabel,
   rows,
   drinkOf,
-  amountOf,
+  hasAmount,
 ) {
   const invalid = rows
-    .filter((row) => amountOf(row) > 0)
+    .filter(hasAmount)
     .map((row) => {
       const name = normalizeDrinkName(drinkOf(row));
       return { name, reason: describeInvalidDrink(parseDrinkName(name)) };
@@ -195,19 +195,23 @@ function prefillFromLogRow(batchId, row) {
  * The kitchen's split of fridge storage between both machines, decided from
  * what every slot holds now.
  * @param {string} date YYYY-MM-DD
- * @param {object[]} inventoryRows rows of that date's Inventory tab (Drink, Storage)
- * @param {Record<string, object[]>} fetchedProducts Nayax products already read, by machine label, so a machine is not fetched twice
  * @returns {Promise<{ batchId: string, event: string, drinks: { drink: string, storage: number, to30th: number, toTowne: number }[], warnings: object[] }>}
  */
-async function buildSplitData(date, inventoryRows, fetchedProducts) {
+async function buildSplitData(date) {
   const warnings = [];
-  const productsByMachine = await Promise.all(
-    MACHINE_CONFIG.map(
-      (config) =>
-        fetchedProducts[config.label] ?? getMachineProducts(config.machineId),
-    ),
+  const [inventoryRows, ...productsByMachine] = await Promise.all([
+    readInventoryRows(date),
+    ...MACHINE_CONFIG.map((config) => getMachineProducts(config.machineId)),
+  ]);
+  assertReadableDrinks(
+    `Inventory tab ${inventoryTabName(date)}`,
+    KITCHEN_LABEL,
+    inventoryRows,
+    (row) => getRowValue(row, "Drink"),
+    (row) => parseInteger(getRowValue(row, "Storage")) > 0,
   );
-  const candidates = MACHINE_CONFIG.flatMap((config, index) =>
+
+  const candidateSlots = MACHINE_CONFIG.flatMap((config, index) =>
     getTopoffCandidates(
       config,
       buildMachineSlots(
@@ -218,35 +222,27 @@ async function buildSplitData(date, inventoryRows, fetchedProducts) {
       ),
     ),
   );
-
-  assertReadableDrinks(
-    `Inventory tab ${inventoryTabName(date)}`,
-    KITCHEN_LABEL,
-    inventoryRows,
-    (row) => getRowValue(row, "Drink"),
-    (row) => parseInteger(getRowValue(row, "Storage")),
-  );
-  const rows = inventoryRows.map((row) => ({
+  const parsedRows = inventoryRows.map((row) => ({
     drink: normalizeDrinkName(getRowValue(row, "Drink")),
     drinkKey: canonicalDrinkKey(getRowValue(row, "Drink")),
     storage: parseInteger(getRowValue(row, "Storage")),
   }));
 
-  allocateTopoffStorage(
-    new Map(rows.map((row) => [row.drinkKey, row.storage])),
-    candidates,
+  const slotAllocations = fillSlotsAcrossMachinesFromStorage(
+    new Map(parsedRows.map((row) => [row.drinkKey, row.storage])),
+    candidateSlots,
   );
 
-  const drinks = rows.map((row) => {
+  const drinks = parsedRows.map((row) => {
     const drink = { drink: row.drink, storage: row.storage };
     for (const config of MACHINE_CONFIG) {
-      drink[`to${config.label}`] = candidates
+      drink[`to${config.label}`] = slotAllocations
         .filter(
-          (candidate) =>
-            candidate.machineLabel === config.label &&
-            candidate.drinkKey === row.drinkKey,
+          (allocation) =>
+            allocation.machineLabel === config.label &&
+            allocation.drinkKey === row.drinkKey,
         )
-        .reduce((sum, candidate) => sum + candidate.allocation, 0);
+        .reduce((sum, allocation) => sum + allocation.allocation, 0);
     }
     return drink;
   });
@@ -278,11 +274,14 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   );
   if (unfinished) return prefillFromLogRow(batchId, unfinished);
 
+  const kitchenRows = getBatchLogRows(logRows, `${KITCHEN_LABEL}-${date}`);
   const event = clearoutMode
     ? RESTOCK_EVENTS.CLEAROUT
-    : batchRows.load
-      ? RESTOCK_EVENTS.TOPOFF
-      : RESTOCK_EVENTS.LOAD;
+    : !batchRows.load
+      ? RESTOCK_EVENTS.LOAD
+      : batchRows.topoff || kitchenRows.split
+        ? RESTOCK_EVENTS.TOPOFF
+        : RESTOCK_EVENTS.SPLIT;
   const violation = batchRuleViolation({
     rows: logRows,
     batchRows,
@@ -297,6 +296,8 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       existingEntryRow: doneRow._rowNumber,
     });
 
+  if (event === RESTOCK_EVENTS.SPLIT) return buildSplitData(date);
+
   // call Nayax and sheets in parallel to reduce latency
   const [machineProducts, sheetRows] = await Promise.all([
     options.machineProducts ?? getMachineProducts(machineConfig.machineId),
@@ -306,20 +307,6 @@ export async function buildRestockData(machineConfig, date, options = {}) {
         ? readInventoryRows(date)
         : null,
   ]);
-
-  if (
-    event === RESTOCK_EVENTS.TOPOFF &&
-    sheetRows.length > 0 &&
-    !MACHINE_CONFIG.some((config) =>
-      sheetRows.some((row) =>
-        findColumnName(row, getInventoryMachineHeader(config)),
-      ),
-    )
-  ) {
-    return buildSplitData(date, sheetRows, {
-      [machineConfig.label]: machineProducts,
-    });
-  }
 
   const warnings = [];
   const slots = buildMachineSlots(
@@ -357,7 +344,7 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       machineConfig.label,
       rows,
       getPlanVariation,
-      (row) => parseInteger(getRowValue(row, amountHeader)),
+      (row) => parseInteger(getRowValue(row, amountHeader)) > 0,
     );
     for (const row of rows) {
       const drink = normalizeDrinkName(getPlanVariation(row));
@@ -400,20 +387,18 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       machineConfig.label,
       inventoryRows,
       (row) => getRowValue(row, "Drink"),
-      (row) => parseInteger(getRowValue(row, inventoryMachineHeader)),
+      (row) => parseInteger(getRowValue(row, inventoryMachineHeader)) > 0,
     );
 
-    const candidates = getTopoffCandidates(machineConfig, slots);
+    const candidateSlots = getTopoffCandidates(machineConfig, slots);
 
-    allocateTopoffStorage(storageByDrink, candidates);
-
-    for (const candidate of candidates) {
-      candidate.slot.expectedNew = candidate.allocation;
-      candidate.slot.total = totalAfter(
-        candidate.slot.previous,
-        candidate.slot.waste,
-        candidate.slot.expectedNew,
-      );
+    for (const allocation of fillSlotsAcrossMachinesFromStorage(
+      storageByDrink,
+      candidateSlots,
+    )) {
+      const slot = slots.find((s) => s.slotNumber === allocation.slotNumber);
+      slot.expectedNew = allocation.allocation;
+      slot.total = totalAfter(slot.previous, slot.waste, slot.expectedNew);
     }
   }
 
