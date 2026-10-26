@@ -108,8 +108,6 @@ export const WARNINGS = {
     `Slot ${slot} has PAR ${par}, but Nayax did not return a readable on-hand count.`,
   openBatchClearedOut: (batchId) =>
     `Batch ${batchId} was never topped off. This Load clears it out.`,
-  missingInventoryAllocationColumn: (machineLabel, header) =>
-    `Inventory is missing an allocation column for ${machineLabel}. Expected a column equivalent to "${header}".`,
 };
 
 /** The hint under Complete when the server rejected the submit with a reason. */

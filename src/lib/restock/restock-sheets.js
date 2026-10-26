@@ -145,6 +145,22 @@ export async function readInventoryRows(date) {
   );
 }
 
+/**
+ * @typedef {object} Candidate a slot that can take cans
+ * @property {string} machineLabel
+ * @property {object} slot the slot state from makeSlotState
+ * @property {string} drinkKey the drink held, "" for an empty slot
+ * @property {number} capacityLeft cans that still fit
+ * @property {number} allocation cans given to it so far
+ */
+
+/**
+ * One candidate per slot: a filled slot with room keeps its drink key, an empty
+ * slot gets "". A full slot or one with an unreadable drink is left out.
+ * @param {{ label: string }} machineConfig
+ * @param {object[]} slots slot states from makeSlotState
+ * @returns {Candidate[]}
+ */
 export function getTopoffCandidates(machineConfig, slots) {
   return slots.flatMap((slot) => {
     const empty = !slot.hasCurrentProduct;
@@ -167,6 +183,14 @@ export function getTopoffCandidates(machineConfig, slots) {
   });
 }
 
+/**
+ * Spreads each drink's storage over its candidates, one can at a time to the
+ * slot with the fewest. When every slot holding the drink is full and at least
+ * half a slot remains, the next empty slot on a machine that already holds the
+ * drink takes it. Mutates each candidate's `allocation` and `drinkKey`.
+ * @param {Map<string, number>} storageByDrink drink key -> cans in storage
+ * @param {Candidate[]} candidates from getTopoffCandidates, both machines together
+ */
 export function allocateTopoffStorage(storageByDrink, candidates) {
   const candidatesByDrink = new Map();
   for (const candidate of candidates) {

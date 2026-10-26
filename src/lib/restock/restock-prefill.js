@@ -4,6 +4,8 @@ import {
   getAmountHeader,
   getMachineSlots,
   getSlotHeader,
+  KITCHEN_LABEL,
+  MACHINE_CONFIG,
   RESTOCK_EVENTS,
   RESTOCK_LOG_HEADER,
 } from "./config.js";
@@ -190,6 +192,74 @@ function prefillFromLogRow(batchId, row) {
 }
 
 /**
+ * The kitchen's split of fridge storage between both machines, decided from
+ * what every slot holds now.
+ * @param {string} date YYYY-MM-DD
+ * @param {object[]} inventoryRows rows of that date's Inventory tab (Drink, Storage)
+ * @param {Record<string, object[]>} fetchedProducts Nayax products already read, by machine label, so a machine is not fetched twice
+ * @returns {Promise<{ batchId: string, event: string, drinks: { drink: string, storage: number, to30th: number, toTowne: number }[], warnings: object[] }>}
+ */
+async function buildSplitData(date, inventoryRows, fetchedProducts) {
+  const warnings = [];
+  const productsByMachine = await Promise.all(
+    MACHINE_CONFIG.map(
+      (config) =>
+        fetchedProducts[config.label] ?? getMachineProducts(config.machineId),
+    ),
+  );
+  const candidates = MACHINE_CONFIG.flatMap((config, index) =>
+    getTopoffCandidates(
+      config,
+      buildMachineSlots(
+        productsByMachine[index],
+        config,
+        RESTOCK_EVENTS.SPLIT,
+        warnings,
+      ),
+    ),
+  );
+
+  assertReadableDrinks(
+    `Inventory tab ${inventoryTabName(date)}`,
+    KITCHEN_LABEL,
+    inventoryRows,
+    (row) => getRowValue(row, "Drink"),
+    (row) => parseInteger(getRowValue(row, "Storage")),
+  );
+  const rows = inventoryRows.map((row) => ({
+    drink: normalizeDrinkName(getRowValue(row, "Drink")),
+    drinkKey: canonicalDrinkKey(getRowValue(row, "Drink")),
+    storage: parseInteger(getRowValue(row, "Storage")),
+  }));
+
+  allocateTopoffStorage(
+    new Map(rows.map((row) => [row.drinkKey, row.storage])),
+    candidates,
+  );
+
+  const drinks = rows.map((row) => {
+    const drink = { drink: row.drink, storage: row.storage };
+    for (const config of MACHINE_CONFIG) {
+      drink[`to${config.label}`] = candidates
+        .filter(
+          (candidate) =>
+            candidate.machineLabel === config.label &&
+            candidate.drinkKey === row.drinkKey,
+        )
+        .reduce((sum, candidate) => sum + candidate.allocation, 0);
+    }
+    return drink;
+  });
+
+  return {
+    batchId: `${KITCHEN_LABEL}-${date}`,
+    event: RESTOCK_EVENTS.SPLIT,
+    drinks,
+    warnings,
+  };
+}
+
+/**
  * Builds the machine slot form payload for the next restock event for a
  * machine/date. An unfinished submit is returned as stored. `logRows` and
  * `machineProducts` can be passed in by a caller that already read them.
@@ -236,6 +306,20 @@ export async function buildRestockData(machineConfig, date, options = {}) {
         ? readInventoryRows(date)
         : null,
   ]);
+
+  if (
+    event === RESTOCK_EVENTS.TOPOFF &&
+    sheetRows.length > 0 &&
+    !MACHINE_CONFIG.some((config) =>
+      sheetRows.some((row) =>
+        findColumnName(row, getInventoryMachineHeader(config)),
+      ),
+    )
+  ) {
+    return buildSplitData(date, sheetRows, {
+      [machineConfig.label]: machineProducts,
+    });
+  }
 
   const warnings = [];
   const slots = buildMachineSlots(
@@ -303,29 +387,6 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   if (event === RESTOCK_EVENTS.TOPOFF) {
     const inventoryRows = sheetRows;
     const inventoryMachineHeader = getInventoryMachineHeader(machineConfig);
-    const hasMachineAllocationColumn = inventoryRows.some((row) =>
-      findColumnName(row, inventoryMachineHeader),
-    );
-
-    if (inventoryRows.length > 0 && !hasMachineAllocationColumn) {
-      addWarning(warnings, {
-        code: "MISSING_INVENTORY_ALLOCATION_COLUMN",
-        expectedColumn: inventoryMachineHeader,
-        availableColumns: [
-          ...new Set(
-            inventoryRows.flatMap((row) =>
-              Object.keys(row).filter(
-                (columnName) => columnName !== "_rowNumber",
-              ),
-            ),
-          ),
-        ],
-        message: WARNINGS.missingInventoryAllocationColumn(
-          machineConfig.label,
-          inventoryMachineHeader,
-        ),
-      });
-    }
 
     const storageByDrink = new Map(
       inventoryRows.map((row) => [
