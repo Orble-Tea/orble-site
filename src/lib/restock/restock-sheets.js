@@ -16,6 +16,7 @@ import {
 } from "./google-sheets.js";
 import {
   canonicalDrinkKeyFromSlot,
+  DEFAULT_DRINK_SLOT_CAPACITY,
   normalizeDrinkName,
   slotCapacityForDrink,
   slotCapacityForDrinkParts,
@@ -59,7 +60,7 @@ export function getRowValue(row, expectedColumnName) {
 export function distributeAcrossSlots(total, slots, drink) {
   const capacity = slotCapacityForDrink(drink);
   let remaining = total;
-  const allocations = slots.map((slot) => ({ slot, quantity: 0 }));
+  const allocations = slots.map((slot) => ({ slotNumber: slot, quantity: 0 }));
 
   while (
     remaining > 0 &&
@@ -145,37 +146,68 @@ export async function readInventoryRows(date) {
 }
 
 export function getTopoffCandidates(machineConfig, slots) {
-  return slots
-    .filter((slot) => slot.hasCurrentProduct)
-    .map((slot) => {
-      const capacity = slotCapacityForDrinkParts(slot);
-      return {
+  return slots.flatMap((slot) => {
+    const empty = !slot.hasCurrentProduct;
+    const drinkKey = empty ? "" : canonicalDrinkKeyFromSlot(slot);
+    const capacityLeft = Math.max(
+      (empty ? DEFAULT_DRINK_SLOT_CAPACITY : slotCapacityForDrinkParts(slot)) -
+        slot.previous,
+      0,
+    );
+    if (!empty && (!drinkKey || capacityLeft === 0)) return [];
+    return [
+      {
         machineLabel: machineConfig.label,
         slot,
-        drinkKey: canonicalDrinkKeyFromSlot(slot),
-        capacityLeft: Math.max(capacity - slot.previous, 0),
+        drinkKey,
+        capacityLeft,
         allocation: 0,
-      };
-    })
-    .filter((candidate) => candidate.drinkKey && candidate.capacityLeft > 0);
+      },
+    ];
+  });
 }
 
 export function allocateTopoffStorage(storageByDrink, candidates) {
   const candidatesByDrink = new Map();
   for (const candidate of candidates) {
+    if (!candidate.drinkKey) continue;
     if (!candidatesByDrink.has(candidate.drinkKey)) {
       candidatesByDrink.set(candidate.drinkKey, []);
     }
     candidatesByDrink.get(candidate.drinkKey).push(candidate);
   }
+  // Empty slots are sorted by machine and number with all 30th slots sorted
+  // low to high, then all Towne slots low to high.
+  const unclaimed = candidates
+    .filter((candidate) => !candidate.drinkKey)
+    .sort(
+      (left, right) =>
+        left.machineLabel.localeCompare(right.machineLabel) ||
+        left.slot.slotNumber - right.slot.slotNumber,
+    );
 
-  for (const [drinkKey, drinkCandidates] of candidatesByDrink) {
-    let remaining = storageByDrink.get(drinkKey) || 0;
+  for (const [drinkKey, storage] of storageByDrink) {
+    const drinkCandidates = candidatesByDrink.get(drinkKey) ?? [];
+    let remaining = storage;
     while (remaining > 0) {
-      const openCandidates = drinkCandidates.filter(
+      let openCandidates = drinkCandidates.filter(
         (candidate) => candidate.allocation < candidate.capacityLeft,
       );
-      if (openCandidates.length === 0) break;
+      if (openCandidates.length === 0) {
+        // An empty slot is only worth opening if it ends up at least half full,
+        // and only on a machine that already sells the drink.
+        if (remaining < DEFAULT_DRINK_SLOT_CAPACITY / 2) break;
+        const taken = unclaimed.find((candidate) =>
+          drinkCandidates.some(
+            (held) => held.machineLabel === candidate.machineLabel,
+          ),
+        );
+        if (!taken) break;
+        unclaimed.splice(unclaimed.indexOf(taken), 1);
+        taken.drinkKey = drinkKey;
+        drinkCandidates.push(taken);
+        openCandidates = [taken];
+      }
 
       openCandidates.sort((left, right) => {
         const leftTotal = left.slot.previous + left.allocation;
@@ -184,7 +216,7 @@ export function allocateTopoffStorage(storageByDrink, candidates) {
           leftTotal - rightTotal ||
           right.capacityLeft - left.capacityLeft ||
           left.machineLabel.localeCompare(right.machineLabel) ||
-          left.slot.slot - right.slot.slot
+          left.slot.slotNumber - right.slot.slotNumber
         );
       });
 

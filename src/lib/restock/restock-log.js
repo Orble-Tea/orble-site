@@ -42,7 +42,7 @@ export const SUBMIT_STATUS = {
  * @returns {string | null} the first problem, or null when the slot is fine
  */
 function validateSlot(event, slot) {
-  const label = `slot ${slot.slot}`;
+  const label = `slot ${slot.slotNumber}`;
   for (const field of ["previous", "waste", "new"]) {
     if (!Number.isInteger(slot[field]) || slot[field] < 0)
       return `${label}: ${field} must be a non-negative integer`;
@@ -83,16 +83,15 @@ function validateSlot(event, slot) {
  * @returns {ReturnType<typeof getMachineConfig>} the machine the body names
  */
 export function validateSubmission(body) {
-  const required = ["batchId", "event", "machine", "date", "slots"];
+  const required = ["batchId", "event", "slots"];
   if (required.some((field) => !body[field]) || !Array.isArray(body.slots))
     throw new RestockError(ERRORS.missingFields);
 
-  const machineConfig = getMachineConfig(body.machine);
+  const { event, batchId, slots } = body;
+  const machineLabel = /^(.+)-\d{4}-\d{2}-\d{2}$/.exec(batchId)?.[1];
+  const machineConfig = getMachineConfig(machineLabel);
   if (!machineConfig)
-    throw new RestockError(ERRORS.unknownMachine(body.machine));
-  const { event, date, batchId, slots } = body;
-  if (batchId !== `${machineConfig.label}-${date}`)
-    throw new RestockError(ERRORS.batchIdMismatch);
+    throw new RestockError(ERRORS.unknownMachine(machineLabel ?? batchId));
 
   const invalid = (problem) =>
     new RestockError(ERRORS.invalidSubmission(problem));
@@ -102,11 +101,11 @@ export function validateSubmission(body) {
   const configured = new Set(machineSlots);
   const seen = new Set();
   for (const slot of slots) {
-    if (seen.has(slot.slot))
-      throw invalid(`slot ${slot.slot} appears more than once`);
-    seen.add(slot.slot);
-    if (!configured.has(slot.slot))
-      throw invalid(`slot ${slot.slot} is not configured on this machine`);
+    if (seen.has(slot.slotNumber))
+      throw invalid(`slot ${slot.slotNumber} appears more than once`);
+    seen.add(slot.slotNumber);
+    if (!configured.has(slot.slotNumber))
+      throw invalid(`slot ${slot.slotNumber} is not configured on this machine`);
   }
   for (const slot of machineSlots) {
     if (!seen.has(slot)) throw invalid(`slot ${slot} is missing`);
@@ -141,7 +140,7 @@ function expectedFields(expected) {
  */
 function slotEntry(slot, expected = {}) {
   return {
-    Slot: slot.slot,
+    Slot: slot.slotNumber,
     Drink: formatDrinkName(slot.drink) || null,
     "Expected Drink": expected["Expected Drink"] ?? null,
     "Previous Drink": slot.previousDrink ?? null,
@@ -200,7 +199,7 @@ export function buildRestockLogRows({
 export function rewriteSlotData(submittedSlots, storedEntries) {
   const storedBySlot = new Map(storedEntries.map((e) => [e.Slot, e]));
   return JSON.stringify(
-    submittedSlots.map((slot) => slotEntry(slot, storedBySlot.get(slot.slot))),
+    submittedSlots.map((slot) => slotEntry(slot, storedBySlot.get(slot.slotNumber))),
   );
 }
 
@@ -213,7 +212,7 @@ export function rewriteSlotData(submittedSlots, storedEntries) {
 export function sameSlots(submittedSlots, storedEntries) {
   const fromRequest = submittedSlots.map((s) =>
     JSON.stringify([
-      s.slot,
+      s.slotNumber,
       formatDrinkName(s.drink) || null,
       s.previousDrink ?? null,
       s.previous,

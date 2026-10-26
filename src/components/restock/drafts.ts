@@ -5,7 +5,7 @@ import { restoreDraftEntry } from "~/lib/restock/ui-helpers";
 /** Persists the current slot entries to localStorage, keyed by batch and event. */
 export function saveDraft() {
   const data = $slots.get().map((s) => ({
-    slot: s.slot,
+    slotNumber: s.slotNumber,
     previous: s.previous,
     waste: s.waste,
     newCount: s.newCount,
@@ -37,11 +37,11 @@ export function restoreDraft() {
     const draft = JSON.parse(raw);
     if (draft.startedAt) setStartedAt(draft.startedAt);
     const bySlot = new Map<number, Record<string, any>>(
-      draft.data.map((d: any) => [d.slot, d]),
+      draft.data.map((d: any) => [d.slotNumber, d]),
     );
     $slots.set(
       $slots.get().map((s) => {
-        const d = bySlot.get(s.slot);
+        const d = bySlot.get(s.slotNumber);
         return d
           ? { ...s, ...restoreDraftEntry(d, s, $payload.get()!.event) }
           : s;

@@ -56,8 +56,6 @@ async function post(body) {
       body: JSON.stringify({
         key: process.env.RESTOCK_SECRET_KEY,
         batchId: BATCH_ID,
-        machine: "Towne",
-        date: DATE,
         duration: "1m 0s",
         ...body,
       }),
@@ -122,7 +120,7 @@ describe("restock submit, live", () => {
       event: "Load",
       slots: [
         {
-          slot: SLOT,
+          slotNumber: SLOT,
           drink: { flavor: "Taro Tea", size: "22oz", topping: "Lychee", sweetness: "Less Sweet" },
           previousDrink: null,
           previous: 0,

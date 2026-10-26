@@ -178,7 +178,7 @@ describe("prefill: Topoff", () => {
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
-      slot: 1,
+      slotNumber: 1,
       previous: 0,
       expectedNew: 0,
       total: 0,
@@ -237,13 +237,13 @@ describe("prefill: Topoff", () => {
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
-      slot: 1,
+      slotNumber: 1,
       previous: 3,
       expectedNew: 0,
       total: 3,
     });
     expect(data.slots[1]).toMatchObject({
-      slot: 2,
+      slotNumber: 2,
       previous: 0,
       expectedNew: 3,
       total: 3,

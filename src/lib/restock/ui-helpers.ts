@@ -13,7 +13,7 @@ export const NEW_COUNT_FIELDS = ["new", "expectedNew"] as const;
 
 // A slot object as sent by backend
 export type ServerSlot = {
-  slot: number;
+  slotNumber: number;
   flavor: string | null;
   size: string | null;
   topping: string | null;
@@ -194,7 +194,7 @@ export function emptyCounts(c: Counts, _event: string): Counts {
 }
 
 type SubmitSlot = {
-  slot: number;
+  slotNumber: number;
   drink: {
     flavor: string;
     size: string | null;
@@ -212,12 +212,12 @@ export function toSubmitSlot(
   s: Counts &
     Pick<
       ServerSlot,
-      "slot" | "flavor" | "size" | "topping" | "sweetness" | "previousDrink"
+      "slotNumber" | "flavor" | "size" | "topping" | "sweetness" | "previousDrink"
     >,
   event: string,
 ): SubmitSlot {
   return {
-    slot: s.slot,
+    slotNumber: s.slotNumber,
     drink: s.flavor
       ? {
           flavor: s.flavor,

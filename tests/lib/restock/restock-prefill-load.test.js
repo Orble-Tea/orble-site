@@ -54,7 +54,7 @@ describe("prefill: Load", () => {
     expect(data.event).toBe("Load");
     expect(data.slots).toHaveLength(35);
     expect(data.slots[0]).toMatchObject({
-      slot: 1,
+      slotNumber: 1,
       previousDrink: "Taro Tea Less Sweet w/ Lychee 16oz",
       flavor: "Thai Tea",
       size: "16oz",
@@ -134,7 +134,7 @@ describe("prefill: Load", () => {
     const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.slots[2]).toMatchObject({
-      slot: 3,
+      slotNumber: 3,
       previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
       flavor: null,
       size: null,
@@ -146,7 +146,7 @@ describe("prefill: Load", () => {
       total: 0,
     });
     expect(data.slots[7]).toMatchObject({
-      slot: 8,
+      slotNumber: 8,
       previousDrink: null,
       flavor: "Thai Tea",
       size: "16oz",
@@ -183,7 +183,7 @@ describe("prefill: Load", () => {
     const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.slots[1]).toMatchObject({
-      slot: 2,
+      slotNumber: 2,
       flavor: "Matcha",
       topping: "Strawberry",
       size: "16oz",
@@ -191,7 +191,7 @@ describe("prefill: Load", () => {
       total: 4,
     });
     expect(data.slots[21]).toMatchObject({
-      slot: 22,
+      slotNumber: 22,
       flavor: "Matcha",
       topping: "Strawberry",
       size: "16oz",
@@ -360,7 +360,7 @@ describe("prefill: Load", () => {
     const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.slots[25]).toMatchObject({
-      slot: 26,
+      slotNumber: 26,
       previousDrink: null,
       flavor: null,
       topping: null,

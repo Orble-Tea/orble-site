@@ -139,10 +139,9 @@ describe("GET /api/restock", () => {
     expect(body).toMatchObject({
       batchId: "30th-2026-07-10",
       event: "Load",
-      machine: "30th",
       slots: expect.arrayContaining([
         expect.objectContaining({
-          slot: 1,
+          slotNumber: 1,
           previousDrink: "Thai Tea Less Sweet w/ Lychee 16oz",
           flavor: "Thai Tea",
           topping: "Lychee",
@@ -151,6 +150,90 @@ describe("GET /api/restock", () => {
       ]),
     });
     expect(body.slots[0]).not.toHaveProperty("drink");
+  });
+
+  it("returns a Split for the kitchen when the Inventory tab has no To columns yet", async () => {
+    vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
+    vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
+    vi.stubEnv("NAYAX_MACHINE_TOWNE_ID", "machine-2");
+    vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
+    vi.stubEnv("INVENTORY_SHEET_ID", "inventory-sheet");
+    vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
+    vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
+    vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
+    const { GET } = await import("../../../src/pages/api/restock.js");
+
+    const thai = (slot, missing) => ({
+      MDBCode: slot,
+      PAR: 4,
+      MissingStockByMDB: missing,
+      DEXProductName: "THAI_16_LESS_LYC",
+    });
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      const urlText = String(url);
+      if (urlText.includes("Restock%20Log")) {
+        return new Response(
+          JSON.stringify({
+            values: [
+              ["Batch ID", "Event"],
+              ["30th-2026-07-10", "Load"],
+            ],
+          }),
+        );
+      }
+      if (urlText.endsWith("/inventory-sheet")) {
+        return new Response(
+          JSON.stringify({
+            sheets: [{ properties: { title: "07/10/2026", index: 0 } }],
+          }),
+        );
+      }
+      if (urlText.includes("07%2F10%2F2026")) {
+        return new Response(
+          JSON.stringify({
+            values: [
+              ["Drink", "Storage"],
+              ["Thai Tea 16oz Less Sweet w/ Lychee", 9],
+              ["Taro Tea 22oz Less Sweet", 1],
+              ["Matcha 16oz Less Sweet", 3],
+            ],
+          }),
+        );
+      }
+      // 30th: one Thai slot at 2 and an empty slot. Towne: one Thai slot at 1.
+      if (urlText.includes("/machines/machine-1/"))
+        return new Response(JSON.stringify([thai(1, 2)]));
+      return new Response(JSON.stringify([thai(1, 3)]));
+    });
+
+    const response = await GET({
+      url: new URL(
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10",
+      ),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({
+      batchId: "Kitchen-2026-07-10",
+      event: "Split",
+      drinks: [
+        {
+          drink: "Thai Tea 16oz Less Sweet w/ Lychee",
+          storage: 9,
+          to30th: 6,
+          toTowne: 3,
+        },
+        {
+          drink: "Taro Tea 22oz Less Sweet",
+          storage: 1,
+          to30th: 0,
+          toTowne: 0,
+        },
+        { drink: "Matcha 16oz Less Sweet", storage: 3, to30th: 0, toTowne: 0 },
+      ],
+      warnings: [],
+    });
   });
 
   it("returns clearout when requested explicitly", async () => {
@@ -197,7 +280,6 @@ describe("GET /api/restock", () => {
     await expect(response.json()).resolves.toMatchObject({
       batchId: "30th-2026-07-10",
       event: "Clearout",
-      machine: "30th",
     });
   });
 

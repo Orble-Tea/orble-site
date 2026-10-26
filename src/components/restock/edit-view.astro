@@ -148,7 +148,7 @@
     prevOpened = false;
     $("edit-context").textContent =
       `Editing · ${payload.event} · ${payload.machine}`;
-    $("edit-title").textContent = `Slot ${s.slot}`;
+    $("edit-title").textContent = `Slot ${s.slotNumber}`;
     const flavors = distinct("flavor", [s.flavor]);
     const flavorOptions =
       (s.warning

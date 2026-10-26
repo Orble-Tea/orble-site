@@ -131,9 +131,9 @@ const APPROVE_BANNER =
     const empty = emptyState(payload.event, s);
     if (s.approved) {
       const grey = !!empty;
-      return `<div data-slot="${s.slot}" class="scroll-mt-36 scroll-mb-32 flex items-stretch overflow-hidden rounded-2xl border border-gray-300 ${grey ? "bg-gray-100/70" : "bg-white shadow-sm"}">
+      return `<div data-slot="${s.slotNumber}" class="scroll-mt-36 scroll-mb-32 flex items-stretch overflow-hidden rounded-2xl border border-gray-300 ${grey ? "bg-gray-100/70" : "bg-white shadow-sm"}">
         <div class="flex w-12 items-center justify-center py-2.5 ${grey ? "" : "border-r border-gray-100 bg-gray-50"}">
-          <div class="text-base font-bold ${grey ? "text-gray-300" : "text-gray-800"}">${s.slot}</div></div>
+          <div class="text-base font-bold ${grey ? "text-gray-300" : "text-gray-800"}">${s.slotNumber}</div></div>
         <div class="flex flex-1 items-center px-3 py-2.5"><div class="text-base ${grey ? "text-gray-400" : "text-gray-700"}">${grey ? "Empty" : esc(fullName(s))}</div></div>
         ${checkboxCell(i, true)}</div>`;
     }
@@ -180,10 +180,10 @@ const APPROVE_BANNER =
           : "");
       counts = countsColumn(s, false);
     }
-    return `<div data-slot="${s.slot}" class="scroll-mt-36 scroll-mb-32 overflow-hidden rounded-2xl ${outline}${ring}">
+    return `<div data-slot="${s.slotNumber}" class="scroll-mt-36 scroll-mb-32 overflow-hidden rounded-2xl ${outline}${ring}">
       <div class="flex items-stretch ${empty ? "bg-gray-100/70" : "bg-white shadow-sm"}">
         <div class="flex w-12 items-center justify-center py-3 ${empty ? "" : "border-r border-gray-100 bg-gray-50"}">
-          <div class="text-base font-bold ${empty ? "text-gray-300" : "text-gray-800"}">${s.slot}</div></div>
+          <div class="text-base font-bold ${empty ? "text-gray-300" : "text-gray-800"}">${s.slotNumber}</div></div>
         <div class="flex-1 px-3 py-2.5">${body}</div>
         ${counts}
         ${checkboxCell(i, false)}
@@ -235,7 +235,7 @@ const APPROVE_BANNER =
       $showErrors.set(true);
       const nums = unapproved
         .slice(0, MAX_LISTED_SLOTS)
-        .map((s) => s.slot)
+        .map((s) => s.slotNumber)
         .join(", ");
       const more =
         unapproved.length > MAX_LISTED_SLOTS
@@ -256,9 +256,9 @@ const APPROVE_BANNER =
     const seconds = Math.round((Date.now() - startedAt) / 1000);
     const duration = `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
     // Each slot carries the prefill it started from, so the log keeps what was shown next to what was confirmed
-    const shown = new Map(payload.slots.map((p) => [p.slot, p]));
+    const shown = new Map(payload.slots.map((p) => [p.slotNumber, p]));
     const submitSlots = slots.map((s) => {
-      const p = shown.get(s.slot)!;
+      const p = shown.get(s.slotNumber)!;
       return {
         ...toSubmitSlot(s, payload.event),
         expected: toSubmitSlot(
@@ -277,8 +277,6 @@ const APPROVE_BANNER =
           key: KEY,
           batchId: payload.batchId,
           event: payload.event,
-          machine: payload.machine,
-          date: payload.date,
           duration,
           slots: submitSlots,
         }),

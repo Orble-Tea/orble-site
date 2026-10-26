@@ -127,7 +127,7 @@ async function loadCatalog(machineConfig, currentProducts, drinks) {
  * Submits a confirmed restock. Validates, decides from the Restock Log what
  * this press does, writes the log row(s) as Nayax pending, writes Nayax, then
  * marks the row(s) Complete. A resend finishes from where the last press
- * stopped. Body: { key, batchId, event, machine, date, duration, slots }.
+ * stopped. Body: { key, batchId, event, duration, slots }.
  * @param {{ request: Request }} context
  * @returns {Promise<Response>} 200 on success, 4xx with the reason, 502 when
  *   Sheets or Nayax failed
@@ -138,7 +138,7 @@ export async function POST({ request }) {
     if (!requireRestockSecretKey(body.key))
       throw new RestockError(ERRORS.invalidKey);
     const machineConfig = validateSubmission(body);
-    const { event, date, batchId, slots } = body;
+    const { event, batchId, slots } = body;
 
     const logSheetId = assertConfigured(
       SHEET_IDS.restockLog,
@@ -159,7 +159,7 @@ export async function POST({ request }) {
       const { machineId } = machineConfig;
       const currentProducts = await getMachineProducts(machineId);
       const nayaxSlots = slots.map((slot) => ({
-        slot: slot.slot,
+        slotNumber: slot.slotNumber,
         drink: slot.drink,
         total: totalAfter(slot.previous, slot.waste, slot.new),
       }));
