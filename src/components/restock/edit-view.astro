@@ -60,7 +60,7 @@
       MISSING_NAYAX_PRODUCT_NAME:
         "no drink name in Nayax: pick one of the valid flavors below",
       MISSING_NAYAX_ON_HAND:
-        "couldn't read the count from Nayax: check the previous count below",
+        "couldn't read the count from Nayax: check the 'before' count below",
     } as Record<string, string>,
   };
 
@@ -204,7 +204,7 @@
       </div>
       <div class="rounded-2xl bg-white p-4 shadow-sm">
         <div class="grid grid-cols-3 gap-2">
-          ${stepper("previous", "Previous", shownPrevious(editState, payload.event), "text-gray-800")}
+          ${stepper("previous", "Before", shownPrevious(editState, payload.event), "text-gray-800")}
           ${stepper("waste", "Waste", editState.waste, "text-gray-800")}
           ${stepper("newCount", "New", editState.newCount, "text-orble-ink")}
         </div>
@@ -212,7 +212,7 @@
           <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500">Total</label>
           <span id="edit-total" class="text-2xl font-bold text-gray-900"></span>
           <div class="mt-1 text-[13px] text-gray-400">
-            <span id="edit-m-prev"></span> previous − <span id="edit-m-waste"></span> waste + <span id="edit-m-new"></span> new = <span id="edit-m-total"></span>
+            <span id="edit-m-prev"></span> before − <span id="edit-m-waste"></span> waste + <span id="edit-m-new"></span> new = <span id="edit-m-total"></span>
           </div>
         </div>
       </div>`;

@@ -50,6 +50,16 @@ export const COLORS = {
   countMuted: "#9ca3af",
 };
 
+/** Card columns the table and Split views share, so the drink name is the same width in both. */
+export const COLS = {
+  name: "w-[48%] shrink-0",
+  middle: "flex-1 pr-3",
+  checkbox: "w-14",
+};
+
+/** Header word over the approve checkbox column, shared by every view. */
+export const CHECKBOX_HEADER = "Check";
+
 /** Reads the planned new count from whichever field the backend sent. */
 export function plannedNew(s: ServerSlot): number {
   for (const field of NEW_COUNT_FIELDS) {

@@ -1,6 +1,7 @@
 // Shared client runtime for anything crossing view boundaries
 import { atom } from "nanostores";
-import type { ServerSlot, Slot } from "~/lib/restock/ui-helpers";
+import { HTTP, type ServerSlot, type Slot } from "~/lib/restock/ui-helpers";
+import { ERRORS, MESSAGES, couldntSubmit } from "~/lib/restock/errors.js";
 
 export const KEY = new URLSearchParams(location.search).get("key") || "";
 export const $ = (id: string) => document.getElementById(id)!;
@@ -37,6 +38,49 @@ export let startedAt = 0;
 /** Records when the current log was started, for the visit duration. */
 export function setStartedAt(t: number) {
   startedAt = t;
+}
+
+/** Time since the log was started, as the log's "3m 12s" duration string. */
+export function durationSinceStart(): string {
+  const seconds = Math.round((Date.now() - startedAt) / 1000);
+  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+}
+
+/** Bob waves over the page while a submit is in flight (overlay lives in start-view). */
+export function showSubmitting(button: HTMLButtonElement, on: boolean) {
+  const overlay = document.getElementById("loading-overlay");
+  if (!overlay) return;
+  if (on) document.getElementById("loading-label")!.textContent = "Submitting…";
+  overlay.classList.replace(on ? "hidden" : "flex", on ? "flex" : "hidden");
+  button.disabled = on;
+}
+
+/**
+ * Posts a log to the API. Resolves to null on success, else the hint to show
+ * under the button: 400 and 409 carry a reason written for the restocker
+ * (e.g. a drink not set up in Nayax yet); anything else is safe to retry.
+ */
+export async function postRestock(
+  body: Record<string, unknown>,
+): Promise<string | null> {
+  let response: Response;
+  try {
+    response = await fetch("/api/restock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: KEY, ...body }),
+    });
+  } catch {
+    return MESSAGES.retrySubmission;
+  }
+  if (response.ok) return null;
+  const error = await response.json().catch(() => ({}));
+  const reason = typeof error.error === "string" ? error.error : null;
+  return response.status === HTTP.CONFLICT
+    ? reason || ERRORS.alreadySubmitted.message
+    : response.status === HTTP.BAD_REQUEST && reason
+      ? couldntSubmit(reason)
+      : MESSAGES.retrySubmission;
 }
 
 /** Updates changed fields only, to one slot at a time. */

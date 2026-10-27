@@ -1,5 +1,6 @@
 ---
 import bob from "~/assets/images/logo_inkscape.svg";
+import { CHECKBOX_HEADER, COLS } from "~/lib/restock/ui-helpers";
 
 const APPROVE_BANNER =
   "After verifying and editing slot contents, mark each slot as done by clicking on the checkbox in the right hand corner of each slot card.";
@@ -19,8 +20,9 @@ const APPROVE_BANNER =
     </div>
     <div class="flex px-3 pb-1 font-semibold uppercase text-gray-500 text-xs">
       <div class="w-12 whitespace-nowrap text-center">Slot #</div>
-      <div class="flex-1 px-3">Product</div>
-      <div class="shrink-0 whitespace-nowrap text-right">Checkbox</div>
+      <div class={`${COLS.name} px-3`}>Product</div>
+      <div class={COLS.middle}></div>
+      <div class={`flex ${COLS.checkbox} justify-center whitespace-nowrap`}>{CHECKBOX_HEADER}</div>
     </div>
     <div
       id="approve-banner"
@@ -54,7 +56,7 @@ const APPROVE_BANNER =
 
 <script>
   import {
-    HTTP,
+    COLS,
     drinkLines,
     emptyState,
     isSwap,
@@ -74,11 +76,11 @@ const APPROVE_BANNER =
     updateSlot,
     hooks,
     navigate,
-    startedAt,
-    KEY,
+    durationSinceStart,
+    postRestock,
+    showSubmitting,
   } from "~/components/restock/runtime";
   import { saveDraft, clearDraft } from "~/components/restock/drafts";
-  import { ERRORS, MESSAGES, couldntSubmit } from "~/lib/restock/errors.js";
 
   // Blocked-submit hint names at most this many unapproved slots.
   const MAX_LISTED_SLOTS = 5;
@@ -112,15 +114,15 @@ const APPROVE_BANNER =
 
   /** Approve checkbox cell for one slot row. */
   function checkboxCell(i: number, checked: boolean): string {
-    return `<label class="flex w-14 cursor-pointer items-center justify-center border-l border-gray-100 active:bg-orble-tint">
+    return `<label class="ml-auto flex ${COLS.checkbox} cursor-pointer items-center justify-center border-l border-gray-100 active:bg-orble-tint">
       <input type="checkbox" data-approve="${i}" class="h-5 w-5 rounded accent-[#7AC4B3] ring-1 ring-gray-900" ${checked ? "checked" : ""}></label>`;
   }
 
   /** Counts column for a slot row; grey styling for rows rendering as Empty. */
   function countsColumn(s: Slot, grey: boolean): string {
     const payload = $payload.get()!;
-    return `<div class="shrink-0 space-y-0.5 whitespace-nowrap py-2.5 pr-3 text-right text-[13px] text-gray-400">
-        ${payload.event === "Topoff" ? `<div>previous: <b class="font-semibold text-gray-700">${shownPrevious(s, payload.event)}</b></div>` : ""}
+    return `<div class="${COLS.middle} space-y-0.5 whitespace-nowrap py-2.5 text-right text-[13px] text-gray-400">
+        ${payload.event === "Topoff" ? `<div>before: <b class="font-semibold text-gray-700">${shownPrevious(s, payload.event)}</b></div>` : ""}
         <div>waste: <b class="font-semibold ${grey ? "text-gray-400" : s.waste > 0 ? "text-red-500" : "text-gray-700"}">${s.waste}</b></div>
         <div>new: <b class="font-semibold ${grey ? "text-gray-400" : "text-orble-ink"}">${s.newCount}</b></div>
         <div>total: <b class="font-semibold ${grey ? "text-gray-400" : "text-gray-900"}">${slotTotal(s, payload.event)}</b></div></div>`;
@@ -135,7 +137,7 @@ const APPROVE_BANNER =
       return `<div data-slot="${s.slotNumber}" class="scroll-mt-36 scroll-mb-32 flex items-stretch overflow-hidden rounded-2xl border border-gray-300 ${grey ? "bg-gray-100/70" : "bg-white shadow-sm"}">
         <div class="flex w-12 items-center justify-center py-2.5 ${grey ? "" : "border-r border-gray-100 bg-gray-50"}">
           <div class="text-base font-bold ${grey ? "text-gray-300" : "text-gray-800"}">${s.slotNumber}</div></div>
-        <div class="flex flex-1 items-center px-3 py-2.5"><div class="text-base ${grey ? "text-gray-400" : "text-gray-700"}">${grey ? "Empty" : esc(fullName(s))}</div></div>
+        <div class="flex ${COLS.name} items-center px-3 py-2.5"><div class="text-base ${grey ? "text-gray-400" : "text-gray-700"}">${grey ? "Empty" : esc(fullName(s))}</div></div>
         ${checkboxCell(i, true)}</div>`;
     }
     const outline =
@@ -182,7 +184,7 @@ const APPROVE_BANNER =
       <div class="flex items-stretch ${empty ? "bg-gray-100/70" : "bg-white shadow-sm"}">
         <div class="flex w-12 items-center justify-center py-3 ${empty ? "" : "border-r border-gray-100 bg-gray-50"}">
           <div class="text-base font-bold ${empty ? "text-gray-300" : "text-gray-800"}">${s.slotNumber}</div></div>
-        <div class="flex-1 px-3 py-2.5">${body}</div>
+        <div class="${COLS.name} px-3 py-2.5">${body}</div>
         ${counts}
         ${checkboxCell(i, false)}
       </div>
@@ -213,16 +215,6 @@ const APPROVE_BANNER =
    * Submits the log. Blocks with red outlines while any slot is
    * unapproved; on success clears the draft and shows the submitted view.
    */
-  /** Bob waves over the page while a submit is in flight (overlay lives in start-view). */
-  function showSubmitting(on: boolean) {
-    const overlay = document.getElementById("loading-overlay");
-    if (!overlay) return;
-    if (on)
-      document.getElementById("loading-label")!.textContent = "Submitting…";
-    overlay.classList.replace(on ? "hidden" : "flex", on ? "flex" : "hidden");
-    ($("complete") as HTMLButtonElement).disabled = on;
-  }
-
   async function complete() {
     // Snapshot the batch being submitted: $payload can change mid-request if a new log is started
     const payload = $payload.get()!;
@@ -251,8 +243,6 @@ const APPROVE_BANNER =
       return;
     }
     hint.classList.add("hidden");
-    const seconds = Math.round((Date.now() - startedAt) / 1000);
-    const duration = `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
     // Each slot carries the prefill it started from, so the log keeps what was shown next to what was confirmed
     const shown = new Map(payload.slots.map((p) => [p.slotNumber, p]));
     const submitSlots = slots.map((s) => {
@@ -265,42 +255,20 @@ const APPROVE_BANNER =
         ),
       };
     });
-    let response: Response;
-    showSubmitting(true);
-    try {
-      response = await fetch("/api/restock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: KEY,
-          batchId: payload.batchId,
-          event: payload.event,
-          duration,
-          slots: submitSlots,
-        }),
-      });
-    } catch {
-      showSubmitting(false);
-      hint.textContent = MESSAGES.retrySubmission;
+    const button = $("complete") as HTMLButtonElement;
+    showSubmitting(button, true);
+    const failure = await postRestock({
+      batchId: payload.batchId,
+      event: payload.event,
+      duration: durationSinceStart(),
+      slots: submitSlots,
+    });
+    showSubmitting(button, false);
+    if (failure) {
+      hint.textContent = failure;
       hint.classList.remove("hidden");
       return;
     }
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      showSubmitting(false);
-      // 400 and 409 carry a reason written for the restocker, e.g. a drink
-      // that is not set up in Nayax yet. Anything else is safe to retry.
-      const reason = typeof error.error === "string" ? error.error : null;
-      hint.textContent =
-        response.status === HTTP.CONFLICT
-          ? reason || ERRORS.alreadySubmitted.message
-          : response.status === HTTP.BAD_REQUEST && reason
-            ? couldntSubmit(reason)
-            : MESSAGES.retrySubmission;
-      hint.classList.remove("hidden");
-      return;
-    }
-    showSubmitting(false);
     clearDraft(payload);
     // Batch changed mid-request (user went back and started a new log): skip the confirmation UI
     if ($payload.get() !== payload) return;

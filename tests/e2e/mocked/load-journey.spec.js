@@ -133,7 +133,7 @@ test("sold-out slot renders Empty with the sold out! note", async ({
   await expect(card).not.toContainText("waste:");
 });
 
-test("Topoff renders previous line, zero waste, no replacing", async ({
+test("Topoff renders before line, zero waste, no replacing", async ({
   page,
 }) => {
   await mockData(page, topoffPayload());
@@ -141,13 +141,13 @@ test("Topoff renders previous line, zero waste, no replacing", async ({
 
   await expect(page.locator("#table-event")).toHaveText("Topoff");
   const slot1 = slotCard(page, 1);
-  await expect(slot1).toContainText("previous: 3");
+  await expect(slot1).toContainText("before: 3");
   await expect(slot1).toContainText("waste: 0");
   await expect(slot1).toContainText("total: 5");
   await expect(slot1).not.toContainText("replacing");
-  // Topoff order: previous, waste, new, total (total always last).
+  // Topoff order: before, waste, new, total (total always last).
   await expect(slot1.locator(".text-right")).toHaveText(
-    /previous:.*waste:.*new:.*total:/s,
+    /before:.*waste:.*new:.*total:/s,
   );
 });
 
