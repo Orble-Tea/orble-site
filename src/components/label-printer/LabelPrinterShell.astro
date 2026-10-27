@@ -1,0 +1,178 @@
+---
+import { Content as PrinterHelp } from "../../../label-printing/OPERATOR_HELP.md";
+
+const { logoSrc } = Astro.props;
+
+const panelClass =
+  "min-w-0 rounded-lg border border-default bg-default shadow-lg";
+const headingClass =
+  "flex items-center justify-between gap-3 border-b border-default px-4 py-4";
+const eyebrowClass =
+  "m-0 font-bold uppercase tracking-normal text-offset text-xs";
+const primaryButtonClass =
+  "min-h-11 rounded-lg border border-primary bg-primary px-4 py-2 font-black text-default transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:border-default disabled:bg-offset disabled:text-offset";
+const secondaryButtonClass =
+  "min-h-9 rounded-lg border border-primary bg-default px-4 py-1.5 font-black text-accent transition-colors hover:bg-offset";
+const tableHeadClass =
+  "sticky top-0 z-10 border-b border-default bg-offset px-2.5 py-3 align-top font-black text-accent text-xs";
+---
+
+<main class="mx-auto max-w-[1160px] px-4 py-6 pb-10 text-default">
+  <header
+    class="flex items-center justify-between gap-4 border-b-2 border-primary pb-4 max-md:flex-col max-md:items-start"
+  >
+    <div class="flex min-w-0 items-center gap-3">
+      <img class="h-9 w-9" src={logoSrc} alt="" />
+      <div>
+        <p class={eyebrowClass}>Orble Production</p>
+        <h1 class="m-0 font-extrabold leading-tight text-accent text-xl">
+          Label Printer
+        </h1>
+      </div>
+    </div>
+    <p
+      id="connectionStatus"
+      class="m-0 min-h-6 text-right text-offset max-md:text-left"
+    >
+      Connect a QL-600 to print.
+    </p>
+  </header>
+
+  <details
+    class="mt-6 rounded-lg border border-default bg-default text-default"
+  >
+    <summary
+      class="cursor-pointer rounded-lg px-4 py-3 font-bold text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <span
+        aria-hidden="true"
+        class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary"
+        >?</span
+      >
+      Help: printing labels
+    </summary>
+    <div
+      class="border-t border-default px-4 py-4 text-sm [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:font-bold [&_h2]:text-base [&_li]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+    >
+      <PrinterHelp />
+    </div>
+  </details>
+
+  <div class="grid gap-6 pt-6">
+    <section class={panelClass} aria-labelledby="productionHeading">
+      <div class={headingClass}>
+        <div>
+          <h2
+            id="productionHeading"
+            class="m-0 font-extrabold leading-tight text-accent text-lg"
+          >
+            Labels to Print
+          </h2>
+        </div>
+        <button id="reloadPlanButton" type="button" class={secondaryButtonClass}
+          >Reload</button
+        >
+      </div>
+
+      <div
+        class="mx-4 mt-4 rounded-lg border border-default bg-offset p-3 font-bold text-offset"
+      >
+        Selected <strong class="text-accent"
+          ><span id="selectedLabelCount">0</span> of <span id="planLabelCount"
+            >0</span
+          ></strong
+        > labels
+      </div>
+      <p class="mx-4 mb-0 mt-2 text-offset text-sm">
+        Includes one extra backup label for each drink variation.
+      </p>
+
+      <label
+        class="my-4 flex items-center gap-3 pl-6 pr-4 font-extrabold text-accent"
+      >
+        <input
+          id="selectEverything"
+          class="h-[18px] w-[18px] accent-primary"
+          type="checkbox"
+          checked
+        />
+        <span>Select everything</span>
+      </label>
+
+      <div
+        class="max-h-[min(52vh,520px)] overflow-auto border-y border-default"
+      >
+        <table class="w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr>
+              <th
+                class={`${tableHeadClass} w-12 pl-6 pr-0`}
+                aria-label="Selected"></th>
+              <th class={`${tableHeadClass} text-left`}>Drink</th>
+              <th class={`${tableHeadClass} orble-table-number`}>Labels</th>
+              <th class={`${tableHeadClass} orble-table-number`}>Machine</th>
+              <th class={`${tableHeadClass} orble-table-number`}>Storage</th>
+            </tr>
+          </thead>
+          <tbody id="planRows">
+            <tr>
+              <td
+                class="border-b border-default px-2.5 py-3 text-default"
+                colspan="5">Loading production plan...</td
+              >
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid gap-3 p-4 md:grid-cols-2">
+        <button id="connectButton" type="button" class={primaryButtonClass}
+          >Connect QL-600</button
+        >
+        <button
+          id="printSelectedButton"
+          type="button"
+          class={primaryButtonClass}
+          disabled>Print Selected</button
+        >
+      </div>
+    </section>
+
+    <section class="border-t border-default pt-4" aria-label="Status log">
+      <p class={eyebrowClass}>Status Log</p>
+      <pre
+        id="log"
+        class="mt-2 max-h-32 overflow-auto whitespace-pre-wrap font-mono leading-normal text-default text-xs"
+        aria-live="polite">
+      </pre>
+    </section>
+  </div>
+
+  <dialog
+    id="printDialog"
+    aria-labelledby="previewHeading"
+    class="m-auto max-h-[90dvh] w-[min(95vw,680px)] rounded-lg border border-default bg-default p-0 text-default shadow-lg backdrop:bg-black/50"
+  >
+    <div class="flex max-h-[90dvh] flex-col">
+      <header class={headingClass}>
+        <h2 id="previewHeading" class="m-0 font-bold text-lg">Print Preview</h2>
+        <span class="text-sm"
+          ><span id="previewCount">0</span> labels selected</span
+        >
+      </header>
+      <div id="previewLabels" class="min-h-0 space-y-4 overflow-y-auto p-4">
+      </div>
+      <p id="printStatus" class="mx-4 text-sm" role="status"></p>
+      <footer class="flex justify-end gap-3 border-t border-default p-4">
+        <button
+          id="cancelPrintButton"
+          type="button"
+          class={secondaryButtonClass}>Cancel</button
+        >
+        <button id="confirmPrintButton" type="button" class={primaryButtonClass}
+          >Print Labels</button
+        >
+      </footer>
+    </div>
+  </dialog>
+</main>
