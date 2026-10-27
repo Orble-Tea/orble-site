@@ -18,7 +18,6 @@ import {
   canonicalDrinkKeyFromSlot,
   DEFAULT_DRINK_SLOT_CAPACITY,
   normalizeDrinkName,
-  slotCapacityForDrink,
   slotCapacityForDrinkParts,
 } from "./drink-parsing.js";
 
@@ -57,24 +56,41 @@ export function getRowValue(row, expectedColumnName) {
   return columnName ? row[columnName] : "";
 }
 
-export function distributeAcrossSlots(total, slots, drink) {
-  const capacity = slotCapacityForDrink(drink);
-  let remaining = total;
-  const allocations = slots.map((slot) => ({ slotNumber: slot, quantity: 0 }));
-
-  while (
-    remaining > 0 &&
-    allocations.some((allocation) => allocation.quantity < capacity)
-  ) {
-    for (const allocation of allocations) {
-      if (remaining <= 0) break;
-      if (allocation.quantity >= capacity) continue;
-      allocation.quantity += 1;
-      remaining -= 1;
-    }
+/**
+ * Hands cups out one at a time to the slot with the fewest. A level tie goes
+ * to the slot that started emptier, then list order. Stops when every slot is
+ * full, so the rest stays where it was.
+ * @param {number} cups to hand out
+ * @param {{ start: number, capacity: number }[]} slots cups in each now, and its cap
+ * @returns {number[]} cups added to each slot, same order as `slots`
+ */
+export function distributeDrinkAcrossSlots(cups, slots) {
+  const added = slots.map(() => 0);
+  let remaining = cups;
+  while (remaining > 0) {
+    let lowest = -1;
+    slots.forEach((slot, index) => {
+      const level = slot.start + added[index];
+      if (level >= slot.capacity) return;
+      if (lowest === -1) {
+        lowest = index;
+        return;
+      }
+      const lowestLevel = slots[lowest].start + added[lowest];
+      if (
+        level < lowestLevel ||
+        (level === lowestLevel &&
+          slot.capacity - slot.start >
+            slots[lowest].capacity - slots[lowest].start)
+      ) {
+        lowest = index;
+      }
+    });
+    if (lowest === -1) break;
+    added[lowest] += 1;
+    remaining -= 1;
   }
-
-  return allocations;
+  return added;
 }
 
 export function getPlanVariation(row) {
@@ -196,19 +212,10 @@ export function fillSlotsAcrossMachinesFromStorage(
   storageByDrink,
   candidateSlots,
 ) {
-  const working = candidateSlots.map((candidate) => ({ ...candidate }));
-  const candidatesByDrink = new Map();
-  for (const candidate of working) {
-    if (!candidate.drinkKey) continue;
-    if (!candidatesByDrink.has(candidate.drinkKey)) {
-      candidatesByDrink.set(candidate.drinkKey, []);
-    }
-    candidatesByDrink.get(candidate.drinkKey).push(candidate);
-  }
-  // Empty slots are sorted by machine and number with all 30th slots sorted
-  // low to high, then all Towne slots low to high.
-  const unclaimed = working
-    .filter((candidate) => !candidate.drinkKey)
+  // Sorted by machine and number with all 30th slots low to high, then all
+  // Towne slots low to high, so the first empty slot found is the lowest 30th.
+  const working = candidateSlots
+    .map((candidate) => ({ ...candidate }))
     .sort(
       (left, right) =>
         left.machineLabel.localeCompare(right.machineLabel) ||
@@ -216,41 +223,35 @@ export function fillSlotsAcrossMachinesFromStorage(
     );
 
   for (const [drinkKey, storage] of storageByDrink) {
-    const drinkCandidates = candidatesByDrink.get(drinkKey) ?? [];
     let remaining = storage;
     while (remaining > 0) {
-      let openCandidates = drinkCandidates.filter(
-        (candidate) => candidate.allocation < candidate.capacityLeft,
+      const held = working.filter(
+        (candidate) => candidate.drinkKey === drinkKey,
       );
-      if (openCandidates.length === 0) {
-        // An empty slot is only worth opening if it ends up at least half full,
-        // and only on a machine that already sells the drink.
-        if (remaining < DEFAULT_DRINK_SLOT_CAPACITY / 2) break;
-        const taken = unclaimed.find((candidate) =>
-          drinkCandidates.some(
-            (held) => held.machineLabel === candidate.machineLabel,
-          ),
-        );
-        if (!taken) break;
-        unclaimed.splice(unclaimed.indexOf(taken), 1);
-        taken.drinkKey = drinkKey;
-        drinkCandidates.push(taken);
-        openCandidates = [taken];
-      }
+      if (held.length === 0) break;
 
-      openCandidates.sort((left, right) => {
-        const leftTotal = left.slot.previous + left.allocation;
-        const rightTotal = right.slot.previous + right.allocation;
-        return (
-          leftTotal - rightTotal ||
-          right.capacityLeft - left.capacityLeft ||
-          left.machineLabel.localeCompare(right.machineLabel) ||
-          left.slot.slotNumber - right.slot.slotNumber
-        );
+      const added = distributeDrinkAcrossSlots(
+        remaining,
+        held.map((candidate) => ({
+          start: candidate.slot.previous + candidate.allocation,
+          capacity: candidate.slot.previous + candidate.capacityLeft,
+        })),
+      );
+      held.forEach((candidate, index) => {
+        candidate.allocation += added[index];
       });
+      remaining -= added.reduce((sum, count) => sum + count, 0);
 
-      openCandidates[0].allocation += 1;
-      remaining -= 1;
+      // An empty slot is only worth opening if it ends up at least half full,
+      // and only on a machine that already sells the drink.
+      if (remaining < DEFAULT_DRINK_SLOT_CAPACITY / 2) break;
+      const empty = working.find(
+        (candidate) =>
+          !candidate.drinkKey &&
+          held.some((h) => h.machineLabel === candidate.machineLabel),
+      );
+      if (!empty) break;
+      empty.drinkKey = drinkKey;
     }
   }
 

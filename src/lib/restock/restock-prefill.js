@@ -18,7 +18,7 @@ import {
 } from "./restock-log.js";
 import {
   fillSlotsAcrossMachinesFromStorage,
-  distributeAcrossSlots,
+  distributeDrinkAcrossSlots,
   findColumnName,
   getInventoryMachineHeader,
   getPlanVariation,
@@ -44,6 +44,7 @@ import {
   isValidDrink,
   normalizeDrinkName,
   parseDrinkName,
+  slotCapacityForDrink,
 } from "./drink-parsing.js";
 import { totalAfter } from "./slot-validation-rules.js";
 
@@ -350,24 +351,26 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       const drink = normalizeDrinkName(getPlanVariation(row));
       const amount = parseInteger(getRowValue(row, amountHeader));
       const slotNumbers = parseSlots(getRowValue(row, slotHeader));
-      for (const allocation of distributeAcrossSlots(
+      const added = distributeDrinkAcrossSlots(
         amount,
-        slotNumbers,
-        drink,
-      )) {
-        const slot = slots.find((s) => s.slotNumber === allocation.slotNumber);
-        if (!slot) continue;
-        if (allocation.quantity === 0) continue;
+        slotNumbers.map(() => ({
+          start: 0,
+          capacity: slotCapacityForDrink(drink),
+        })),
+      );
+      slotNumbers.forEach((slotNumber, index) => {
+        const slot = slots.find((s) => s.slotNumber === slotNumber);
+        if (!slot || added[index] === 0) return;
         const parsedDrink = parseDrinkName(drink);
         Object.assign(slot, {
           flavor: parsedDrink.flavor || null,
           size: parsedDrink.size || null,
           topping: parsedDrink.topping || null,
           sweetness: parsedDrink.sweetness || null,
-          expectedNew: allocation.quantity,
+          expectedNew: added[index],
         });
         slot.total = totalAfter(slot.previous, slot.waste, slot.expectedNew);
-      }
+      });
     }
   }
 
