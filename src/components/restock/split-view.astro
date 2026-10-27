@@ -66,6 +66,11 @@ const machineLabels = MACHINE_CONFIG.map((m) => m.label);
     showSubmitting,
     type SplitDrink,
   } from "~/components/restock/runtime";
+  import {
+    clearDraft,
+    readDraft,
+    writeDraft,
+  } from "~/components/restock/drafts";
 
   const machineLabels = $("view-split").dataset.machines!.split(",");
 
@@ -107,8 +112,10 @@ const machineLabels = MACHINE_CONFIG.map((m) => m.label);
       .map(renderDrink)
       .join("");
   }
-  $payload.listen(() => {
-    approved = new Set();
+  $payload.listen((payload) => {
+    if (!payload || payload.event !== "Split") return;
+    const saved = readDraft();
+    approved = new Set(Array.isArray(saved) ? saved : []);
     $("split-hint").classList.add("hidden");
     renderSplit();
   });
@@ -150,6 +157,7 @@ const machineLabels = MACHINE_CONFIG.map((m) => m.label);
       hint.classList.remove("hidden");
       return;
     }
+    clearDraft(payload);
     // Batch changed mid-request (user went back and started a new log): skip the confirmation UI
     if ($payload.get() !== payload) return;
     const time = new Date().toLocaleTimeString([], {
@@ -168,6 +176,7 @@ const machineLabels = MACHINE_CONFIG.map((m) => m.label);
     const drink = $payload.get()!.drinks![Number(target.dataset.approve)].drink;
     if (target.checked) approved.add(drink);
     else approved.delete(drink);
+    writeDraft([...approved]);
     renderSplit();
   });
 </script>

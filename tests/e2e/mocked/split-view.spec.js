@@ -101,3 +101,26 @@ test("a rejected split shows the server's reason under the button", async ({
   );
   await expect(page.locator("#view-split")).toBeVisible();
 });
+
+test("checked drinks survive a reload and clear after submit", async ({
+  page,
+}) => {
+  await mockData(page, splitPayload());
+  const posts = await mockSubmit(page);
+  await startLog(page, "2026-07-10");
+  await page.locator('[data-approve="1"]').check();
+
+  await page.reload();
+  await startLog(page, "2026-07-10");
+  await expect(page.locator('[data-approve="1"]')).toBeChecked();
+  await expect(page.locator('[data-approve="0"]')).not.toBeChecked();
+
+  await approveAll(page);
+  await page.click("#split-complete");
+  await expect(page.locator("#view-submitted")).toBeVisible();
+  expect(posts).toHaveLength(1);
+
+  await page.reload();
+  await startLog(page, "2026-07-10");
+  await expect(page.locator('[data-approve="1"]')).not.toBeChecked();
+});
