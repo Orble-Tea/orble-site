@@ -40,6 +40,7 @@ import {
 } from "./nayax.js";
 import {
   canonicalDrinkKey,
+  canonicalDrinkKeyFromSlot,
   describeInvalidDrink,
   isValidDrink,
   normalizeDrinkName,
@@ -212,6 +213,8 @@ async function buildSplitData(date) {
     (row) => parseInteger(getRowValue(row, "Storage")) > 0,
   );
 
+  // A slot whose product nobody can read is planned as empty: the restocker
+  // sorts it out on the Topoff, the kitchen only needs to know it has room.
   const candidateSlots = MACHINE_CONFIG.flatMap((config, index) =>
     getTopoffCandidates(
       config,
@@ -220,6 +223,10 @@ async function buildSplitData(date) {
         config,
         RESTOCK_EVENTS.SPLIT,
         warnings,
+      ).map((slot) =>
+        slot.hasCurrentProduct && !canonicalDrinkKeyFromSlot(slot)
+          ? { ...slot, hasCurrentProduct: false, previous: 0 }
+          : slot,
       ),
     ),
   );

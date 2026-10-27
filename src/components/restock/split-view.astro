@@ -1,0 +1,79 @@
+---
+import bob from "~/assets/images/logo_inkscape.svg";
+import { MACHINE_CONFIG } from "~/lib/restock/config.js";
+
+const machineLabels = MACHINE_CONFIG.map((m) => m.label);
+---
+
+<section
+  id="view-split"
+  class="hidden pb-28"
+  data-machines={machineLabels.join(",")}
+>
+  <div class="sticky top-0 z-10 border-b border-gray-200 bg-white">
+    <div class="flex items-center justify-between px-4 py-3">
+      <div>
+        <div class="text-gray-400 text-xs">
+          <span id="split-event"></span> · <span id="split-date"></span>
+        </div>
+        <div class="font-heading text-gray-900 text-xl" id="split-title">
+          Kitchen
+        </div>
+      </div>
+      <img src={bob.src} alt="" class="h-11 pr-1" />
+    </div>
+    <div class="flex px-3 pb-1 font-semibold uppercase text-gray-500 text-xs">
+      <div class="flex-1 px-3">Drink</div>
+      {machineLabels.map((label) => <div class="w-16 text-right">{label}</div>)}
+    </div>
+  </div>
+  <div id="drink-list" class="space-y-2 p-3"></div>
+  <div
+    class="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 p-4 backdrop-blur"
+  >
+    <button
+      id="split-complete"
+      class="w-full rounded-2xl bg-orble-dark py-4 font-semibold text-white shadow-md transition text-base active:scale-[0.99]"
+    >
+      Mark Split Task Complete
+    </button>
+  </div>
+</section>
+
+<script>
+  import { drinkLines, esc } from "~/lib/restock/ui-helpers";
+  import { parseDrinkName } from "~/lib/restock/drink-parsing.js";
+  import { $, $payload, type SplitDrink } from "~/components/restock/runtime";
+
+  const machineLabels = $("view-split").dataset.machines!.split(",");
+
+  /** One drink card: the drink lines and storage on the left, each machine's share on the right. */
+  function renderDrink(d: SplitDrink): string {
+    const { title, quals } = drinkLines(parseDrinkName(d.drink));
+    const shares = machineLabels
+      .map(
+        (label) =>
+          `<div class="w-16 text-right text-base font-semibold text-gray-900" data-to="${label}">${(d as any)[`to${label}`]}</div>`,
+      )
+      .join("");
+    return `<div data-drink="${esc(d.drink)}" class="flex items-center rounded-2xl border border-gray-300 bg-white px-3 py-3 shadow-sm">
+      <div class="flex-1">
+        ${title}${quals}
+        <div class="mt-0.5 text-[13px] text-gray-400">storage: <b class="font-semibold text-gray-700" data-storage>${d.storage}</b></div>
+      </div>
+      ${shares}
+    </div>`;
+  }
+
+  /** Redraws the header and drink list; runs when a payload arrives. */
+  function renderSplit() {
+    const payload = $payload.get();
+    if (!payload || payload.event !== "Split") return;
+    $("split-event").textContent = payload.event;
+    $("split-date").textContent = payload.date;
+    $("drink-list").innerHTML = (payload.drinks || [])
+      .map(renderDrink)
+      .join("");
+  }
+  $payload.listen(renderSplit);
+</script>

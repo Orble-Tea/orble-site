@@ -55,6 +55,7 @@ const APPROVE_BANNER =
 <script>
   import {
     HTTP,
+    drinkLines,
     emptyState,
     isSwap,
     esc,
@@ -159,13 +160,10 @@ const APPROVE_BANNER =
           : "");
       if (s.waste > 0 || s.newCount > 0) counts = countsColumn(s, true);
     } else {
-      const title = s.warning
-        ? `<div class="text-base font-semibold text-amber-700">${esc(s.flavor || "?")}</div>`
-        : `<div class="text-base font-semibold text-gray-900">${esc(s.flavor || "?")}</div>`;
-      const quals = [s.size, s.topping, s.sweetness]
-        .filter(Boolean)
-        .map((q) => `<div class="text-xs text-gray-500">${esc(q!)}</div>`)
-        .join("");
+      const { title, quals } = drinkLines(
+        s,
+        s.warning ? "text-amber-700" : "text-gray-900",
+      );
       body =
         title +
         (isSwap(payload.event, s)

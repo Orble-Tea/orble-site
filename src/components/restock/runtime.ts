@@ -5,6 +5,13 @@ import type { ServerSlot, Slot } from "~/lib/restock/ui-helpers";
 export const KEY = new URLSearchParams(location.search).get("key") || "";
 export const $ = (id: string) => document.getElementById(id)!;
 
+export type SplitDrink = {
+  drink: string;
+  storage: number;
+  to30th: number;
+  toTowne: number;
+};
+
 export type RestockPayload = {
   batchId: string;
   event: string;
@@ -18,6 +25,7 @@ export type RestockPayload = {
     batchId?: string;
   }[];
   slots: ServerSlot[];
+  drinks?: SplitDrink[];
 };
 
 export const $payload = atom<RestockPayload | null>(null);
@@ -41,9 +49,9 @@ export const hooks = {
   openEdit: (_i: number) => {},
 };
 
-const VIEWS = ["start", "table", "edit", "submitted"];
+const VIEWS = ["start", "table", "split", "edit", "submitted"];
 
-/** Shows one view section and hides the other three. */
+/** Shows one view section and hides the others. */
 export function showView(name: string) {
   for (const v of VIEWS) $(`view-${v}`).classList.toggle("hidden", v !== name);
   window.scrollTo(0, 0);

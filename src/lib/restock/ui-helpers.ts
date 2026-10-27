@@ -108,6 +108,24 @@ export function esc(s: string): string {
   return div.innerHTML;
 }
 
+export type DrinkParts = {
+  flavor: string | null;
+  size: string | null;
+  topping: string | null;
+  sweetness: string | null;
+};
+
+/** The flavor as a title, and size, topping and sweetness each on its own small line. */
+export function drinkLines(d: DrinkParts, titleClass = "text-gray-900") {
+  return {
+    title: `<div class="text-base font-semibold ${titleClass}">${esc(d.flavor || "?")}</div>`,
+    quals: [d.size, d.topping, d.sweetness]
+      .filter(Boolean)
+      .map((q) => `<div class="text-xs text-gray-500">${esc(q!)}</div>`)
+      .join(""),
+  };
+}
+
 // ---- Count rules shared by the edit steppers, the table, and the POST ----
 
 export type Counts = { previous: number; waste: number; newCount: number };
@@ -212,7 +230,12 @@ export function toSubmitSlot(
   s: Counts &
     Pick<
       ServerSlot,
-      "slotNumber" | "flavor" | "size" | "topping" | "sweetness" | "previousDrink"
+      | "slotNumber"
+      | "flavor"
+      | "size"
+      | "topping"
+      | "sweetness"
+      | "previousDrink"
     >,
   event: string,
 ): SubmitSlot {

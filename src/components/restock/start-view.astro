@@ -320,6 +320,15 @@ const drinkNameRules: [string, string[]][] = [
     }
     startStatus(null);
     setStartedAt(Date.now());
+    if (body.event === "Split") {
+      batch(() => {
+        $payload.set({ ...body, slots: [], machine, date });
+        $showErrors.set(false);
+        $slots.set([]);
+      });
+      navigate("split");
+      return;
+    }
     $("approve-banner").classList.add("hidden");
     $("complete-hint").classList.add("hidden");
     batch(() => {

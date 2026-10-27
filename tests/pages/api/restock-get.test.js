@@ -163,12 +163,18 @@ describe("GET /api/restock", () => {
     vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
     const { GET } = await import("../../../src/pages/api/restock.js");
 
-    const thai = (slot, missing) => ({
+    const product = (slot, missing, name) => ({
       MDBCode: slot,
       PAR: 4,
       MissingStockByMDB: missing,
-      DEXProductName: "THAI_16_LESS_LYC",
+      DEXProductName: name,
     });
+    const thai = (slot, missing) => product(slot, missing, "THAI_16_LESS_LYC");
+    // Every slot from `from` to 35 full of Taro, so the machine has no empty slot
+    const fullOfTaro = (from) =>
+      Array.from({ length: 36 - from }, (_, i) =>
+        product(from + i, 0, "TARO_22_LESS"),
+      );
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
@@ -200,10 +206,14 @@ describe("GET /api/restock", () => {
           }),
         );
       }
-      // 30th: one Thai slot at 2 and an empty slot. Towne: one Thai slot at 1.
+      // 30th: Thai at 2, the rest full. Towne: Thai at 1, slot 2 holds a
+      // product nobody can read, the rest full. The only place Thai's
+      // leftover can go is Towne slot 2, which the Split plans as empty.
       if (urlText.includes("/machines/machine-1/"))
-        return new Response(JSON.stringify([thai(1, 2)]));
-      return new Response(JSON.stringify([thai(1, 3)]));
+        return new Response(JSON.stringify([thai(1, 2), ...fullOfTaro(2)]));
+      return new Response(
+        JSON.stringify([thai(1, 3), product(2, 3, "BMT22"), ...fullOfTaro(3)]),
+      );
     });
 
     const response = await GET({
@@ -221,8 +231,8 @@ describe("GET /api/restock", () => {
         {
           drink: "Thai Tea 16oz Less Sweet w/ Lychee",
           storage: 9,
-          to30th: 6,
-          toTowne: 3,
+          to30th: 2,
+          toTowne: 7,
         },
         {
           drink: "Taro Tea 22oz Less Sweet",
@@ -232,7 +242,12 @@ describe("GET /api/restock", () => {
         },
         { drink: "Matcha 16oz Less Sweet", storage: 3, to30th: 0, toTowne: 0 },
       ],
-      warnings: [],
+      warnings: [
+        expect.objectContaining({
+          slot: 2,
+          code: "UNPARSED_NAYAX_PRODUCT_NAME",
+        }),
+      ],
     });
   });
 
