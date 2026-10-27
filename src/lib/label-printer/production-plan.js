@@ -12,79 +12,65 @@ import {
 
 const SPARE_LABEL_COUNT = 1;
 
-export function buildLabelPrintData(rows, options = {}) {
-  const recipes = buildRecipeLabelGroups(rows, options.now || new Date());
-  return {
-    recipeCount: recipes.length,
-    totalLabels: recipes.reduce((total, recipe) => total + recipe.labels.length, 0),
-    recipes,
-  };
-}
-
 /**
- * Groups table rows by recipe so each recipe can be sent as one cut job while
- * preserving the individual drink rows the operator selects in the UI. Each
- * cut job prints a "recipe label group" that includes all variations of the
- * same base recipe.
+ * Builds selectable drink rows directly from the sheet, including one backup
+ * label per drink. Machine labels retain every assigned slot; storage is blank.
+ * @param {Object[]} rows Production Plan rows keyed by column header.
+ * @param {{now?: Date}} options Clock override for deterministic expiration dates.
+ * @returns {{rows: Object[]}} Drink rows in sheet order, each with its labels.
  */
-function buildRecipeLabelGroups(rows, now) {
-  const groups = new Map();
-  let currentRecipe = "";
+export function buildLabelPrintData(rows, options = {}) {
+  const printRows = [];
+  const expirationDate = formatExpirationDate(options.now || new Date());
 
   for (const row of rows) {
-    const recipeCell = getRowValue(row, "Recipe").trim();
-    if (recipeCell) currentRecipe = recipeCell;
-
-    const recipe = currentRecipe;
     const drinkName = getPlanVariation(row).trim();
-    if (!recipe || !drinkName) continue;
+    if (!drinkName) continue;
 
     const quantity = parseInteger(getRowValue(row, "Amount to Make"));
     if (quantity <= 0) continue;
 
-    const expirationDate = formatExpirationDate(now);
-    const directLabels = buildMachineLabels(row, expirationDate, drinkName).slice(0, quantity);
+    const directLabels = buildMachineLabels(
+      row,
+      expirationDate,
+      drinkName,
+    ).slice(0, quantity);
     const storageLabels = Array.from(
       { length: Math.max(0, quantity - directLabels.length) },
       () => ({ code: "", expirationDate, drinkName }),
     );
-    const spareLabels = Array.from(
-      { length: SPARE_LABEL_COUNT },
-      () => ({ code: "", expirationDate, drinkName }),
-    );
+    const spareLabels = Array.from({ length: SPARE_LABEL_COUNT }, () => ({
+      code: "",
+      expirationDate,
+      drinkName,
+    }));
     const labels = [...directLabels, ...storageLabels, ...spareLabels];
 
-    if (!groups.has(recipe)) {
-      groups.set(recipe, { recipe, rows: [], labels: [] });
-    }
-
-    const group = groups.get(recipe);
-    group.rows.push({
-      id: `${recipe}::${drinkName}::${group.rows.length}`,
-      recipe,
+    printRows.push({
       drinkName,
-      expirationDate,
-      totalLabels: labels.length,
       directLabels: directLabels.length,
       storageLabels: storageLabels.length,
       spareLabels: spareLabels.length,
       labels,
     });
-    group.labels.push(...labels);
   }
 
-  return Array.from(groups.values())
-    .filter((group) => group.labels.length > 0)
-    .map((group) => ({
-      ...group,
-      totalLabels: group.labels.length,
-    }));
+  return { rows: printRows };
 }
 
+/**
+ * Repeats each machine's full slot list on all labels allocated to that machine.
+ * @param {Object} row Sheet row containing machine quantities and slots.
+ * @param {string} expirationDate Formatted expiration date.
+ * @param {string} drinkName Full drink variation name.
+ * @returns {Object[]} Machine labels in configured machine order.
+ */
 function buildMachineLabels(row, expirationDate, drinkName) {
   const labels = [];
   for (const machineConfig of MACHINE_CONFIG) {
-    const amount = parseInteger(getRowValue(row, getAmountHeader(machineConfig)));
+    const amount = parseInteger(
+      getRowValue(row, getAmountHeader(machineConfig)),
+    );
     if (amount <= 0) continue;
 
     const slots = parseSlots(getRowValue(row, getSlotHeader(machineConfig)));
@@ -101,8 +87,13 @@ function buildMachineLabels(row, expirationDate, drinkName) {
   return labels;
 }
 
+/**
+ * Formats seven calendar days after the supplied instant in UTC.
+ * @param {Date} now Production date; never mutated.
+ * @returns {string} Expiration in MM/DD/YY format.
+ */
 function formatExpirationDate(now) {
-  const date = todayUtc(now);
+  const date = new Date(now);
   date.setUTCDate(date.getUTCDate() + 7);
   return date.toLocaleDateString("en-US", {
     timeZone: "UTC",
@@ -110,15 +101,4 @@ function formatExpirationDate(now) {
     day: "2-digit",
     year: "2-digit",
   });
-}
-
-function todayUtc(now) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "UTC",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-  }).formatToParts(now);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day)));
 }

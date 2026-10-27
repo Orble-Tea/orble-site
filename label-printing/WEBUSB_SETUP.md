@@ -21,8 +21,8 @@ sequenceDiagram
   Browser->>Site: GET /api/label-print-data?key=...
   Site->>Sheets: Read Production Plan rows
   Sheets-->>Site: Production Plan values
-  Site-->>Browser: Recipe groups and labels
-  Operator->>Browser: Review rows and choose printer
+  Site-->>Browser: Drink rows and labels
+  Operator->>Browser: Select rows, preview labels, and confirm printing
   Browser->>Printer: Send raster data through WebUSB
 ```
 
@@ -42,7 +42,6 @@ sequenceDiagram
 
 The label API reads these Production Plan fields:
 
-- `Recipe`
 - `Drink Variation`
 - `Amount to Make`
 - `Amount to 30TH`
@@ -60,7 +59,7 @@ Each label contains:
 - Expiration date
 - Optional machine and slot code
 
-The expiration date is the print date plus seven days, because drinks are packaged and labeled immediately after production.
+The expiration date is the current UTC date plus seven days when the plan is loaded. Reload the plan if the page has remained open overnight.
 
 Machine labels receive a code in the top-left corner:
 
@@ -75,7 +74,7 @@ For each Production Plan row, total labels come from `Amount to Make`, plus one 
 
 ## Printing Behavior
 
-Rows are grouped by recipe. When the operator prints selected rows, the browser sends one print job per recipe group so the QL-600 cuts only after that recipe's labels.
+The page has no recipe grouping. Each selected drink row is one print job, with no cuts between its labels and a cut at the end. Print Selected opens a scrollable preview of every label before anything is sent to USB. The operator can uncheck individual labels in the preview, including printing just one as a test.
 
 The page starts with every row selected. Operators can clear the top checkbox or uncheck individual drink variations before printing.
 
@@ -92,6 +91,8 @@ Update visual label layout and raster generation in:
 ```text
 src/lib/label-printer/raster.js
 ```
+
+The active stock profile is `LABEL_MEDIA` in `src/lib/label-printer/media.js`. It owns the printable dot dimensions, physical stock dimensions, and media command fields. Preview and raster dimensions both come from that profile. A different stock needs its verified profile selected there; changing label stock does not change the QL-600 printhead width.
 
 Update browser connection behavior in:
 
@@ -128,16 +129,7 @@ The existing `runEverything()` flow can also show the same printer link after re
 
 ## Operator Runbook
 
-1. Plug the Brother QL-600 into the computer by USB.
-2. Open the label printer page from the Production Plan menu.
-3. Use Chrome or Edge.
-4. Review the label table.
-5. Uncheck any rows that should not print.
-6. Click `Connect QL-600` if the printer is not already connected.
-7. Choose the QL-600 in the browser permission picker.
-8. Click `Print Selected`.
-
-The browser remembers the printer permission for the site. On later visits, the page tries to reconnect automatically.
+See [operator instructions and troubleshooting](./OPERATOR_HELP.md). The page imports that Markdown file directly into its Help section, so edits update both the documentation and the UI.
 
 ## Local Development
 
@@ -154,3 +146,12 @@ http://localhost:4321/label-printer?key=YOUR_RESTOCK_KEY
 ```
 
 The local page still requires the shared restock key. WebUSB works on `localhost` for development and requires HTTPS when hosted.
+
+## Verification
+
+- `npm test` checks label data, UTC date boundaries, API error handling, and raster command boundaries.
+- `npm run test:labels` runs Playwright on desktop and mobile viewports. It uses the real page and renderer with mocked plan responses and a simulated USB device, covering full preview, slot lists, selection, single-label printing, and failures. It does not send anything to a physical printer.
+- `npm run test:integration -- tests/integration/label-print-data.integration.test.js` reads the configured Google Sheet through the real API handler. Use a test sheet and the existing integration environment settings. This label test never writes to Sheets; other integration tests in the repository do, so run this file explicitly.
+- Before release, print one label and a multi-label drink row on the QL-600 to verify physical alignment and the final cut. Browser tests cannot verify printer mechanics.
+
+Install Chromium once for browser tests with `npx playwright install chromium`.
