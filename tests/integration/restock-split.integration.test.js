@@ -1,5 +1,5 @@
 // Live POST /api/restock for a Split against the (Testing) workbooks. Sheets
-// only: a Split writes the kitchen's To columns and its log row, no Nayax.
+// only: a Split fills the kitchen's To columns and logs its row, no Nayax.
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { RESTOCK_LOG_HEADER } from "../../src/lib/restock/config.js";
 import {
@@ -53,8 +53,9 @@ describe("restock split submit, live", () => {
     );
     vi.stubEnv("GOOGLE_PRIVATE_KEY", requireEnv("GOOGLE_PRIVATE_KEY"));
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "");
+    // The kitchen's tab carries the To columns; the Split fills them in
     await seedSheet(INVENTORY(), INVENTORY_TAB, [
-      ["Drink", "Storage"],
+      ["Drink", "Storage", "To 30th", "To Towne"],
       [THAI, 6],
       [MATCHA, 1],
     ]);
@@ -108,7 +109,7 @@ describe("restock split submit, live", () => {
 
     expect(status).toBe(400);
     expect(await readSheetValues(INVENTORY(), INVENTORY_TAB)).toEqual([
-      ["Drink", "Storage"],
+      ["Drink", "Storage", "To 30th", "To Towne"],
       [THAI, "6"],
       [MATCHA, "1"],
     ]);

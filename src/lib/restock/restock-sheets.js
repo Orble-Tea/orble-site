@@ -1,7 +1,9 @@
 // Reads of the Production Plan, Inventory and Restock Log sheets, and the
-// Topoff allocation of cold storage across slots. Pure except the three reads.
+// Topoff allocation of cold storage across slots. Pure except the sheet reads
+// and the Split's write of the To columns.
 import {
   assertConfigured,
+  MACHINE_CONFIG,
   PRODUCTION_PLAN_SHEET,
   RESTOCK_EVENTS,
   RESTOCK_LOG_HEADER,
@@ -10,9 +12,11 @@ import {
 } from "./config.js";
 import { ERRORS, RestockError, UpstreamServiceError } from "./errors.js";
 import {
+  columnLetter,
   findSheetNameForDate,
   readSheetValues,
   rowsToObjects,
+  updateSheetValues,
 } from "./google-sheets.js";
 import {
   canonicalDrinkKeyFromSlot,
@@ -149,16 +153,76 @@ export async function readRestockLog() {
  * @param {string} date YYYY-MM-DD
  * @throws {RestockError} 409 noInventoryForBatch when the workbook has no tab for that date
  */
-export async function readInventoryRows(date) {
+/**
+ * The date's Inventory tab as the sheet holds it.
+ * @param {string} date YYYY-MM-DD
+ * @returns {Promise<{ sheetName: string, values: unknown[][] }>} header row first
+ */
+export async function readInventoryTab(date) {
   const inventoryId = assertConfigured(
     SHEET_IDS.inventory,
     "INVENTORY_SHEET_ID",
   );
   const sheetName = await findSheetNameForDate(inventoryId, date);
   if (!sheetName) throw new RestockError(ERRORS.noInventoryForBatch(date));
-  return rowsToObjects(await readSheetValues(inventoryId, sheetName)).filter(
-    (row) => normalizeDrinkName(getRowValue(row, "Drink")),
+  return { sheetName, values: await readSheetValues(inventoryId, sheetName) };
+}
+
+export async function readInventoryRows(date) {
+  const { values } = await readInventoryTab(date);
+  return inventoryRowsOf(values);
+}
+
+/** The tab's rows that name a drink, keyed by column name. */
+export function inventoryRowsOf(values) {
+  return rowsToObjects(values).filter((row) =>
+    normalizeDrinkName(getRowValue(row, "Drink")),
   );
+}
+
+/**
+ * Fills each machine's "To <machine>" column on an Inventory tab, one PUT per
+ * column over every data row, so rows without a share keep their cell.
+ * @param {{ sheetName: string, values: unknown[][] }} tab from readInventoryTab
+ * @param {string} date for the error when a column is missing
+ * @param {Map<number, Record<string, number>>} sharesByRow row number -> { [machineLabel]: cups }
+ */
+export async function writeInventoryShares(tab, date, sharesByRow) {
+  const inventoryId = assertConfigured(
+    SHEET_IDS.inventory,
+    "INVENTORY_SHEET_ID",
+  );
+  const header = tab.values[0] ?? [];
+  const columns = MACHINE_CONFIG.map((config) => {
+    const expected = normalizeColumnName(getInventoryMachineHeader(config));
+    const index = header.findIndex(
+      (name) => normalizeColumnName(name) === expected,
+    );
+    if (index === -1)
+      throw new RestockError(
+        ERRORS.inventoryColumnMissing(date, getInventoryMachineHeader(config)),
+      );
+    return { label: config.label, index };
+  });
+  const lastRow = tab.values.length;
+  for (const { label, index } of columns) {
+    const cells = [];
+    for (let rowNumber = 2; rowNumber <= lastRow; rowNumber++) {
+      cells.push([
+        sharesByRow.get(rowNumber)?.[label] ??
+          tab.values[rowNumber - 1]?.[index] ??
+          "",
+      ]);
+    }
+    const letter = columnLetter(index);
+    await updateSheetValues(
+      inventoryId,
+      tab.sheetName,
+      `${letter}2:${letter}${lastRow}`,
+      cells,
+      "RAW",
+    );
+  }
 }
 
 /**

@@ -3,6 +3,8 @@
 import {
   getMachineConfig,
   getMachineSlots,
+  KITCHEN_LABEL,
+  MACHINE_CONFIG,
   RESTOCK_EVENTS,
   RESTOCK_LOG_HEADER,
 } from "./config.js";
@@ -75,6 +77,37 @@ function validateSlot(event, slot) {
 }
 
 /**
+ * Validates a Split POST body: a kitchen batch id, and for every drink a
+ * name and a whole-number share per machine. Throws the first problem as a
+ * RestockError. Whether the drinks match the Inventory tab is checked later.
+ * @param {Record<string, any>} body the parsed request body
+ * @returns {string} the batch's date, YYYY-MM-DD
+ */
+export function validateSplitSubmission(body) {
+  const { batchId, drinks } = body;
+  if (!batchId || !Array.isArray(drinks))
+    throw new RestockError(ERRORS.missingFields);
+  const invalid = (problem) =>
+    new RestockError(ERRORS.invalidSubmission(problem));
+  const date = new RegExp(`^${KITCHEN_LABEL}-(\\d{4}-\\d{2}-\\d{2})$`).exec(
+    batchId,
+  )?.[1];
+  if (!date) throw invalid(`batch ${batchId} is not a kitchen batch`);
+  const isCount = (value) => Number.isInteger(value) && value >= 0;
+  for (const entry of drinks) {
+    if (typeof entry.drink !== "string" || !entry.drink.trim())
+      throw invalid("every drink needs a name");
+    for (const config of MACHINE_CONFIG) {
+      if (!isCount(entry[`to${config.label}`]))
+        throw invalid(
+          `${entry.drink}: the share for ${config.label} must be a whole number`,
+        );
+    }
+  }
+  return date;
+}
+
+/**
  * Validates a POST body: required fields, a known machine, a batch id that
  * matches machine and date, a known event, every configured slot exactly once,
  * and each slot passing validateSlot. Throws the first problem as a RestockError.
@@ -105,7 +138,9 @@ export function validateSubmission(body) {
       throw invalid(`slot ${slot.slotNumber} appears more than once`);
     seen.add(slot.slotNumber);
     if (!configured.has(slot.slotNumber))
-      throw invalid(`slot ${slot.slotNumber} is not configured on this machine`);
+      throw invalid(
+        `slot ${slot.slotNumber} is not configured on this machine`,
+      );
   }
   for (const slot of machineSlots) {
     if (!seen.has(slot)) throw invalid(`slot ${slot} is missing`);
@@ -199,7 +234,9 @@ export function buildRestockLogRows({
 export function rewriteSlotData(submittedSlots, storedEntries) {
   const storedBySlot = new Map(storedEntries.map((e) => [e.Slot, e]));
   return JSON.stringify(
-    submittedSlots.map((slot) => slotEntry(slot, storedBySlot.get(slot.slotNumber))),
+    submittedSlots.map((slot) =>
+      slotEntry(slot, storedBySlot.get(slot.slotNumber)),
+    ),
   );
 }
 

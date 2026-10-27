@@ -261,7 +261,8 @@ describe("restock data integration", () => {
   }
 
   it("builds a Split after the Load, until the kitchen logs one", async () => {
-    // Towne is limited to one slot with no product, so it offers one empty slot
+    // Towne is limited to one slot with no product: an empty slot on a machine
+    // that holds no Thai, so the leftover stays in the fridge
     vi.stubEnv("RESTOCK_SLOTS_TOWNE", "53");
     await seedSheet(requireEnv("INVENTORY_SHEET_ID"), INVENTORY_TAB, [
       ["Drink", "Storage"],
@@ -278,8 +279,8 @@ describe("restock data integration", () => {
       batchId: `Kitchen-${TEST_DATE}`,
       event: "Split",
       drinks: [
-        // slot 50 takes 3 to reach 4; the 3 left open Towne's empty slot
-        { drink: THAI, storage: 6, to30th: 3, toTowne: 3 },
+        // slot 50 takes 3 to reach 4; the 3 left have no Thai machine with room
+        { drink: THAI, storage: 6, to30th: 3, toTowne: 0 },
         // one can is below the empty-slot line, so it tops up slot 51
         { drink: MATCHA, storage: 1, to30th: 1, toTowne: 0 },
       ],

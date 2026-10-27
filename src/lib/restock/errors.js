@@ -42,6 +42,14 @@ export const ERRORS = {
     message: `No Inventory tab named ${inventoryTabName(date)}. Add it, or pick a different batch's date.`,
   }),
   /**
+   * @param {string} date YYYY-MM-DD, shown as the tab would be named
+   * @param {string} column the "To <machine>" header the Split fills in
+   */
+  inventoryColumnMissing: (date, column) => ({
+    status: 409,
+    message: `Inventory tab ${inventoryTabName(date)} has no ${column} column. Add it, then submit again.`,
+  }),
+  /**
    * @param {string} sheetName "Production Plan" or "Inventory tab MM/DD/YYYY"
    * @param {string} machineLabel
    * @param {{ name: string, reason: string }[]} rows rows with an amount for this machine whose drink the parser cannot read

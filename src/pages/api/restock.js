@@ -26,7 +26,10 @@ import {
   UpstreamServiceError,
 } from "../../lib/restock/errors.js";
 import { totalAfter } from "../../lib/restock/slot-validation-rules.js";
-import { canonicalDrinkKeyFromParts } from "../../lib/restock/drink-parsing.js";
+import {
+  canonicalDrinkKey,
+  canonicalDrinkKeyFromParts,
+} from "../../lib/restock/drink-parsing.js";
 import {
   createMachineProducts,
   getMachine,
@@ -35,13 +38,22 @@ import {
   putMachineProducts,
 } from "../../lib/restock/nayax.js";
 import { buildRestockData } from "../../lib/restock/restock-prefill.js";
-import { readRestockLog } from "../../lib/restock/restock-sheets.js";
+import {
+  getRowValue,
+  inventoryRowsOf,
+  parseInteger,
+  readInventoryTab,
+  readRestockLog,
+  writeInventoryShares,
+} from "../../lib/restock/restock-sheets.js";
 import {
   buildRestockLogRows,
   decideSubmitAction,
+  getBatchLogRows,
   lastMachineBatchEvent,
   rewriteSlotData,
   SUBMIT_STATUS,
+  validateSplitSubmission,
   validateSubmission,
 } from "../../lib/restock/restock-log.js";
 import {
@@ -90,7 +102,8 @@ export async function GET({ url }) {
   }
 }
 
-const { BATCH_ID, EVENT, DURATION, SLOT_DATA, STATUS } = RESTOCK_LOG_HEADER;
+const { BATCH_ID, EVENT, DATE, DURATION, SLOT_DATA, STATUS } =
+  RESTOCK_LOG_HEADER;
 
 /**
  * The operator's catalog with DEX names and prices borrowed from this
@@ -132,11 +145,82 @@ async function loadCatalog(machineConfig, currentProducts, drinks) {
  * @returns {Promise<Response>} 200 on success, 4xx with the reason, 502 when
  *   Sheets or Nayax failed
  */
+/**
+ * The kitchen's Split: each drink's share per machine goes into the date's
+ * Inventory tab To columns, then one Complete Split row is logged. Sheets
+ * only, no Nayax. Refused whole before any write when a drink does not match
+ * the tab, a share exceeds the storage, or the batch already has a Split.
+ * @param {Record<string, any>} body the parsed request body
+ */
+async function submitSplit(body) {
+  const date = validateSplitSubmission(body);
+  const { batchId, drinks } = body;
+  const { header, rows } = await readRestockLog();
+  if (getBatchLogRows(rows, batchId).split)
+    throw new RestockError(ERRORS.alreadySubmitted);
+
+  const tab = await readInventoryTab(date);
+  const invalid = (problem) =>
+    new RestockError(ERRORS.invalidSubmission(problem));
+  const inventoryByKey = new Map(
+    inventoryRowsOf(tab.values).map((row) => [
+      canonicalDrinkKey(getRowValue(row, "Drink")),
+      row,
+    ]),
+  );
+  const sharesByRow = new Map();
+  for (const entry of drinks) {
+    const row = inventoryByKey.get(canonicalDrinkKey(entry.drink));
+    if (!row)
+      throw invalid(`${entry.drink} is not on Inventory tab ${tab.sheetName}`);
+    inventoryByKey.delete(canonicalDrinkKey(entry.drink));
+    const shares = Object.fromEntries(
+      MACHINE_CONFIG.map((config) => [
+        config.label,
+        entry[`to${config.label}`],
+      ]),
+    );
+    const total = Object.values(shares).reduce((sum, cups) => sum + cups, 0);
+    const storage = parseInteger(getRowValue(row, "Storage"));
+    if (total > storage)
+      throw invalid(
+        `${entry.drink}: ${total} cups split, but only ${storage} in storage`,
+      );
+    sharesByRow.set(row._rowNumber, shares);
+  }
+  const [left] = inventoryByKey.values();
+  if (left)
+    throw invalid(
+      `${getRowValue(left, "Drink")} is on Inventory tab ${tab.sheetName} but missing from the split`,
+    );
+
+  await writeInventoryShares(tab, date, sharesByRow);
+  await appendSheetValues(
+    assertConfigured(SHEET_IDS.restockLog, "RESTOCK_LOG_SHEET_ID"),
+    RESTOCK_LOG_SHEET,
+    [
+      toSheetRow(header, {
+        [BATCH_ID]: batchId,
+        [EVENT]: RESTOCK_EVENTS.SPLIT,
+        [DATE]: new Date().toISOString().slice(0, 10),
+        [DURATION]: body.duration || "",
+        [SLOT_DATA]: "",
+        [STATUS]: SUBMIT_STATUS.COMPLETE,
+      }),
+    ],
+    "RAW",
+  );
+}
+
 export async function POST({ request }) {
   try {
     const body = await parseJson(request);
     if (!requireRestockSecretKey(body.key))
       throw new RestockError(ERRORS.invalidKey);
+    if (body.event === RESTOCK_EVENTS.SPLIT) {
+      await submitSplit(body);
+      return json({ success: true, message: "Split complete" });
+    }
     const machineConfig = validateSubmission(body);
     const { event, batchId, slots } = body;
 
