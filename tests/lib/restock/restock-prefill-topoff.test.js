@@ -25,6 +25,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -88,6 +89,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -141,6 +143,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -178,7 +181,7 @@ describe("prefill: Topoff", () => {
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
-      slot: 1,
+      slotNumber: 1,
       previous: 0,
       expectedNew: 0,
       total: 0,
@@ -194,6 +197,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -237,13 +241,13 @@ describe("prefill: Topoff", () => {
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
-      slot: 1,
+      slotNumber: 1,
       previous: 3,
       expectedNew: 0,
       total: 3,
     });
     expect(data.slots[1]).toMatchObject({
-      slot: 2,
+      slotNumber: 2,
       previous: 0,
       expectedNew: 3,
       total: 3,
@@ -259,6 +263,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -296,6 +301,7 @@ describe("prefill: Topoff", () => {
               values: [
                 ["Batch ID", "Event"],
                 ["30th-2026-07-10", "Load"],
+                ["Kitchen-2026-07-10", "Split"],
               ],
             }),
           );

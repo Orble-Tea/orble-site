@@ -1,7 +1,9 @@
 // Reads of the Production Plan, Inventory and Restock Log sheets, and the
-// Topoff allocation of cold storage across slots. Pure except the three reads.
+// Topoff allocation of cold storage across slots. Pure except the sheet reads
+// and the Split's write of the To columns.
 import {
   assertConfigured,
+  MACHINE_CONFIG,
   PRODUCTION_PLAN_SHEET,
   RESTOCK_EVENTS,
   RESTOCK_LOG_HEADER,
@@ -10,14 +12,16 @@ import {
 } from "./config.js";
 import { ERRORS, RestockError, UpstreamServiceError } from "./errors.js";
 import {
+  columnLetter,
   findSheetNameForDate,
   readSheetValues,
   rowsToObjects,
+  updateSheetValues,
 } from "./google-sheets.js";
 import {
   canonicalDrinkKeyFromSlot,
+  DEFAULT_DRINK_SLOT_CAPACITY,
   normalizeDrinkName,
-  slotCapacityForDrink,
   slotCapacityForDrinkParts,
 } from "./drink-parsing.js";
 
@@ -56,24 +60,41 @@ export function getRowValue(row, expectedColumnName) {
   return columnName ? row[columnName] : "";
 }
 
-export function distributeAcrossSlots(total, slots, drink) {
-  const capacity = slotCapacityForDrink(drink);
-  let remaining = total;
-  const allocations = slots.map((slot) => ({ slot, quantity: 0 }));
-
-  while (
-    remaining > 0 &&
-    allocations.some((allocation) => allocation.quantity < capacity)
-  ) {
-    for (const allocation of allocations) {
-      if (remaining <= 0) break;
-      if (allocation.quantity >= capacity) continue;
-      allocation.quantity += 1;
-      remaining -= 1;
-    }
+/**
+ * Hands cups out one at a time to the slot with the fewest. A level tie goes
+ * to the slot that started emptier, then list order. Stops when every slot is
+ * full, so the rest stays where it was.
+ * @param {number} cups to hand out
+ * @param {{ start: number, capacity: number }[]} slots cups in each now, and its cap
+ * @returns {number[]} cups added to each slot, same order as `slots`
+ */
+export function distributeDrinkAcrossSlots(cups, slots) {
+  const added = slots.map(() => 0);
+  let remaining = cups;
+  while (remaining > 0) {
+    let lowest = -1;
+    slots.forEach((slot, index) => {
+      const level = slot.start + added[index];
+      if (level >= slot.capacity) return;
+      if (lowest === -1) {
+        lowest = index;
+        return;
+      }
+      const lowestLevel = slots[lowest].start + added[lowest];
+      if (
+        level < lowestLevel ||
+        (level === lowestLevel &&
+          slot.capacity - slot.start >
+            slots[lowest].capacity - slots[lowest].start)
+      ) {
+        lowest = index;
+      }
+    });
+    if (lowest === -1) break;
+    added[lowest] += 1;
+    remaining -= 1;
   }
-
-  return allocations;
+  return added;
 }
 
 export function getPlanVariation(row) {
@@ -132,64 +153,178 @@ export async function readRestockLog() {
  * @param {string} date YYYY-MM-DD
  * @throws {RestockError} 409 noInventoryForBatch when the workbook has no tab for that date
  */
-export async function readInventoryRows(date) {
+/**
+ * The date's Inventory tab as the sheet holds it.
+ * @param {string} date YYYY-MM-DD
+ * @returns {Promise<{ sheetName: string, values: unknown[][] }>} header row first
+ */
+export async function readInventoryTab(date) {
   const inventoryId = assertConfigured(
     SHEET_IDS.inventory,
     "INVENTORY_SHEET_ID",
   );
   const sheetName = await findSheetNameForDate(inventoryId, date);
   if (!sheetName) throw new RestockError(ERRORS.noInventoryForBatch(date));
-  return rowsToObjects(await readSheetValues(inventoryId, sheetName)).filter(
-    (row) => normalizeDrinkName(getRowValue(row, "Drink")),
+  return { sheetName, values: await readSheetValues(inventoryId, sheetName) };
+}
+
+export async function readInventoryRows(date) {
+  const { values } = await readInventoryTab(date);
+  return inventoryRowsOf(values);
+}
+
+/** The tab's rows that name a drink, keyed by column name. */
+export function inventoryRowsOf(values) {
+  return rowsToObjects(values).filter((row) =>
+    normalizeDrinkName(getRowValue(row, "Drink")),
   );
 }
 
-export function getTopoffCandidates(machineConfig, slots) {
-  return slots
-    .filter((slot) => slot.hasCurrentProduct)
-    .map((slot) => {
-      const capacity = slotCapacityForDrinkParts(slot);
-      return {
-        machineLabel: machineConfig.label,
-        slot,
-        drinkKey: canonicalDrinkKeyFromSlot(slot),
-        capacityLeft: Math.max(capacity - slot.previous, 0),
-        allocation: 0,
-      };
-    })
-    .filter((candidate) => candidate.drinkKey && candidate.capacityLeft > 0);
+/**
+ * Fills each machine's "To <machine>" column on an Inventory tab, one PUT per
+ * column over every data row, so rows without a share keep their cell.
+ * @param {{ sheetName: string, values: unknown[][] }} tab from readInventoryTab
+ * @param {string} date for the error when a column is missing
+ * @param {Map<number, Record<string, number>>} sharesByRow row number -> { [machineLabel]: cups }
+ */
+export async function writeInventoryShares(tab, date, sharesByRow) {
+  const inventoryId = assertConfigured(
+    SHEET_IDS.inventory,
+    "INVENTORY_SHEET_ID",
+  );
+  const header = tab.values[0] ?? [];
+  const columns = MACHINE_CONFIG.map((config) => {
+    const expected = normalizeColumnName(getInventoryMachineHeader(config));
+    const index = header.findIndex(
+      (name) => normalizeColumnName(name) === expected,
+    );
+    if (index === -1)
+      throw new RestockError(
+        ERRORS.inventoryColumnMissing(date, getInventoryMachineHeader(config)),
+      );
+    return { label: config.label, index };
+  });
+  const lastRow = tab.values.length;
+  for (const { label, index } of columns) {
+    const cells = [];
+    for (let rowNumber = 2; rowNumber <= lastRow; rowNumber++) {
+      cells.push([
+        sharesByRow.get(rowNumber)?.[label] ??
+          tab.values[rowNumber - 1]?.[index] ??
+          "",
+      ]);
+    }
+    const letter = columnLetter(index);
+    await updateSheetValues(
+      inventoryId,
+      tab.sheetName,
+      `${letter}2:${letter}${lastRow}`,
+      cells,
+      "RAW",
+    );
+  }
 }
 
-export function allocateTopoffStorage(storageByDrink, candidates) {
-  const candidatesByDrink = new Map();
-  for (const candidate of candidates) {
-    if (!candidatesByDrink.has(candidate.drinkKey)) {
-      candidatesByDrink.set(candidate.drinkKey, []);
-    }
-    candidatesByDrink.get(candidate.drinkKey).push(candidate);
-  }
+/**
+ * @typedef {object} Candidate a slot that can take cups
+ * @property {string} machineLabel
+ * @property {object} slot the slot state from makeSlotState
+ * @property {string} drinkKey the drink held, "" for an empty slot
+ * @property {number} capacityLeft cups that still fit
+ * @property {number} allocation cups given to it so far
+ */
 
-  for (const [drinkKey, drinkCandidates] of candidatesByDrink) {
-    let remaining = storageByDrink.get(drinkKey) || 0;
+/**
+ * One candidate per slot: a filled slot with room keeps its drink key, an empty
+ * slot gets "". A full slot or one with an unreadable drink is left out.
+ * @param {{ label: string }} machineConfig
+ * @param {object[]} slots slot states from makeSlotState
+ * @returns {Candidate[]}
+ */
+export function getTopoffCandidates(machineConfig, slots) {
+  return slots.flatMap((slot) => {
+    const empty = !slot.hasCurrentProduct;
+    const drinkKey = empty ? "" : canonicalDrinkKeyFromSlot(slot);
+    const capacityLeft = Math.max(
+      (empty ? DEFAULT_DRINK_SLOT_CAPACITY : slotCapacityForDrinkParts(slot)) -
+        slot.previous,
+      0,
+    );
+    if (!empty && (!drinkKey || capacityLeft === 0)) return [];
+    return [
+      {
+        machineLabel: machineConfig.label,
+        slot,
+        drinkKey,
+        capacityLeft,
+        allocation: 0,
+      },
+    ];
+  });
+}
+
+/**
+ * Spreads each drink's storage over its candidate slots, one cup at a time to the
+ * slot with the fewest. When every slot holding the drink is full and at least
+ * half a slot remains, the next empty slot on a machine that already holds the
+ * drink takes it. The candidate slots are not changed.
+ * @param {Map<string, number>} storageByDrink drink key -> cups in storage
+ * @param {Candidate[]} candidateSlots from getTopoffCandidates, one machine or both
+ * @returns {{ machineLabel: string, slotNumber: number, drinkKey: string, allocation: number }[]} one entry per slot that gets cups
+ */
+export function fillSlotsAcrossMachinesFromStorage(
+  storageByDrink,
+  candidateSlots,
+) {
+  // Sorted by machine and number with all 30th slots low to high, then all
+  // Towne slots low to high, so the first empty slot found is the lowest 30th.
+  const working = candidateSlots
+    .map((candidate) => ({ ...candidate }))
+    .sort(
+      (left, right) =>
+        left.machineLabel.localeCompare(right.machineLabel) ||
+        left.slot.slotNumber - right.slot.slotNumber,
+    );
+
+  for (const [drinkKey, storage] of storageByDrink) {
+    let remaining = storage;
     while (remaining > 0) {
-      const openCandidates = drinkCandidates.filter(
-        (candidate) => candidate.allocation < candidate.capacityLeft,
+      const held = working.filter(
+        (candidate) => candidate.drinkKey === drinkKey,
       );
-      if (openCandidates.length === 0) break;
+      if (held.length === 0) break;
 
-      openCandidates.sort((left, right) => {
-        const leftTotal = left.slot.previous + left.allocation;
-        const rightTotal = right.slot.previous + right.allocation;
-        return (
-          leftTotal - rightTotal ||
-          right.capacityLeft - left.capacityLeft ||
-          left.machineLabel.localeCompare(right.machineLabel) ||
-          left.slot.slot - right.slot.slot
-        );
+      const added = distributeDrinkAcrossSlots(
+        remaining,
+        held.map((candidate) => ({
+          start: candidate.slot.previous + candidate.allocation,
+          capacity: candidate.slot.previous + candidate.capacityLeft,
+        })),
+      );
+      held.forEach((candidate, index) => {
+        candidate.allocation += added[index];
       });
+      remaining -= added.reduce((sum, count) => sum + count, 0);
 
-      openCandidates[0].allocation += 1;
-      remaining -= 1;
+      // An empty slot is only worth opening if it ends up at least half full,
+      // and only on a machine that already sells the drink.
+      if (remaining < DEFAULT_DRINK_SLOT_CAPACITY / 2) break;
+      const empty = working.find(
+        (candidate) =>
+          !candidate.drinkKey &&
+          held.some((h) => h.machineLabel === candidate.machineLabel),
+      );
+      if (!empty) break;
+      empty.drinkKey = drinkKey;
     }
   }
+
+  return working
+    .filter((candidate) => candidate.allocation > 0)
+    .map((candidate) => ({
+      machineLabel: candidate.machineLabel,
+      slotNumber: candidate.slot.slotNumber,
+      drinkKey: candidate.drinkKey,
+      allocation: candidate.allocation,
+    }));
 }

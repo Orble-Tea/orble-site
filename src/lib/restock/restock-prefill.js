@@ -4,6 +4,8 @@ import {
   getAmountHeader,
   getMachineSlots,
   getSlotHeader,
+  KITCHEN_LABEL,
+  MACHINE_CONFIG,
   RESTOCK_EVENTS,
   RESTOCK_LOG_HEADER,
 } from "./config.js";
@@ -15,8 +17,8 @@ import {
   SUBMIT_STATUS,
 } from "./restock-log.js";
 import {
-  allocateTopoffStorage,
-  distributeAcrossSlots,
+  fillSlotsAcrossMachinesFromStorage,
+  distributeDrinkAcrossSlots,
   findColumnName,
   getInventoryMachineHeader,
   getPlanVariation,
@@ -38,10 +40,12 @@ import {
 } from "./nayax.js";
 import {
   canonicalDrinkKey,
+  canonicalDrinkKeyFromSlot,
   describeInvalidDrink,
   isValidDrink,
   normalizeDrinkName,
   parseDrinkName,
+  slotCapacityForDrink,
 } from "./drink-parsing.js";
 import { totalAfter } from "./slot-validation-rules.js";
 
@@ -60,10 +64,10 @@ function assertReadableDrinks(
   machineLabel,
   rows,
   drinkOf,
-  amountOf,
+  hasAmount,
 ) {
   const invalid = rows
-    .filter((row) => amountOf(row) > 0)
+    .filter(hasAmount)
     .map((row) => {
       const name = normalizeDrinkName(drinkOf(row));
       return { name, reason: describeInvalidDrink(parseDrinkName(name)) };
@@ -130,7 +134,7 @@ function makeSlotState(slot, current, event, warnings) {
   }
 
   return {
-    slot,
+    slotNumber: slot,
     previousDrink,
     flavor: parsed.flavor || null,
     size: parsed.size || null,
@@ -161,14 +165,14 @@ function normalizeRequestedMode(mode) {
 }
 
 /** A stored submit as the form's prefill, so pressing Complete resends it. */
-function prefillFromLogRow(machineConfig, date, batchId, row) {
+function prefillFromLogRow(batchId, row) {
   const slots = JSON.parse(row[RESTOCK_LOG_HEADER.SLOT_DATA] || "[]").map(
     (entry) => {
       const parsed = entry.Drink
         ? parseDrinkName(normalizeDrinkName(entry.Drink))
         : {};
       return {
-        slot: entry.Slot,
+        slotNumber: entry.Slot,
         previousDrink: entry["Previous Drink"] ?? null,
         flavor: parsed.flavor || null,
         size: parsed.size || null,
@@ -184,10 +188,78 @@ function prefillFromLogRow(machineConfig, date, batchId, row) {
   return {
     batchId,
     event: row[RESTOCK_LOG_HEADER.EVENT],
-    machine: machineConfig.label,
-    date,
     slots,
     warnings: [],
+  };
+}
+
+/**
+ * The kitchen's split of fridge storage between both machines, decided from
+ * what every slot holds now.
+ * @param {string} date YYYY-MM-DD
+ * @returns {Promise<{ batchId: string, event: string, drinks: { drink: string, storage: number, to30th: number, toTowne: number }[], warnings: object[] }>}
+ */
+async function buildSplitData(date) {
+  const warnings = [];
+  const [inventoryRows, ...productsByMachine] = await Promise.all([
+    readInventoryRows(date),
+    ...MACHINE_CONFIG.map((config) => getMachineProducts(config.machineId)),
+  ]);
+  assertReadableDrinks(
+    `Inventory tab ${inventoryTabName(date)}`,
+    KITCHEN_LABEL,
+    inventoryRows,
+    (row) => getRowValue(row, "Drink"),
+    (row) => parseInteger(getRowValue(row, "Storage")) > 0,
+  );
+
+  // A slot whose product nobody can read is planned as empty: the restocker
+  // sorts it out on the Topoff, the kitchen only needs to know it has room.
+  const candidateSlots = MACHINE_CONFIG.flatMap((config, index) =>
+    getTopoffCandidates(
+      config,
+      buildMachineSlots(
+        productsByMachine[index],
+        config,
+        RESTOCK_EVENTS.SPLIT,
+        warnings,
+      ).map((slot) =>
+        slot.hasCurrentProduct && !canonicalDrinkKeyFromSlot(slot)
+          ? { ...slot, hasCurrentProduct: false, previous: 0 }
+          : slot,
+      ),
+    ),
+  );
+  const parsedRows = inventoryRows.map((row) => ({
+    drink: normalizeDrinkName(getRowValue(row, "Drink")),
+    drinkKey: canonicalDrinkKey(getRowValue(row, "Drink")),
+    storage: parseInteger(getRowValue(row, "Storage")),
+  }));
+
+  const slotAllocations = fillSlotsAcrossMachinesFromStorage(
+    new Map(parsedRows.map((row) => [row.drinkKey, row.storage])),
+    candidateSlots,
+  );
+
+  const drinks = parsedRows.map((row) => {
+    const drink = { drink: row.drink, storage: row.storage };
+    for (const config of MACHINE_CONFIG) {
+      drink[`to${config.label}`] = slotAllocations
+        .filter(
+          (allocation) =>
+            allocation.machineLabel === config.label &&
+            allocation.drinkKey === row.drinkKey,
+        )
+        .reduce((sum, allocation) => sum + allocation.allocation, 0);
+    }
+    return drink;
+  });
+
+  return {
+    batchId: `${KITCHEN_LABEL}-${date}`,
+    event: RESTOCK_EVENTS.SPLIT,
+    drinks,
+    warnings,
   };
 }
 
@@ -208,14 +280,16 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   ).find(
     (row) => row?.[RESTOCK_LOG_HEADER.STATUS] === SUBMIT_STATUS.NAYAX_PENDING,
   );
-  if (unfinished)
-    return prefillFromLogRow(machineConfig, date, batchId, unfinished);
+  if (unfinished) return prefillFromLogRow(batchId, unfinished);
 
+  const kitchenRows = getBatchLogRows(logRows, `${KITCHEN_LABEL}-${date}`);
   const event = clearoutMode
     ? RESTOCK_EVENTS.CLEAROUT
-    : batchRows.load
-      ? RESTOCK_EVENTS.TOPOFF
-      : RESTOCK_EVENTS.LOAD;
+    : !batchRows.load
+      ? RESTOCK_EVENTS.LOAD
+      : batchRows.topoff || kitchenRows.split
+        ? RESTOCK_EVENTS.TOPOFF
+        : RESTOCK_EVENTS.SPLIT;
   const violation = batchRuleViolation({
     rows: logRows,
     batchRows,
@@ -229,6 +303,8 @@ export async function buildRestockData(machineConfig, date, options = {}) {
     throw new RestockError(ERRORS.batchFullyLogged, {
       existingEntryRow: doneRow._rowNumber,
     });
+
+  if (event === RESTOCK_EVENTS.SPLIT) return buildSplitData(date);
 
   // call Nayax and sheets in parallel to reduce latency
   const [machineProducts, sheetRows] = await Promise.all([
@@ -276,59 +352,38 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       machineConfig.label,
       rows,
       getPlanVariation,
-      (row) => parseInteger(getRowValue(row, amountHeader)),
+      (row) => parseInteger(getRowValue(row, amountHeader)) > 0,
     );
     for (const row of rows) {
       const drink = normalizeDrinkName(getPlanVariation(row));
       const amount = parseInteger(getRowValue(row, amountHeader));
       const slotNumbers = parseSlots(getRowValue(row, slotHeader));
-      for (const allocation of distributeAcrossSlots(
+      const added = distributeDrinkAcrossSlots(
         amount,
-        slotNumbers,
-        drink,
-      )) {
-        const slot = slots.find((s) => s.slot === allocation.slot);
-        if (!slot) continue;
-        if (allocation.quantity === 0) continue;
+        slotNumbers.map(() => ({
+          start: 0,
+          capacity: slotCapacityForDrink(drink),
+        })),
+      );
+      slotNumbers.forEach((slotNumber, index) => {
+        const slot = slots.find((s) => s.slotNumber === slotNumber);
+        if (!slot || added[index] === 0) return;
         const parsedDrink = parseDrinkName(drink);
         Object.assign(slot, {
           flavor: parsedDrink.flavor || null,
           size: parsedDrink.size || null,
           topping: parsedDrink.topping || null,
           sweetness: parsedDrink.sweetness || null,
-          expectedNew: allocation.quantity,
+          expectedNew: added[index],
         });
         slot.total = totalAfter(slot.previous, slot.waste, slot.expectedNew);
-      }
+      });
     }
   }
 
   if (event === RESTOCK_EVENTS.TOPOFF) {
     const inventoryRows = sheetRows;
     const inventoryMachineHeader = getInventoryMachineHeader(machineConfig);
-    const hasMachineAllocationColumn = inventoryRows.some((row) =>
-      findColumnName(row, inventoryMachineHeader),
-    );
-
-    if (inventoryRows.length > 0 && !hasMachineAllocationColumn) {
-      addWarning(warnings, {
-        code: "MISSING_INVENTORY_ALLOCATION_COLUMN",
-        expectedColumn: inventoryMachineHeader,
-        availableColumns: [
-          ...new Set(
-            inventoryRows.flatMap((row) =>
-              Object.keys(row).filter(
-                (columnName) => columnName !== "_rowNumber",
-              ),
-            ),
-          ),
-        ],
-        message: WARNINGS.missingInventoryAllocationColumn(
-          machineConfig.label,
-          inventoryMachineHeader,
-        ),
-      });
-    }
 
     const storageByDrink = new Map(
       inventoryRows.map((row) => [
@@ -342,20 +397,18 @@ export async function buildRestockData(machineConfig, date, options = {}) {
       machineConfig.label,
       inventoryRows,
       (row) => getRowValue(row, "Drink"),
-      (row) => parseInteger(getRowValue(row, inventoryMachineHeader)),
+      (row) => parseInteger(getRowValue(row, inventoryMachineHeader)) > 0,
     );
 
-    const candidates = getTopoffCandidates(machineConfig, slots);
+    const candidateSlots = getTopoffCandidates(machineConfig, slots);
 
-    allocateTopoffStorage(storageByDrink, candidates);
-
-    for (const candidate of candidates) {
-      candidate.slot.expectedNew = candidate.allocation;
-      candidate.slot.total = totalAfter(
-        candidate.slot.previous,
-        candidate.slot.waste,
-        candidate.slot.expectedNew,
-      );
+    for (const allocation of fillSlotsAcrossMachinesFromStorage(
+      storageByDrink,
+      candidateSlots,
+    )) {
+      const slot = slots.find((s) => s.slotNumber === allocation.slotNumber);
+      slot.expectedNew = allocation.allocation;
+      slot.total = totalAfter(slot.previous, slot.waste, slot.expectedNew);
     }
   }
 
@@ -375,8 +428,6 @@ export async function buildRestockData(machineConfig, date, options = {}) {
   return {
     batchId,
     event,
-    machine: machineConfig.label,
-    date,
     slots,
     warnings,
   };

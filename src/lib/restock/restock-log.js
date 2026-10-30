@@ -3,6 +3,8 @@
 import {
   getMachineConfig,
   getMachineSlots,
+  KITCHEN_LABEL,
+  MACHINE_CONFIG,
   RESTOCK_EVENTS,
   RESTOCK_LOG_HEADER,
 } from "./config.js";
@@ -42,7 +44,7 @@ export const SUBMIT_STATUS = {
  * @returns {string | null} the first problem, or null when the slot is fine
  */
 function validateSlot(event, slot) {
-  const label = `slot ${slot.slot}`;
+  const label = `slot ${slot.slotNumber}`;
   for (const field of ["previous", "waste", "new"]) {
     if (!Number.isInteger(slot[field]) || slot[field] < 0)
       return `${label}: ${field} must be a non-negative integer`;
@@ -75,6 +77,37 @@ function validateSlot(event, slot) {
 }
 
 /**
+ * Validates a Split POST body: a kitchen batch id, and for every drink a
+ * name and a whole-number share per machine. Throws the first problem as a
+ * RestockError. Whether the drinks match the Inventory tab is checked later.
+ * @param {Record<string, any>} body the parsed request body
+ * @returns {string} the batch's date, YYYY-MM-DD
+ */
+export function validateSplitSubmission(body) {
+  const { batchId, drinks } = body;
+  if (!batchId || !Array.isArray(drinks))
+    throw new RestockError(ERRORS.missingFields);
+  const invalid = (problem) =>
+    new RestockError(ERRORS.invalidSubmission(problem));
+  const date = new RegExp(`^${KITCHEN_LABEL}-(\\d{4}-\\d{2}-\\d{2})$`).exec(
+    batchId,
+  )?.[1];
+  if (!date) throw invalid(`batch ${batchId} is not a kitchen batch`);
+  const isCount = (value) => Number.isInteger(value) && value >= 0;
+  for (const entry of drinks) {
+    if (typeof entry.drink !== "string" || !entry.drink.trim())
+      throw invalid("every drink needs a name");
+    for (const config of MACHINE_CONFIG) {
+      if (!isCount(entry[`to${config.label}`]))
+        throw invalid(
+          `${entry.drink}: the share for ${config.label} must be a whole number`,
+        );
+    }
+  }
+  return date;
+}
+
+/**
  * Validates a POST body: required fields, a known machine, a batch id that
  * matches machine and date, a known event, every configured slot exactly once,
  * and each slot passing validateSlot. Throws the first problem as a RestockError.
@@ -83,16 +116,15 @@ function validateSlot(event, slot) {
  * @returns {ReturnType<typeof getMachineConfig>} the machine the body names
  */
 export function validateSubmission(body) {
-  const required = ["batchId", "event", "machine", "date", "slots"];
+  const required = ["batchId", "event", "slots"];
   if (required.some((field) => !body[field]) || !Array.isArray(body.slots))
     throw new RestockError(ERRORS.missingFields);
 
-  const machineConfig = getMachineConfig(body.machine);
+  const { event, batchId, slots } = body;
+  const machineLabel = /^(.+)-\d{4}-\d{2}-\d{2}$/.exec(batchId)?.[1];
+  const machineConfig = getMachineConfig(machineLabel);
   if (!machineConfig)
-    throw new RestockError(ERRORS.unknownMachine(body.machine));
-  const { event, date, batchId, slots } = body;
-  if (batchId !== `${machineConfig.label}-${date}`)
-    throw new RestockError(ERRORS.batchIdMismatch);
+    throw new RestockError(ERRORS.unknownMachine(machineLabel ?? batchId));
 
   const invalid = (problem) =>
     new RestockError(ERRORS.invalidSubmission(problem));
@@ -102,11 +134,13 @@ export function validateSubmission(body) {
   const configured = new Set(machineSlots);
   const seen = new Set();
   for (const slot of slots) {
-    if (seen.has(slot.slot))
-      throw invalid(`slot ${slot.slot} appears more than once`);
-    seen.add(slot.slot);
-    if (!configured.has(slot.slot))
-      throw invalid(`slot ${slot.slot} is not configured on this machine`);
+    if (seen.has(slot.slotNumber))
+      throw invalid(`slot ${slot.slotNumber} appears more than once`);
+    seen.add(slot.slotNumber);
+    if (!configured.has(slot.slotNumber))
+      throw invalid(
+        `slot ${slot.slotNumber} is not configured on this machine`,
+      );
   }
   for (const slot of machineSlots) {
     if (!seen.has(slot)) throw invalid(`slot ${slot} is missing`);
@@ -141,7 +175,7 @@ function expectedFields(expected) {
  */
 function slotEntry(slot, expected = {}) {
   return {
-    Slot: slot.slot,
+    Slot: slot.slotNumber,
     Drink: formatDrinkName(slot.drink) || null,
     "Expected Drink": expected["Expected Drink"] ?? null,
     "Previous Drink": slot.previousDrink ?? null,
@@ -200,7 +234,9 @@ export function buildRestockLogRows({
 export function rewriteSlotData(submittedSlots, storedEntries) {
   const storedBySlot = new Map(storedEntries.map((e) => [e.Slot, e]));
   return JSON.stringify(
-    submittedSlots.map((slot) => slotEntry(slot, storedBySlot.get(slot.slot))),
+    submittedSlots.map((slot) =>
+      slotEntry(slot, storedBySlot.get(slot.slotNumber)),
+    ),
   );
 }
 
@@ -213,7 +249,7 @@ export function rewriteSlotData(submittedSlots, storedEntries) {
 export function sameSlots(submittedSlots, storedEntries) {
   const fromRequest = submittedSlots.map((s) =>
     JSON.stringify([
-      s.slot,
+      s.slotNumber,
       formatDrinkName(s.drink) || null,
       s.previousDrink ?? null,
       s.previous,
@@ -240,7 +276,7 @@ export function sameSlots(submittedSlots, storedEntries) {
  * from a race is ignored.
  * @param {LogRow[]} rows the whole Restock Log, oldest first
  * @param {string} batchId
- * @returns {{ load?: LogRow, topoff?: LogRow, clearout?: LogRow }}
+ * @returns {{ load?: LogRow, topoff?: LogRow, clearout?: LogRow, split?: LogRow }}
  */
 export function getBatchLogRows(rows, batchId) {
   const found = {};
@@ -253,6 +289,7 @@ export function getBatchLogRows(rows, batchId) {
     load: found[RESTOCK_EVENTS.LOAD],
     topoff: found[RESTOCK_EVENTS.TOPOFF],
     clearout: found[RESTOCK_EVENTS.CLEAROUT],
+    split: found[RESTOCK_EVENTS.SPLIT],
   };
 }
 

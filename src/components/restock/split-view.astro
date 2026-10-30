@@ -1,0 +1,182 @@
+---
+import bob from "~/assets/images/logo_inkscape.svg";
+import { MACHINE_CONFIG } from "~/lib/restock/config.js";
+import { CHECKBOX_HEADER, COLS } from "~/lib/restock/ui-helpers";
+
+const machineLabels = MACHINE_CONFIG.map((m) => m.label);
+---
+
+<section
+  id="view-split"
+  class="hidden pb-28"
+  data-machines={machineLabels.join(",")}
+>
+  <div class="sticky top-0 z-10 border-b border-gray-200 bg-white">
+    <div class="flex items-center justify-between px-4 py-3">
+      <div>
+        <div class="text-gray-400 text-xs">
+          <span id="split-event"></span> · <span id="split-date"></span>
+        </div>
+        <div class="font-heading text-gray-900 text-xl" id="split-title">
+          Kitchen
+        </div>
+      </div>
+      <img src={bob.src} alt="" class="h-11 pr-1" />
+    </div>
+    <div class="flex px-3 pb-1 font-semibold uppercase text-gray-500 text-xs">
+      <div class={`${COLS.name} px-3`}>Drink</div>
+      <div class={`flex ${COLS.middle}`}>
+        {
+          machineLabels.map((label) => (
+            <div class="flex-1 text-center">{label}</div>
+          ))
+        }
+      </div>
+      <div class={`flex ${COLS.checkbox} justify-center whitespace-nowrap`}>{CHECKBOX_HEADER}</div>
+    </div>
+  </div>
+  <div id="drink-list" class="space-y-2 p-3"></div>
+  <div
+    class="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white/95 p-4 backdrop-blur"
+  >
+    <button
+      id="split-complete"
+      class="w-full rounded-2xl bg-orble-dark py-4 font-semibold text-white shadow-md transition text-base active:scale-[0.99]"
+    >
+      Mark Split Task Complete
+    </button>
+    <div
+      id="split-hint"
+      class="mt-2 hidden text-center font-bold text-red-500 text-sm"
+    >
+    </div>
+  </div>
+</section>
+
+<script>
+  import { COLS, drinkLines, esc } from "~/lib/restock/ui-helpers";
+  import { parseDrinkName } from "~/lib/restock/drink-parsing.js";
+  import {
+    $,
+    $payload,
+    $showErrors,
+    navigate,
+    durationSinceStart,
+    postRestock,
+    showSubmitting,
+    type SplitDrink,
+  } from "~/components/restock/runtime";
+  import {
+    clearDraft,
+    readDraft,
+    writeDraft,
+  } from "~/components/restock/drafts";
+
+  const machineLabels = $("view-split").dataset.machines!.split(",");
+
+  // Drinks the kitchen has checked off, by sheet name. Reset with each payload.
+  let approved = new Set<string>();
+
+  /** One drink card: the drink lines and storage, each machine's share, and the checkbox. */
+  function renderDrink(d: SplitDrink, i: number): string {
+    const { title, quals } = drinkLines(parseDrinkName(d.drink));
+    const shares = machineLabels
+      .map(
+        (label) =>
+          `<div class="flex-1 text-center text-xl font-semibold text-gray-900" data-to="${label}">${(d as any)[`to${label}`]}</div>`,
+      )
+      .join("");
+    const checked = approved.has(d.drink);
+    const outline =
+      $showErrors.get() && !checked
+        ? "border-2 border-red-400"
+        : "border border-gray-300";
+    return `<div data-drink="${esc(d.drink)}" class="flex items-stretch overflow-hidden rounded-2xl ${outline} bg-white shadow-sm">
+      <div class="${COLS.name} px-3 py-3">
+        ${title}${quals}
+        <div class="mt-0.5 text-[13px] text-gray-400">storage: <b class="font-semibold text-gray-700" data-storage>${d.storage}</b></div>
+      </div>
+      <div class="flex ${COLS.middle} items-center">${shares}</div>
+      <label class="flex ${COLS.checkbox} cursor-pointer items-center justify-center border-l border-gray-100 active:bg-orble-tint">
+        <input type="checkbox" data-approve="${i}" class="h-5 w-5 rounded accent-[#7AC4B3] ring-1 ring-gray-900" ${checked ? "checked" : ""}></label>
+    </div>`;
+  }
+
+  /** Redraws the header and drink list; runs when a payload arrives or the error state flips. */
+  function renderSplit() {
+    const payload = $payload.get();
+    if (!payload || payload.event !== "Split") return;
+    $("split-event").textContent = payload.event;
+    $("split-date").textContent = payload.date;
+    $("drink-list").innerHTML = (payload.drinks || [])
+      .map(renderDrink)
+      .join("");
+  }
+  $payload.listen((payload) => {
+    if (!payload || payload.event !== "Split") return;
+    const saved = readDraft();
+    approved = new Set(Array.isArray(saved) ? saved : []);
+    $("split-hint").classList.add("hidden");
+    renderSplit();
+  });
+  $showErrors.listen(renderSplit);
+
+  /**
+   * Submits the split. Blocks with red outlines while any drink is
+   * unchecked; on success shows the submitted view.
+   */
+  async function complete() {
+    const payload = $payload.get()!;
+    const drinks = payload.drinks || [];
+    const hint = $("split-hint");
+    const unapproved = drinks.filter((d) => !approved.has(d.drink));
+    if (unapproved.length > 0) {
+      $showErrors.set(true);
+      hint.textContent = `Not approved: ${unapproved.length} of ${drinks.length} drinks`;
+      hint.classList.remove("hidden");
+      document
+        .querySelector(`[data-drink="${esc(unapproved[0].drink)}"]`)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+    hint.classList.add("hidden");
+    const button = $("split-complete") as HTMLButtonElement;
+    showSubmitting(button, true);
+    const failure = await postRestock({
+      batchId: payload.batchId,
+      event: payload.event,
+      duration: durationSinceStart(),
+      drinks: drinks.map(({ drink, storage, ...shares }) => ({
+        drink,
+        ...shares,
+      })),
+    });
+    showSubmitting(button, false);
+    if (failure) {
+      hint.textContent = failure;
+      hint.classList.remove("hidden");
+      return;
+    }
+    clearDraft(payload);
+    // Batch changed mid-request (user went back and started a new log): skip the confirmation UI
+    if ($payload.get() !== payload) return;
+    const time = new Date().toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    $("submitted-meta").textContent =
+      `${payload.event} · Kitchen · ${payload.date} · ${time}`;
+    navigate("submitted", true);
+  }
+
+  $("split-complete").addEventListener("click", complete);
+  $("drink-list").addEventListener("change", (e) => {
+    const target = e.target as HTMLInputElement;
+    if (target.dataset.approve === undefined) return;
+    const drink = $payload.get()!.drinks![Number(target.dataset.approve)].drink;
+    if (target.checked) approved.add(drink);
+    else approved.delete(drink);
+    writeDraft([...approved]);
+    renderSplit();
+  });
+</script>

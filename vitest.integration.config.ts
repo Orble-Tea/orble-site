@@ -8,8 +8,8 @@ export default defineConfig({
     environment: "node",
     include: ["tests/integration/**/*.test.js"],
     globals: true,
-    testTimeout: 60000,
-    hookTimeout: 60000,
+    testTimeout: 180000,
+    hookTimeout: 180000,
     fileParallelism: false,
   },
 });

@@ -88,7 +88,7 @@ export function lookupProduct(catalog, drink) {
 /**
  * Machine products to create: slots on the plan that Nayax does not have yet.
  * Nayax ignores missing stock on create; the PUT that follows sets it.
- * @param {{ currentProducts: object[], catalog: ReturnType<typeof buildNayaxCatalog>, slots: { slot: number, drink: DrinkParts | null, total: number }[] }} input
+ * @param {{ currentProducts: object[], catalog: ReturnType<typeof buildNayaxCatalog>, slots: { slotNumber: number, drink: DrinkParts | null, total: number }[] }} input
  *   currentProducts as read from Nayax; slots is what each slot should hold after the visit
  * @returns {object[]}
  * @throws {RestockError} via lookupProduct when a drink has no usable Nayax product
@@ -96,10 +96,10 @@ export function lookupProduct(catalog, drink) {
 export function nayaxSlotsToCreate({ currentProducts, catalog, slots }) {
   const existingSlots = new Set(currentProducts.map(getProductSlot));
   return slots
-    .filter(({ slot, drink }) => drink?.flavor && !existingSlots.has(slot))
-    .map(({ slot, drink, total }) => ({
+    .filter(({ slotNumber, drink }) => drink?.flavor && !existingSlots.has(slotNumber))
+    .map(({ slotNumber, drink, total }) => ({
       ...lookupProduct(catalog, drink),
-      MDBCode: slot,
+      MDBCode: slotNumber,
       PAR: total,
     }));
 }
@@ -108,13 +108,13 @@ export function nayaxSlotsToCreate({ currentProducts, catalog, slots }) {
  * The machine's whole product list for one full PUT: changed slots get
  * PAR = total and missing stock reset (Nayax's count is PAR minus missing
  * stock), emptied slots are left out, everything else is sent back as read.
- * @param {{ currentProducts: object[], catalog: ReturnType<typeof buildNayaxCatalog>, slots: { slot: number, drink: DrinkParts | null, total: number }[] }} input
+ * @param {{ currentProducts: object[], catalog: ReturnType<typeof buildNayaxCatalog>, slots: { slotNumber: number, drink: DrinkParts | null, total: number }[] }} input
  *   currentProducts as read from Nayax, including any slots just created; slots is what each slot should hold after the visit
  * @returns {object[] | null} null when nothing differs
  * @throws {RestockError} via lookupProduct when a drink has no usable Nayax product
  */
 export function buildNayaxUpdate({ currentProducts, catalog, slots }) {
-  const submittedBySlot = new Map(slots.map((s) => [s.slot, s]));
+  const submittedBySlot = new Map(slots.map((s) => [s.slotNumber, s]));
   let changed = false;
   const put = [];
   for (const current of currentProducts) {

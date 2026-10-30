@@ -15,10 +15,6 @@ export const ERRORS = {
   missingFields: { status: 400, message: "Missing required fields" },
   invalidDate: { status: 400, message: "Invalid date" },
   invalidMode: { status: 400, message: "Invalid mode" },
-  batchIdMismatch: {
-    status: 400,
-    message: "batchId does not match the machine and date",
-  },
   alreadySubmitted: {
     status: 409,
     message: "This event was already submitted for this batch.",
@@ -44,6 +40,14 @@ export const ERRORS = {
   noInventoryForBatch: (date) => ({
     status: 409,
     message: `No Inventory tab named ${inventoryTabName(date)}. Add it, or pick a different batch's date.`,
+  }),
+  /**
+   * @param {string} date YYYY-MM-DD, shown as the tab would be named
+   * @param {string} column the "To <machine>" header the Split fills in
+   */
+  inventoryColumnMissing: (date, column) => ({
+    status: 409,
+    message: `Inventory tab ${inventoryTabName(date)} has no ${column} column. Add it, then submit again.`,
   }),
   /**
    * @param {string} sheetName "Production Plan" or "Inventory tab MM/DD/YYYY"
@@ -112,8 +116,6 @@ export const WARNINGS = {
     `Slot ${slot} has PAR ${par}, but Nayax did not return a readable on-hand count.`,
   openBatchClearedOut: (batchId) =>
     `Batch ${batchId} was never topped off. This Load clears it out.`,
-  missingInventoryAllocationColumn: (machineLabel, header) =>
-    `Inventory is missing an allocation column for ${machineLabel}. Expected a column equivalent to "${header}".`,
 };
 
 /** The hint under Complete when the server rejected the submit with a reason. */

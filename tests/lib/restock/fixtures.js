@@ -8,7 +8,7 @@
  */
 export function submitted(overrides) {
   return {
-    slot: 1,
+    slotNumber: 1,
     drink: null,
     previousDrink: null,
     previous: 0,
