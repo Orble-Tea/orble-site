@@ -8,10 +8,26 @@
 ```mermaid
 %%{init: {"flowchart": {"rankSpacing": 35, "nodeSpacing": 40, "wrappingWidth": 360}}}%%
 flowchart TD
-  A([Complete pressed]) --> Q1{Is the inbound request valid?}
+  A([Complete pressed]) --> Q0{Is the event a Split?}
+  Q0 -- "Yes, the kitchen's form" --> K1
+  Q0 -- "No, a machine's form" --> Q1{Is the inbound request valid?}
   Q1 -- "No, the request shape is incorrect" --> R0["invalidKey / invalidJson / missingFields /<br/>unknownMachine"]
   Q1 -- "No, the slot list violates<br/>the slot invariants" --> R1[invalidSubmission]
   Q1 -- "Yes, so we read the Restock Log to get<br/>all rows with the provided batch id" --> Q2{"Is there already a row for the submitted event?"}
+
+  subgraph K [Split: no Nayax write, so no pending status; a retry redoes both writes]
+  K1{"Is the Split request valid?"}
+  K1 -- "No, the batch id is not Kitchen-#lt;date#gt;, a drink has no name,<br/>or a share is not a whole number" --> R1
+  K1 -- "Yes, so we read the Restock Log" --> K2{"Is there already a Split row<br/>for Kitchen-#lt;date#gt;?"}
+  K2 -- Yes --> R5
+  K2 -- "No, so we read the date's Inventory tab" --> K3{"Does every submitted drink match an Inventory row,<br/>do its shares add up to at most its Storage,<br/>and is every Inventory drink in the submission?"}
+  K3 -- "No, a drink is missing on either side<br/>or a share exceeds storage" --> R1
+  K3 -- Yes --> K4["PUT the To 30th and To Towne columns<br/>(header row down, columns C and D)"]
+  K4 --> K5["Append the Kitchen-#lt;date#gt; Split row,<br/>Status = Complete"]
+  K5 --> OKK([200 Split complete])
+  end
+  K2 -. "no Inventory tab for the date" .-> R10[noInventoryForBatch]
+  K -. "Sheets fails at any step" .-> X
   Q2 -- Yes --> ST{"What is the Status of the event?"}
   Q2 -- No --> Q2b{"Is this event allowed<br/>for the batch yet?"}
 
@@ -52,8 +68,8 @@ flowchart TD
 
   classDef reject fill:#fde2e1,stroke:#b42318,color:#7a271a
   classDef ok fill:#d1fadf,stroke:#027a48,color:#054f31
-  class R0,R1,R2,R4,R5,R6,R7,X reject
-  class OK,OK0 ok
+  class R0,R1,R2,R4,R5,R6,R7,R10,X reject
+  class OK,OK0,OKK ok
   classDef log fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   class E1,E2,G log
 ```
