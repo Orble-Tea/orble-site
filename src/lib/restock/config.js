@@ -19,9 +19,14 @@ export const MACHINE_CONFIG = [
   },
 ];
 
+// Log prefix for the split event log entry
+export const KITCHEN_LABEL = "Kitchen";
+
 export const RESTOCK_LOG_SHEET = "Restock Log";
 export const PRODUCTION_PLAN_SHEET = "Production Plan";
 export const INVENTORY_SHEET = "Inventory";
+// An Inventory tab is Drink, Storage, then one "To <machine>" column per machine (zero-based)
+export const INVENTORY_FIRST_MACHINE_COLUMN = 2;
 
 // Restock Log column names, in sheet order
 export const RESTOCK_LOG_HEADER = {

@@ -43,7 +43,7 @@ describe("buildRestockLogRows", () => {
       event: "Load",
       submittedSlots: [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: THAI,
           previousDrink: "Mango Passion Fruit Tea 16oz",
           previous: 3,
@@ -57,7 +57,7 @@ describe("buildRestockLogRows", () => {
             new: 4,
           }),
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ],
       status: SUBMIT_STATUS.NAYAX_PENDING,
     });
@@ -110,7 +110,7 @@ describe("buildRestockLogRows", () => {
       event: "Load",
       submittedSlots: [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: MATCHA,
           new: 4,
           expected: expected({ drink: MATCHA, new: 4 }),
@@ -128,7 +128,7 @@ describe("buildRestockLogRows", () => {
       visitDate: "2026-07-13",
       submittedSlots: [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: THAI,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 1,
@@ -173,7 +173,7 @@ describe("buildRestockLogRows", () => {
       event: "Load",
       submittedSlots: [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: MATCHA,
           previousDrink: "Taro Tea 16oz",
           new: 4,
@@ -183,7 +183,7 @@ describe("buildRestockLogRows", () => {
             new: 4,
           }),
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ],
       status: SUBMIT_STATUS.NAYAX_PENDING,
     });
@@ -218,21 +218,21 @@ describe("sameSlots", () => {
     event: "Topoff",
     submittedSlots: [
       submitted({
-        slot: 1,
+        slotNumber: 1,
         drink: THAI,
         previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
         previous: 2,
         waste: 1,
         new: 2,
       }),
-      submitted({ slot: 2 }),
+      submitted({ slotNumber: 2 }),
     ],
     status: SUBMIT_STATUS.NAYAX_PENDING,
   })[0];
   const entries = JSON.parse(stored["Slot Data"] || "[]");
   const resubmit = (slot1) => [
     submitted({
-      slot: 1,
+      slotNumber: 1,
       drink: THAI,
       previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
       previous: 2,
@@ -240,7 +240,7 @@ describe("sameSlots", () => {
       new: 2,
       ...slot1,
     }),
-    submitted({ slot: 2 }),
+    submitted({ slotNumber: 2 }),
   ];
 
   it("matches a resend of the stored submit, in any slot order", () => {

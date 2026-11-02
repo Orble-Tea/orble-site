@@ -6,6 +6,7 @@ export const RESTOCK_EVENTS = {
   LOAD: "Load",
   TOPOFF: "Topoff",
   CLEAROUT: "Clearout",
+  SPLIT: "Split",
 };
 
 /** Load and Clearout take the whole old batch out of the slot. */

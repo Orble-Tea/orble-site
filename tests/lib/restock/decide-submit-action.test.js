@@ -14,7 +14,7 @@ describe("decideSubmitAction", () => {
   const BATCH = "30th-2026-07-10";
   const slots = [
     submitted({
-      slot: 1,
+      slotNumber: 1,
       drink: MATCHA,
       new: 3,
       expected: expected({ drink: MATCHA, new: 3 }),
@@ -29,7 +29,7 @@ describe("decideSubmitAction", () => {
     submittedSlots: slots,
     status: SUBMIT_STATUS.NAYAX_PENDING,
   })[0]["Slot Data"];
-  const edited = [submitted({ slot: 1, drink: MATCHA, new: 2 })];
+  const edited = [submitted({ slotNumber: 1, drink: MATCHA, new: 2 })];
 
   // Log rows the way rowsToObjects returns them
   let rowNumber;

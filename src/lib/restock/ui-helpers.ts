@@ -13,7 +13,7 @@ export const NEW_COUNT_FIELDS = ["new", "expectedNew"] as const;
 
 // A slot object as sent by backend
 export type ServerSlot = {
-  slot: number;
+  slotNumber: number;
   flavor: string | null;
   size: string | null;
   topping: string | null;
@@ -49,6 +49,22 @@ export const COLORS = {
   chipMutedBorder: "#e5e7eb",
   countMuted: "#9ca3af",
 };
+
+/** Card columns the table and Split views share, so the drink name is the same width in both. */
+export const COLS = {
+  name: "w-[48%] shrink-0",
+  middle: "flex-1 pr-3",
+  checkbox: "w-14",
+};
+
+/** Header word over the approve checkbox column, shared by every view. */
+export const CHECKBOX_HEADER = "Check";
+
+/** Approve checkbox cell for row `i` of a slot or drink list. */
+export function checkboxCell(i: number, checked: boolean): string {
+  return `<label class="ml-auto flex ${COLS.checkbox} cursor-pointer items-center justify-center border-l border-gray-100 active:bg-orble-tint">
+      <input type="checkbox" data-approve="${i}" class="h-5 w-5 rounded accent-[#7AC4B3] ring-1 ring-gray-900" ${checked ? "checked" : ""}></label>`;
+}
 
 /** Reads the planned new count from whichever field the backend sent. */
 export function plannedNew(s: ServerSlot): number {
@@ -106,6 +122,24 @@ export function esc(s: string): string {
   const div = document.createElement("div");
   div.textContent = s;
   return div.innerHTML;
+}
+
+export type DrinkParts = {
+  flavor: string | null;
+  size: string | null;
+  topping: string | null;
+  sweetness: string | null;
+};
+
+/** The flavor as a title, and size, topping and sweetness each on its own small line. */
+export function drinkLines(d: DrinkParts, titleClass = "text-gray-900") {
+  return {
+    title: `<div class="text-base font-semibold ${titleClass}">${esc(d.flavor || "?")}</div>`,
+    quals: [d.size, d.topping, d.sweetness]
+      .filter(Boolean)
+      .map((q) => `<div class="text-xs text-gray-500">${esc(q!)}</div>`)
+      .join(""),
+  };
 }
 
 // ---- Count rules shared by the edit steppers, the table, and the POST ----
@@ -194,7 +228,7 @@ export function emptyCounts(c: Counts, _event: string): Counts {
 }
 
 type SubmitSlot = {
-  slot: number;
+  slotNumber: number;
   drink: {
     flavor: string;
     size: string | null;
@@ -212,12 +246,17 @@ export function toSubmitSlot(
   s: Counts &
     Pick<
       ServerSlot,
-      "slot" | "flavor" | "size" | "topping" | "sweetness" | "previousDrink"
+      | "slotNumber"
+      | "flavor"
+      | "size"
+      | "topping"
+      | "sweetness"
+      | "previousDrink"
     >,
   event: string,
 ): SubmitSlot {
   return {
-    slot: s.slot,
+    slotNumber: s.slotNumber,
     drink: s.flavor
       ? {
           flavor: s.flavor,

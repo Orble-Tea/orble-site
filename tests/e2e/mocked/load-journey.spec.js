@@ -16,12 +16,10 @@ function topoffPayload() {
   return {
     batchId: "30th-2026-07-13",
     event: "Topoff",
-    machine: "30th",
-    date: "2026-07-13",
     warnings: [],
     slots: [
       slot({
-        slot: 1,
+        slotNumber: 1,
         previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
         flavor: "Thai Tea",
         size: "16oz",
@@ -32,7 +30,7 @@ function topoffPayload() {
         expectedNew: 2,
         total: 5,
       }),
-      slot({ slot: 2 }),
+      slot({ slotNumber: 2 }),
     ],
   };
 }
@@ -91,10 +89,8 @@ test("full Load visit: render, gate, edit, fold, submit payload", async ({
   const body = posts[0];
   expect(body.batchId).toBe("30th-2026-07-10");
   expect(body.event).toBe("Load");
-  expect(body.machine).toBe("30th");
-  expect(body.date).toBe("2026-07-10");
   expect(body.duration).toMatch(/^\d+m \d+s$/);
-  expect(body.slots.map((s) => s.slot)).toEqual([1, 2, 3, 4]);
+  expect(body.slots.map((s) => s.slotNumber)).toEqual([1, 2, 3, 4]);
   expect(body.slots[0]).toMatchObject({ new: 4, drink: { topping: null } });
   expect(body.slots[0].expected).toMatchObject({ new: 3, drink: { topping: "Lychee" } });
 });
@@ -116,7 +112,7 @@ test("Topoff: the previous stepper corrects the Nayax count and reaches the POST
   await page.click("#complete");
   await expect(page.locator("#view-submitted")).toBeVisible();
   // The corrected count is what the server gets, next to the Nayax count it started from.
-  expect(posts[0].slots[0]).toMatchObject({ slot: 1, previous: 2 });
+  expect(posts[0].slots[0]).toMatchObject({ slotNumber: 1, previous: 2 });
   expect(posts[0].slots[0].expected).toMatchObject({ previous: 3 });
 });
 
@@ -126,7 +122,7 @@ test("sold-out slot renders Empty with the sold out! note", async ({
   const payload = topoffPayload();
   // Drink configured in Nayax, sold through, nothing allocated to add.
   payload.slots.push(
-    slot({ slot: 9, flavor: "Taro", size: "16oz", previous: 0 }),
+    slot({ slotNumber: 9, flavor: "Taro", size: "16oz", previous: 0 }),
   );
   await mockData(page, payload);
   await startLog(page, "2026-07-13");
@@ -137,7 +133,7 @@ test("sold-out slot renders Empty with the sold out! note", async ({
   await expect(card).not.toContainText("waste:");
 });
 
-test("Topoff renders previous line, zero waste, no replacing", async ({
+test("Topoff renders before line, zero waste, no replacing", async ({
   page,
 }) => {
   await mockData(page, topoffPayload());
@@ -145,17 +141,17 @@ test("Topoff renders previous line, zero waste, no replacing", async ({
 
   await expect(page.locator("#table-event")).toHaveText("Topoff");
   const slot1 = slotCard(page, 1);
-  await expect(slot1).toContainText("previous: 3");
+  await expect(slot1).toContainText("before: 3");
   await expect(slot1).toContainText("waste: 0");
   await expect(slot1).toContainText("total: 5");
   await expect(slot1).not.toContainText("replacing");
-  // Topoff order: previous, waste, new, total (total always last).
+  // Topoff order: before, waste, new, total (total always last).
   await expect(slot1.locator(".text-right")).toHaveText(
-    /previous:.*waste:.*new:.*total:/s,
+    /before:.*waste:.*new:.*total:/s,
   );
 });
 
-test("edit on a retiring slot: Empty preselected, chips greyed until a flavor is picked", async ({
+test("edit on a retiring slotNumber: Empty preselected, chips greyed until a flavor is picked", async ({
   page,
 }) => {
   await mockData(page, loadPayload());

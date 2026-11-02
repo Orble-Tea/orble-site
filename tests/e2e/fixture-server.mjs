@@ -133,6 +133,7 @@ const RESTOCK_LOG_VALUES = [
   ["Complete", `30th-${SCENARIO_DATES.done}`, "Topoff"],
   ["Complete", `30th-${SCENARIO_DATES.done}`, "Clearout"], // written by the Load below
   ["Complete", `30th-${SCENARIO_DATES.topoff}`, "Load"], // the batch a Load on SCENARIO_DATES.load clears out
+  ["Complete", `Kitchen-${SCENARIO_DATES.topoff}`, "Split"],
 ];
 
 // Restock Log before 30th's first ever Load: the row above it will be Towne's Clearout.

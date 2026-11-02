@@ -9,7 +9,7 @@
 %%{init: {"flowchart": {"rankSpacing": 35, "nodeSpacing": 40, "wrappingWidth": 360}}}%%
 flowchart TD
   A([Complete pressed]) --> Q1{Is the inbound request valid?}
-  Q1 -- "No, the request shape is incorrect" --> R0["invalidKey / invalidJson / missingFields /<br/>unknownMachine / batchIdMismatch"]
+  Q1 -- "No, the request shape is incorrect" --> R0["invalidKey / invalidJson / missingFields /<br/>unknownMachine"]
   Q1 -- "No, the slot list violates<br/>the slot invariants" --> R1[invalidSubmission]
   Q1 -- "Yes, so we read the Restock Log to get<br/>all rows with the provided batch id" --> Q2{"Is there already a row for the submitted event?"}
   Q2 -- Yes --> ST{"What is the Status of the event?"}

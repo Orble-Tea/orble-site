@@ -17,7 +17,7 @@ export const CHIP_COLORS = {
 /** One slot in the canned payload shape, with overridable fields. */
 export function slot(overrides) {
   return {
-    slot: 0,
+    slotNumber: 0,
     previousDrink: null,
     flavor: null,
     size: null,
@@ -36,13 +36,11 @@ export function loadPayload() {
   return {
     batchId: "30th-2026-07-10",
     event: "Load",
-    machine: "30th",
-    date: "2026-07-10",
     warnings: [],
     slots: [
       // swap: Thai Tea goes out, Matcha goes in -> "replacing" line
       slot({
-        slot: 1,
+        slotNumber: 1,
         previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
         flavor: "Matcha",
         size: "16oz",
@@ -55,7 +53,7 @@ export function loadPayload() {
       }),
       // same drink stays -> no replacing line
       slot({
-        slot: 2,
+        slotNumber: 2,
         previousDrink: "Matcha 16oz Less Sweet",
         flavor: "Matcha",
         size: "16oz",
@@ -66,9 +64,9 @@ export function loadPayload() {
         total: 2,
       }),
       // retiring: drinks out, plan puts nothing in -> "Empty" + removing line
-      slot({ slot: 3, previousDrink: "Taro Tea 16oz", previous: 2, waste: 2 }),
+      slot({ slotNumber: 3, previousDrink: "Taro Tea 16oz", previous: 2, waste: 2 }),
       // empty slot -> greyed card
-      slot({ slot: 4 }),
+      slot({ slotNumber: 4 }),
     ],
   };
 }

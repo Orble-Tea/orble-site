@@ -210,7 +210,7 @@ describe("prefill: events", () => {
     expect(data.event).toBe("Load");
     expect(data.slots).toEqual([
       expect.objectContaining({
-        slot: 1,
+        slotNumber: 1,
         previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
         flavor: "Matcha",
         size: "16oz",
@@ -221,7 +221,7 @@ describe("prefill: events", () => {
         total: 2,
       }),
       expect.objectContaining({
-        slot: 2,
+        slotNumber: 2,
         previousDrink: null,
         flavor: null,
         previous: 0,

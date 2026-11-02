@@ -37,7 +37,7 @@ test("draft survives reload and clears after submit", async ({ page }) => {
   await page.click("#complete");
   await expect(page.locator("#view-submitted")).toBeVisible();
   expect(posts[0].slots[0]).toMatchObject({
-    slot: 1,
+    slotNumber: 1,
     drink: { flavor: "Matcha", size: "16oz", topping: "Lychee", sweetness: "Less Sweet" },
     previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
     previous: 3,
