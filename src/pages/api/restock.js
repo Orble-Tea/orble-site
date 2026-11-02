@@ -6,6 +6,7 @@
 import {
   assertConfigured,
   getMachineConfig,
+  KITCHEN_LABEL,
   MACHINE_CONFIG,
   requireRestockSecretKey,
   RESTOCK_EVENTS,
@@ -38,6 +39,7 @@ import {
   putMachineProducts,
 } from "../../lib/restock/nayax.js";
 import { buildRestockData } from "../../lib/restock/restock-prefill.js";
+import { RestockQuery, RestockSubmit } from "../../lib/restock/schemas.js";
 import {
   getRowValue,
   inventoryRowsOf,
@@ -49,7 +51,6 @@ import {
 import {
   buildRestockLogRows,
   decideSubmitAction,
-  getBatchLogRows,
   lastMachineBatchEvent,
   rewriteSlotData,
   SUBMIT_STATUS,
@@ -67,31 +68,38 @@ import {
 /**
  * The restock form for a machine and batch date: the next event and its slot
  * prefill, or a stored Nayax pending submit. Query: key, machine, date,
- * optional mode=clearout.
+ * optional isClearout=true.
  * @param {{ url: URL }} context
  * @returns {Promise<Response>} the form JSON, or a 4xx with the reason
  */
+// Which ERRORS entry a failed RestockQuery field maps to
+const QUERY_ERRORS = {
+  machine: ERRORS.unknownMachine(),
+  date: ERRORS.invalidDate,
+  isClearout: ERRORS.invalidIsClearout,
+};
+
 export async function GET({ url }) {
   try {
     if (!requireRestockSecretKey(url.searchParams.get("key")))
       throw new RestockError(ERRORS.invalidKey);
 
-    const machineConfig = getMachineConfig(url.searchParams.get("machine"));
-    if (!machineConfig) throw new RestockError(ERRORS.unknownMachine());
-
-    const date = url.searchParams.get("date");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date))
-      throw new RestockError(ERRORS.invalidDate);
+    const query = RestockQuery.safeParse({
+      key: url.searchParams.get("key"),
+      machine: url.searchParams.get("machine"),
+      date: url.searchParams.get("date"),
+      isClearout: url.searchParams.get("isClearout") ?? undefined,
+    });
+    if (!query.success) {
+      const field = query.error.issues[0].path[0];
+      throw new RestockError(QUERY_ERRORS[field] ?? ERRORS.missingFields);
+    }
+    const machineConfig = getMachineConfig(query.data.machine);
     if (!machineConfig.machineId)
       throw new RestockError(ERRORS.machineNotConfigured);
 
-    const requestedMode =
-      url.searchParams.get("mode") || url.searchParams.get("event");
-    if (requestedMode && String(requestedMode).toLowerCase() !== "clearout")
-      throw new RestockError(ERRORS.invalidMode);
-
-    const data = await buildRestockData(machineConfig, date, {
-      mode: requestedMode || null,
+    const data = await buildRestockData(machineConfig, query.data.date, {
+      isClearout: query.data.isClearout === "true",
     });
     return json(data);
   } catch (error) {
@@ -148,16 +156,28 @@ async function loadCatalog(machineConfig, currentProducts, drinks) {
 /**
  * The kitchen's Split: each drink's share per machine goes into the date's
  * Inventory tab To columns, then one Complete Split row is logged. Sheets
- * only, no Nayax. Refused whole before any write when a drink does not match
- * the tab, a share exceeds the storage, or the batch already has a Split.
+ * only, no Nayax, so there is no pending status: a retry redoes both writes.
+ * The Restock Log decides the same way as a machine's submit: an identical
+ * resend is already done, a different one is refused, and an older Kitchen
+ * batch cannot be split after a newer one. Refused whole before any write
+ * when a drink does not match the tab or a share exceeds the storage.
  * @param {Record<string, any>} body the parsed request body
+ * @returns {Promise<string>} the response message
  */
 async function submitSplit(body) {
   const date = validateSplitSubmission(body);
   const { batchId, drinks } = body;
   const { header, rows } = await readRestockLog();
-  if (getBatchLogRows(rows, batchId).split)
-    throw new RestockError(ERRORS.alreadySubmitted);
+  const decision = decideSubmitAction({
+    rows,
+    machineLabel: KITCHEN_LABEL,
+    batchId,
+    event: RESTOCK_EVENTS.SPLIT,
+    submittedSlots: drinks,
+  });
+  if (decision.action === "reject")
+    throw new RestockError(decision.error, decision.details);
+  if (decision.action === "done") return "Split already complete";
 
   const tab = await readInventoryTab(date);
   const invalid = (problem) =>
@@ -195,21 +215,22 @@ async function submitSplit(body) {
     );
 
   await writeInventoryShares(tab, sharesByRow);
+  const newRows = buildRestockLogRows({
+    batchId,
+    previousBatchId: null,
+    visitDate: new Date().toISOString().slice(0, 10),
+    duration: body.duration || "",
+    event: RESTOCK_EVENTS.SPLIT,
+    submittedSlots: drinks,
+    status: SUBMIT_STATUS.COMPLETE,
+  });
   await appendSheetValues(
     assertConfigured(SHEET_IDS.restockLog, "RESTOCK_LOG_SHEET_ID"),
     RESTOCK_LOG_SHEET,
-    [
-      toSheetRow(header, {
-        [BATCH_ID]: batchId,
-        [EVENT]: RESTOCK_EVENTS.SPLIT,
-        [DATE]: new Date().toISOString().slice(0, 10),
-        [DURATION]: body.duration || "",
-        [SLOT_DATA]: "",
-        [STATUS]: SUBMIT_STATUS.COMPLETE,
-      }),
-    ],
+    newRows.map((row) => toSheetRow(header, row)),
     "RAW",
   );
+  return "Split complete";
 }
 
 export async function POST({ request }) {
@@ -217,9 +238,21 @@ export async function POST({ request }) {
     const body = await parseJson(request);
     if (!requireRestockSecretKey(body.key))
       throw new RestockError(ERRORS.invalidKey);
+    const parsed = RestockSubmit.safeParse(body);
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      throw new RestockError(
+        issue.code === "invalid_type" &&
+          /received undefined/.test(issue.message)
+          ? ERRORS.missingFields
+          : ERRORS.invalidSubmission(
+              `${issue.path.join(".")}: ${issue.message}`,
+            ),
+      );
+    }
     if (body.event === RESTOCK_EVENTS.SPLIT) {
-      await submitSplit(body);
-      return json({ success: true, message: "Split complete" });
+      const message = await submitSplit(body);
+      return json({ success: true, message });
     }
     const machineConfig = validateSubmission(body);
     const { event, batchId, slots } = body;

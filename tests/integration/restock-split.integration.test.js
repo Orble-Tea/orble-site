@@ -95,7 +95,10 @@ describe("restock split submit, live", () => {
         [RESTOCK_LOG_HEADER.BATCH_ID]: BATCH_ID,
         [RESTOCK_LOG_HEADER.EVENT]: "Split",
         [RESTOCK_LOG_HEADER.DURATION]: "1m 0s",
-        [RESTOCK_LOG_HEADER.SLOT_DATA]: "",
+        [RESTOCK_LOG_HEADER.SLOT_DATA]: JSON.stringify([
+          { drink: THAI, to30th: 3, toTowne: 3 },
+          { drink: MATCHA, to30th: 1, toTowne: 0 },
+        ]),
         [RESTOCK_LOG_HEADER.STATUS]: "Complete",
       }),
     ]);

@@ -14,7 +14,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:coverage": "vitest run --coverage",
     "format": "prettier --write .",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project browser --project integration",
+    "docs:screens": "playwright test --project docs",
     "smoke": "playwright test --config playwright.smoke.config.mjs"
   },
   "devDependencies": {
@@ -67,8 +68,10 @@
     "nanostores": "1.5.3",
     "ogl": "^0.0.103",
     "sharp": "^0.34.4",
+    "swagger-ui-dist": "^5.34.1",
     "tailwindcss": "^3.2.4",
     "tiny-invariant": "^1.3.1",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7",
+    "zod-openapi": "^6.0.2"
   }
 }

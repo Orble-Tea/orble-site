@@ -16,11 +16,20 @@ const DATE = "2099-01-01"; // far future: never collides with real batches
 const BATCH_ID = `Towne-${DATE}`;
 const DRINK = "Taro Tea 22oz Less Sweet w/ Lychee"; // TARO_22_LESS_LYC, already on Towne
 const COMPARED_FIELDS = [
-  "MachineProductID", "NayaxProductID", "MDBCode", "PAR",
-  "MissingStockByMDB", "DEXProductName", "CashPrice", "CreditCardPrice",
+  "MachineProductID",
+  "NayaxProductID",
+  "MDBCode",
+  "PAR",
+  "MissingStockByMDB",
+  "DEXProductName",
+  "CashPrice",
+  "CreditCardPrice",
 ];
 const NAYAX_SETTLE_MS = 3000;
 const NAYAX_RETRIES = 3;
+// The suite runs close to the Sheets read quota (60 per minute), so a 429 on
+// the app's own Restock Log read comes back as a 502; wait for the window.
+const SHEETS_QUOTA_WAIT_MS = 30_000;
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -64,13 +73,23 @@ async function post(body) {
   return { status: response.status, json: await response.json() };
 }
 
-// Nayax can 404 a PUT naming a record it created a moment earlier. The
-// restocker presses Complete again and the resume finishes; so does the test.
+// Nayax can 404 a PUT naming a record it created a moment earlier, and Sheets
+// can 429 a read. The restocker presses Complete again and the resume
+// finishes; so does the test.
+function retryable(json) {
+  const details = json.details ?? {};
+  if (details.operation === "put_machine_products") return NAYAX_SETTLE_MS;
+  if (details.service === "google_sheets" && details.status === 429)
+    return SHEETS_QUOTA_WAIT_MS;
+  return null;
+}
+
 async function submit(body) {
   let result = await post(body);
   for (let i = 0; i < NAYAX_RETRIES; i++) {
-    if (result.json.details?.operation !== "put_machine_products") return result;
-    await new Promise((resolve) => setTimeout(resolve, NAYAX_SETTLE_MS));
+    const wait = retryable(result.json);
+    if (wait === null) return result;
+    await new Promise((resolve) => setTimeout(resolve, wait));
     result = await post(body);
   }
   return result;
@@ -93,7 +112,9 @@ describe("restock submit, live", () => {
     snapshot = await towneProducts();
     // Refuse to run if slot 50 is in use: the test must own it.
     expect(snapshot.some((p) => p.MDBCode === SLOT)).toBe(false);
-    await seedSheet(LOG_SHEET(), "Restock Log", [Object.values(RESTOCK_LOG_HEADER)]);
+    await seedSheet(LOG_SHEET(), "Restock Log", [
+      Object.values(RESTOCK_LOG_HEADER),
+    ]);
     await seedSheet(requireEnv("PRODUCTION_PLAN_SHEET_ID"), "Production Plan", [
       ["Drink Variation", "Amount to Towne", "Slot (Towne)"],
       [DRINK, 3, String(SLOT)],
@@ -111,7 +132,10 @@ describe("restock submit, live", () => {
       });
     }
     await clearSheetRange(LOG_SHEET(), "Restock Log");
-    await clearSheetRange(requireEnv("PRODUCTION_PLAN_SHEET_ID"), "Production Plan");
+    await clearSheetRange(
+      requireEnv("PRODUCTION_PLAN_SHEET_ID"),
+      "Production Plan",
+    );
     vi.unstubAllEnvs();
   });
 
@@ -121,7 +145,12 @@ describe("restock submit, live", () => {
       slots: [
         {
           slotNumber: SLOT,
-          drink: { flavor: "Taro Tea", size: "22oz", topping: "Lychee", sweetness: "Less Sweet" },
+          drink: {
+            flavor: "Taro Tea",
+            size: "22oz",
+            topping: "Lychee",
+            sweetness: "Less Sweet",
+          },
           previousDrink: null,
           previous: 0,
           waste: 0,
@@ -132,7 +161,9 @@ describe("restock submit, live", () => {
     expect(status, JSON.stringify(json)).toBe(200);
 
     const after = await towneProducts();
-    expect(after.filter((p) => p.MDBCode !== SLOT).map(pick)).toEqual(snapshot.map(pick));
+    expect(after.filter((p) => p.MDBCode !== SLOT).map(pick)).toEqual(
+      snapshot.map(pick),
+    );
     const created = after.find((p) => p.MDBCode === SLOT);
     expect(created).toMatchObject({
       PAR: 3,
@@ -142,6 +173,8 @@ describe("restock submit, live", () => {
     expect(created.CashPrice).toBeGreaterThan(0); // prices copied, not blanked
 
     // The row reached the real sheet and the submit finished; its shape is unit-tested
-    expect((await logRows()).map((row) => row.Status)).toEqual([SUBMIT_STATUS.COMPLETE]);
+    expect((await logRows()).map((row) => row.Status)).toEqual([
+      SUBMIT_STATUS.COMPLETE,
+    ]);
   });
 });

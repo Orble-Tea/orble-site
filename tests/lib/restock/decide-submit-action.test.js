@@ -162,4 +162,82 @@ describe("decideSubmitAction", () => {
     ]);
     expect(decision.preExistingEventRow).toBe(rows[1]);
   });
+
+  describe("for the kitchen's Split", () => {
+    const KITCHEN_BATCH = "Kitchen-2026-07-10";
+    const drinks = [
+      { drink: "Mango Passion Fruit Tea 16oz", to30th: 6, toTowne: 5 },
+      { drink: "Horchata 16oz", to30th: 0, toTowne: 0 },
+    ];
+    const storedDrinks = buildRestockLogRows({
+      batchId: KITCHEN_BATCH,
+      previousBatchId: null,
+      visitDate: "2026-07-10",
+      duration: "1m 0s",
+      event: "Split",
+      submittedSlots: drinks,
+      status: SUBMIT_STATUS.COMPLETE,
+    })[0]["Slot Data"];
+    const decideSplit = (makeRows, submittedSlots = drinks) => {
+      rowNumber = 2;
+      const rows = makeRows();
+      return {
+        rows,
+        decision: decideSubmitAction({
+          rows,
+          machineLabel: "Kitchen",
+          batchId: KITCHEN_BATCH,
+          event: "Split",
+          submittedSlots,
+        }),
+      };
+    };
+
+    it("stores the drinks as the row's Slot Data", () => {
+      expect(JSON.parse(storedDrinks)).toEqual(drinks);
+    });
+
+    it("appends when the kitchen batch has no Split yet, even before any Load", () => {
+      expect(decideSplit(() => []).decision).toEqual({ action: "append" });
+      expect(
+        decideSplit(() => [row("Kitchen-2026-07-03", "Split")]).decision,
+      ).toEqual({ action: "append" });
+    });
+
+    it("rejects a kitchen batch older than the newest Split", () => {
+      expect(
+        decideSplit(() => [row("Kitchen-2026-07-17", "Split")]).decision,
+      ).toEqual({
+        action: "reject",
+        error: ERRORS.batchSuperseded("Kitchen-2026-07-17"),
+        details: { newestBatchId: "Kitchen-2026-07-17" },
+      });
+    });
+
+    it("treats a resend with the same drinks as done, in any order", () => {
+      const { rows, decision } = decideSplit(
+        () => [
+          row(KITCHEN_BATCH, "Split", SUBMIT_STATUS.COMPLETE, storedDrinks),
+        ],
+        [...drinks].reverse(),
+      );
+      expect(decision).toEqual({
+        action: "done",
+        preExistingEventRow: rows[0],
+      });
+    });
+
+    it("rejects a second Split with different drinks", () => {
+      const { decision } = decideSplit(
+        () => [
+          row(KITCHEN_BATCH, "Split", SUBMIT_STATUS.COMPLETE, storedDrinks),
+        ],
+        [{ ...drinks[0], to30th: 7 }, drinks[1]],
+      );
+      expect(decision).toEqual({
+        action: "reject",
+        error: ERRORS.alreadySubmitted,
+      });
+    });
+  });
 });

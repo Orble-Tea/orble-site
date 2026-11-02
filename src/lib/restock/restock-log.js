@@ -29,6 +29,10 @@ const { BATCH_ID, EVENT, DATE, DURATION, SLOT_DATA, STATUS } =
  *   A Restock Log row keyed by column name (RESTOCK_LOG_HEADER).
  * @typedef {Record<string, unknown>} SlotDataEntry
  *   One slot's entry in a row's Slot Data JSON; see slotEntry for the keys.
+ * @typedef {{ drink: string } & Record<string, number>} SplitDrink
+ *   One drink of the kitchen's Split: its name and a to<Machine> share per machine.
+ * @typedef {SubmittedSlot[] | SplitDrink[]} Submitted
+ *   What a form confirmed: a machine's slots, or the kitchen's drinks for a Split.
  */
 
 // A submit's progress, in the Status column of its log row(s)
@@ -191,10 +195,11 @@ function slotEntry(slot, expected = {}) {
 }
 
 /**
- * Restock Log rows for a submission. Every row carries every slot as JSON in
- * Slot Data. A Load writes a Clearout row closing the previous batch (when
- * there is one) and a Load row; a Topoff or a standalone Clearout writes one row.
- * @param {{ batchId: string, previousBatchId: string | null, visitDate: string, duration: string, event: string, submittedSlots: SubmittedSlot[], status: string }} input
+ * Restock Log rows for a submission. Every row carries what was confirmed as
+ * JSON in Slot Data: every slot, or a Split's drinks. A Load writes a Clearout
+ * row closing the previous batch (when there is one) and a Load row; a Topoff,
+ * a standalone Clearout or a Split writes one row.
+ * @param {{ batchId: string, previousBatchId: string | null, visitDate: string, duration: string, event: string, submittedSlots: Submitted, status: string }} input
  *   previousBatchId is the batch a Load closes out
  * @returns {LogRow[]} one or two rows
  */
@@ -208,9 +213,11 @@ export function buildRestockLogRows({
   status,
 }) {
   const slotData = JSON.stringify(
-    submittedSlots.map((slot) =>
-      slotEntry(slot, expectedFields(slot.expected)),
-    ),
+    event === RESTOCK_EVENTS.SPLIT
+      ? submittedSlots
+      : submittedSlots.map((slot) =>
+          slotEntry(slot, expectedFields(slot.expected)),
+        ),
   );
   const row = (rowBatchId, rowEvent) => ({
     [BATCH_ID]: rowBatchId,
@@ -241,7 +248,25 @@ export function rewriteSlotData(submittedSlots, storedEntries) {
 }
 
 /**
- * Whether a request carries the same confirmed state as a stored submit.
+ * Whether a Split request carries the same drinks and shares as a stored Split.
+ * @param {SplitDrink[]} submittedDrinks
+ * @param {SplitDrink[]} storedDrinks the row's Slot Data
+ * @returns {boolean}
+ */
+export function sameDrinks(submittedDrinks, storedDrinks) {
+  const key = (entry) =>
+    JSON.stringify([
+      entry.drink,
+      ...MACHINE_CONFIG.map((config) => entry[`to${config.label}`]),
+    ]);
+  return (
+    JSON.stringify(submittedDrinks.map(key).sort()) ===
+    JSON.stringify(storedDrinks.map(key).sort())
+  );
+}
+
+/**
+ * Whether a request carries the same confirmed slots as a stored submit.
  * @param {SubmittedSlot[]} submittedSlots
  * @param {SlotDataEntry[]} storedEntries the row's Slot Data
  * @returns {boolean}
@@ -311,9 +336,11 @@ export function lastMachineBatchEvent(rows, machineLabel) {
 /**
  * The batch rule a new event would break, or null when the batch can take it.
  * Shared by the page (which event to offer) and the submit (whether to write),
- * so the two cannot disagree.
+ * so the two cannot disagree. The kitchen's Split is checked against the
+ * Kitchen batch: it has no Load, so only the newer-batch rule applies to it.
  * @param {{ rows: LogRow[], batchRows: ReturnType<typeof getBatchLogRows>, machineLabel: string, batchId: string, event: string }} input
- *   rows is the whole Restock Log; batchRows is getBatchLogRows(rows, batchId)
+ *   rows is the whole Restock Log; batchRows is getBatchLogRows(rows, batchId);
+ *   machineLabel is KITCHEN_LABEL for a Split
  * @returns {{ error: { status: number, message: string }, details?: Record<string, unknown> } | null}
  *   details carries fields the page reads alongside the message
  */
@@ -339,7 +366,8 @@ export function batchRuleViolation({
     Boolean(batchRows.load) &&
     batchRows.load[STATUS] !== SUBMIT_STATUS.NAYAX_PENDING;
   // The requested event is a Topoff or Clearout, but this is not possible as there is no Load event for this batch
-  if (event !== RESTOCK_EVENTS.LOAD && !loadDone)
+  const needsLoad = [RESTOCK_EVENTS.TOPOFF, RESTOCK_EVENTS.CLEAROUT];
+  if (needsLoad.includes(event) && !loadDone)
     return { error: ERRORS.needsEventFirst(RESTOCK_EVENTS.LOAD, event) };
   return null;
 }
@@ -348,8 +376,9 @@ export function batchRuleViolation({
  * What a submit does given the Restock Log. The event's row for this batch
  * comes first, so a failed submit can always finish; only without one do the
  * batch rules apply.
- * @param {{ rows: LogRow[], machineLabel: string, batchId: string, event: string, submittedSlots: SubmittedSlot[] }} input
- *   rows is the whole Restock Log, oldest first
+ * @param {{ rows: LogRow[], machineLabel: string, batchId: string, event: string, submittedSlots: Submitted }} input
+ *   rows is the whole Restock Log, oldest first; a Split passes KITCHEN_LABEL
+ *   and its drinks
  * @returns {{ action: "append" }
  *   | { action: "resume", overwrite: boolean, preExistingEventRow: LogRow }
  *   | { action: "done", preExistingEventRow: LogRow }
@@ -367,10 +396,11 @@ export function decideSubmitAction({
   const batchRows = getBatchLogRows(rows, batchId);
   const eventRow = batchRows[event.toLowerCase()];
   if (eventRow) {
-    const same = sameSlots(
-      submittedSlots,
-      JSON.parse(eventRow[SLOT_DATA] || "[]"),
-    );
+    const stored = JSON.parse(eventRow[SLOT_DATA] || "[]");
+    const same =
+      event === RESTOCK_EVENTS.SPLIT
+        ? sameDrinks(submittedSlots, stored)
+        : sameSlots(submittedSlots, stored);
     if (eventRow[STATUS] === SUBMIT_STATUS.NAYAX_PENDING)
       return {
         action: "resume",

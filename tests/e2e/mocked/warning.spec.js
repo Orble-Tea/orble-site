@@ -30,7 +30,7 @@ test("warning slot renders amber and cannot resolve without a flavor", async ({
   await startLog(page, "2026-07-10");
 
   const card = slotCard(page, 2);
-  await expect(card).toContainText("?");
+  await expect(card).toContainText("BMT22");
   await expect(card).toContainText(/unrecognized "BMT22"/i);
 
   // The edit form opens with no flavor picked and the defaults checked.
@@ -43,7 +43,9 @@ test("warning slot renders amber and cannot resolve without a flavor", async ({
     page.locator('#edit-chips input[name="Topping"][value="None"]'),
   ).toBeChecked();
   await expect(
-    page.locator('#edit-chips input[name="Sweetness"][value="Regular Sweetness"]'),
+    page.locator(
+      '#edit-chips input[name="Sweetness"][value="Regular Sweetness"]',
+    ),
   ).toBeChecked();
 
   // Saving without picking a flavor keeps the warning on the table.

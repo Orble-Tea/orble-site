@@ -105,7 +105,7 @@ export async function POST({ request }) {
 
     if (!validationResult.success) {
       // Extract validation errors
-      const errors = validationResult.error.flatten().fieldErrors;
+      const errors = z.flattenError(validationResult.error).fieldErrors;
 
       return new Response(
         JSON.stringify({

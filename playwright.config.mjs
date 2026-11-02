@@ -37,6 +37,13 @@ export default defineConfig({
       workers: 1,
       use: { video: "retain-on-failure", trace: "retain-on-failure" },
     },
+    // Doc screenshots: rendered on demand by `npm run docs:screens`, not by test:e2e.
+    // 1x so the PNGs read at a sensible size in the markdown.
+    {
+      name: "docs",
+      testMatch: /docs\/.*\.spec\.js/,
+      use: { deviceScaleFactor: 1 },
+    },
   ],
   webServer: [
     {

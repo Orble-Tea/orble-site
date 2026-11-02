@@ -97,7 +97,10 @@ describe("POST /api/restock for a Split", () => {
         "Split",
         expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         "1m 0s",
-        "",
+        JSON.stringify([
+          { drink: THAI, to30th: 3, toTowne: 3 },
+          { drink: MATCHA, to30th: 1, toTowne: 0 },
+        ]),
         "Complete",
       ],
     ]);
@@ -154,9 +157,62 @@ describe("POST /api/restock for a Split", () => {
     expect(writes(calls)).toEqual([]);
   });
 
-  it("refuses a second Split for the same kitchen batch", async () => {
+  it("refuses a second Split with different drinks for the same kitchen batch", async () => {
     const calls = installFakes({
-      logRows: [[BATCH_ID, "Split", DATE, "1m 0s", "", "Complete"]],
+      logRows: [
+        [
+          BATCH_ID,
+          "Split",
+          DATE,
+          "1m 0s",
+          JSON.stringify([
+            { drink: THAI, to30th: 2, toTowne: 4 },
+            { drink: MATCHA, to30th: 1, toTowne: 0 },
+          ]),
+          "Complete",
+        ],
+      ],
+    });
+
+    const response = await POST({
+      request: makeRequest({
+        drinks: [
+          { drink: THAI, to30th: 3, toTowne: 3 },
+          { drink: MATCHA, to30th: 1, toTowne: 0 },
+        ],
+      }),
+    });
+
+    expect(response.status).toBe(409);
+    expect(writes(calls)).toEqual([]);
+  });
+
+  it("answers a resend of the same Split with 200 and writes nothing", async () => {
+    const drinks = [
+      { drink: THAI, to30th: 3, toTowne: 3 },
+      { drink: MATCHA, to30th: 1, toTowne: 0 },
+    ];
+    const calls = installFakes({
+      logRows: [
+        [BATCH_ID, "Split", DATE, "1m 0s", JSON.stringify(drinks), "Complete"],
+      ],
+    });
+
+    const response = await POST({ request: makeRequest({ drinks }) });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      success: true,
+      message: "Split already complete",
+    });
+    expect(writes(calls)).toEqual([]);
+  });
+
+  it("refuses a Split for a kitchen batch older than the newest Split", async () => {
+    const calls = installFakes({
+      logRows: [
+        ["Kitchen-2026-07-17", "Split", DATE, "1m 0s", "[]", "Complete"],
+      ],
     });
 
     const response = await POST({

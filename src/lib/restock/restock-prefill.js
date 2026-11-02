@@ -172,13 +172,6 @@ function buildMachineSlots(machineProducts, machineConfig, event, warnings) {
   );
 }
 
-function normalizeRequestedMode(mode) {
-  const normalized = String(mode || "")
-    .trim()
-    .toLowerCase();
-  return normalized || null;
-}
-
 /** A stored submit as the form's prefill, so pressing Complete resends it. */
 function prefillFromLogRow(batchId, row) {
   const slots = JSON.parse(row[RESTOCK_LOG_HEADER.SLOT_DATA] || "[]").map(
@@ -286,9 +279,7 @@ async function buildSplitData(date) {
 export async function buildRestockData(machineConfig, date, options = {}) {
   const batchId = `${machineConfig.label}-${date}`;
   const logRows = options.logRows ?? (await readRestockLog()).rows;
-  const clearoutMode =
-    normalizeRequestedMode(options.mode ?? options.event) ===
-    RESTOCK_EVENTS.CLEAROUT.toLowerCase();
+  const clearoutMode = options.isClearout === true;
   const batchRows = getBatchLogRows(logRows, batchId);
   const unfinished = (
     clearoutMode ? [batchRows.clearout] : [batchRows.load, batchRows.topoff]

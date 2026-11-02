@@ -293,7 +293,7 @@ describe("restock data integration", () => {
   it("builds a Clearout for the batch after its Load", async () => {
     await seedRestockLog(logRows([BATCH_ID, "Load"]));
 
-    const response = await getRestockData("&mode=clearout");
+    const response = await getRestockData("&isClearout=true");
 
     expect(response.status).toBe(200);
     const body = await response.json();

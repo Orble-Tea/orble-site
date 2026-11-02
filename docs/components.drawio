@@ -1,0 +1,73 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Orble Beta components" id="orble-beta-components">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="c_browser" value="Phone browser" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#999999;fontColor=#555555;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="200" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="c_server" value="Orble Beta server · Astro on Netlify" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#999999;fontColor=#555555;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="300" y="40" width="520" height="640" as="geometry"/>
+        </mxCell>
+        <mxCell id="c_nayax" value="Nayax" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#999999;fontColor=#555555;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="40" width="240" height="160" as="geometry"/>
+        </mxCell>
+        <mxCell id="c_google" value="Google" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#999999;fontColor=#555555;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="240" width="560" height="440" as="geometry"/>
+        </mxCell>
+        <mxCell id="c_sheets" value="Google Sheets" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#999999;fontColor=#555555;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="370" width="260" height="300" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="app" value="Restock app" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="60" y="290" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="/api/restock&#xa;GET prefill · POST submit" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="330" y="290" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="nayaxClient" value="Nayax client" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="620" y="90" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="sheetsClient" value="Sheets client" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="620" y="490" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="lynx" value="Lynx API&#xa;machine products" style="shape=cylinder3;whiteSpace=wrap;html=0;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="70" width="150" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="script" value="Apps Script&#xa;recipe card generator" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="270" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="plan" value="Production Plan" style="shape=document;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;size=0.25;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="390" width="200" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="inventory" value="Refrigerated Inventory" style="shape=document;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;size=0.25;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="490" width="200" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="log" value="Restock Log" style="shape=document;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;size=0.25;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="590" width="200" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="cards" value="Google Docs&#xa;Recipe Cards" style="shape=document;whiteSpace=wrap;html=0;fillColor=#eeeeee;strokeColor=#999999;fontSize=13;size=0.25;" vertex="1" parent="1">
+          <mxGeometry x="1420" y="260" width="170" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;" edge="1" parent="1" source="app" target="api"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;exitX=1;exitY=0.25;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="nayaxClient"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;exitX=1;exitY=0.75;entryX=0;entryY=0.5;" edge="1" parent="1" source="api" target="sheetsClient"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" value="reads · updates" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;startArrow=block;startFill=1;fontSize=12;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="nayaxClient" target="lynx"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="reads" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;fontSize=12;exitX=1;exitY=0.25;entryX=0;entryY=0.5;" edge="1" parent="1" source="sheetsClient" target="plan"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" value="reads · writes split" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;startArrow=block;startFill=1;fontSize=12;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="sheetsClient" target="inventory"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" value="writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;fontSize=12;exitX=1;exitY=0.75;entryX=0;entryY=0.5;" edge="1" parent="1" source="sheetsClient" target="log"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="plan" target="script"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;fontSize=12;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="script" target="cards"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e10" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#666666;endArrow=block;endFill=1;fontSize=12;exitX=1;exitY=0.75;entryX=1;entryY=0.5;" edge="1" parent="1" source="script" target="inventory">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="1380" y="315"/><mxPoint x="1380" y="525"/></Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
