@@ -63,6 +63,12 @@ Rules the smoke lives by:
 - **Independent derivation.** `tests/smoke/smoke.spec.js` must never reuse the backend's derivation (`restock-service`, the prefill, the submit routes). Its expectations are plain sums over raw sheet values; reusing the derivation would let a bug agree with itself and pass. The drink parser (`drinks.js`) is shared on purpose: it only names a drink, and its own unit tests cover it.
 - **Aggregate-level.** It checks that no unit of any drink is lost or invented end to end. Slot-level placement is covered by the fixture-backed browser tests.
 
+## API docs
+
+Open `/docs?key=<RESTOCK_SECRET_KEY>` on any deploy for the restock API reference (Swagger UI). The page reads `/api/openapi.json`, which is built at request time from the Zod schemas in `src/lib/restock/schemas.js`. `/api/restock` validates with the same schemas, so a field cannot appear in the docs without the code accepting it, or the other way round. Try-it is enabled for GET only.
+
+To document a new route: add its request and response schemas to `schemas.js` with `.meta({ description, example })`, validate in the handler with `safeParse`, and register the path in `src/lib/openapi.js`.
+
 ## Credits
 
 - astronaut image

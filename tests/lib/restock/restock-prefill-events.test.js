@@ -45,7 +45,7 @@ describe("prefill: events", () => {
       getMachineConfig("30th"),
       "2026-07-10",
       {
-        mode: "clearout",
+        isClearout: true,
       },
     );
 
@@ -77,7 +77,7 @@ describe("prefill: events", () => {
 
     await expect(
       buildRestockData(getMachineConfig("30th"), "2026-07-10", {
-        mode: "clearout",
+        isClearout: true,
       }),
     ).rejects.toMatchObject({
       status: ERRORS.batchClearedOut.status,
