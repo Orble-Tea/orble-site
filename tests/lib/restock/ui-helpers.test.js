@@ -93,7 +93,7 @@ describe("toSubmitSlot", () => {
   // The POST carries the full state the restocker confirmed, so the log
   // records what they saw even if Nayax or the plan changed mid-visit.
   const slot = {
-    slot: 1,
+    slotNumber: 1,
     previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
     flavor: "Matcha",
     size: "16oz",
@@ -108,7 +108,7 @@ describe("toSubmitSlot", () => {
 
   it("sends the drink, previous drink, and all three counts for every slot", () => {
     expect(toSubmitSlot(slot, "Topoff")).toEqual({
-      slot: 1,
+      slotNumber: 1,
       drink: {
         flavor: "Matcha",
         size: "16oz",
@@ -157,7 +157,7 @@ describe("toSubmitSlot", () => {
 describe("restoreDraftEntry", () => {
   it("reads drafts saved before the sweetness rename", () => {
     const entry = restoreDraftEntry(
-      { slot: 1, waste: 0, newCount: 2, sweetnessLevel: "Less Sweet" },
+      { slotNumber: 1, waste: 0, newCount: 2, sweetnessLevel: "Less Sweet" },
       { previous: 3 },
       "Topoff",
     );
@@ -168,7 +168,7 @@ describe("restoreDraftEntry", () => {
   it("keeps a corrected previous count saved in the draft", () => {
     expect(
       restoreDraftEntry(
-        { slot: 1, previous: 2, waste: 1, newCount: 0 },
+        { slotNumber: 1, previous: 2, waste: 1, newCount: 0 },
         { previous: 3 },
         "Topoff",
       ),
@@ -178,7 +178,7 @@ describe("restoreDraftEntry", () => {
   it("clamps a Topoff draft whose waste was allowed above previous by the old rule", () => {
     expect(
       restoreDraftEntry(
-        { slot: 1, waste: 4, newCount: 0 },
+        { slotNumber: 1, waste: 4, newCount: 0 },
         { previous: 3 },
         "Topoff",
       ).waste,

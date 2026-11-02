@@ -14,17 +14,15 @@ describe("validateSubmission", () => {
   const ok = (event, slots, overrides = {}) => ({
     batchId: "30th-2026-07-10",
     event,
-    machine: "30th",
-    date: "2026-07-10",
     slots,
     ...overrides,
   });
-  const twoSlots = [submitted({ slot: 1 }), submitted({ slot: 2 })];
+  const twoSlots = [submitted({ slotNumber: 1 }), submitted({ slotNumber: 2 })];
 
   const cases = [
     {
       name: "a body missing a field",
-      input: ok("Load", twoSlots, { date: undefined }),
+      input: ok("Load", twoSlots, { batchId: undefined }),
       error: ERRORS.missingFields.message,
     },
     {
@@ -34,29 +32,21 @@ describe("validateSubmission", () => {
     },
     {
       name: "an unknown machine",
-      input: ok("Load", twoSlots, {
-        machine: "Depot",
-        batchId: "Depot-2026-07-10",
-      }),
+      input: ok("Load", twoSlots, { batchId: "Depot-2026-07-10" }),
       error: ERRORS.unknownMachine("Depot").message,
-    },
-    {
-      name: "a batchId that does not match the machine and date",
-      input: ok("Load", twoSlots, { batchId: "30th-2026-07-03" }),
-      error: ERRORS.batchIdMismatch.message,
     },
     {
       name: "a valid Load",
       input: ok("Load", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: MATCHA,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 2,
           waste: 2,
           new: 4,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: null,
     },
@@ -64,14 +54,14 @@ describe("validateSubmission", () => {
       name: "a Load that leaves old drinks in the slot",
       input: ok("Load", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: MATCHA,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 3,
           waste: 2,
           new: 1,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: /slot 1: a Load must take out all 3 previous/i,
     },
@@ -79,7 +69,7 @@ describe("validateSubmission", () => {
       name: "a missing slot",
       input: ok("Load", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 2,
           waste: 2,
@@ -91,13 +81,13 @@ describe("validateSubmission", () => {
       name: "a duplicated slot",
       input: ok("Load", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 2,
           waste: 2,
         }),
         submitted({
-          slot: 1,
+          slotNumber: 1,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 2,
           waste: 2,
@@ -109,13 +99,13 @@ describe("validateSubmission", () => {
       name: "a slot the machine does not have",
       input: ok("Load", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 2,
           waste: 2,
         }),
-        submitted({ slot: 2 }),
-        submitted({ slot: 36 }),
+        submitted({ slotNumber: 2 }),
+        submitted({ slotNumber: 36 }),
       ]),
       error: /slot 36 is not configured/i,
     },
@@ -123,13 +113,13 @@ describe("validateSubmission", () => {
       name: "a negative count",
       input: ok("Load", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 2,
           waste: 2,
           new: -1,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: /slot 1: new must be a non-negative integer/i,
     },
@@ -137,14 +127,14 @@ describe("validateSubmission", () => {
       name: "new over the slot's headroom",
       input: ok("Topoff", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: THAI,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 3,
           waste: 0,
           new: 2,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: /slot 1: new 2 exceeds the 1 free/i,
     },
@@ -152,14 +142,14 @@ describe("validateSubmission", () => {
       name: "Topoff waste above the Nayax count",
       input: ok("Topoff", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: THAI,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 3,
           waste: 4,
           new: 0,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: /slot 1: waste 4 exceeds previous 3/i,
     },
@@ -167,14 +157,14 @@ describe("validateSubmission", () => {
       name: "Topoff waste above a corrected previous count",
       input: ok("Topoff", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: THAI,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 2,
           waste: 3,
           new: 0,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: /slot 1: waste 3 exceeds previous 2/i,
     },
@@ -183,14 +173,14 @@ describe("validateSubmission", () => {
       // Nayax says 3 (1 free); really 2, so 2 new fit.
       input: ok("Topoff", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: THAI,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 2,
           waste: 0,
           new: 2,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: null,
     },
@@ -198,14 +188,14 @@ describe("validateSubmission", () => {
       name: "a Topoff that swaps the drink",
       input: ok("Topoff", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: MATCHA,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 3,
           waste: 0,
           new: 1,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: /slot 1: a Topoff cannot change the drink/i,
     },
@@ -213,14 +203,14 @@ describe("validateSubmission", () => {
       name: "a Topoff that corrects the previous drink and keeps it",
       input: ok("Topoff", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           drink: MATCHA,
           previousDrink: "Matcha 16oz Less Sweet",
           previous: 3,
           waste: 0,
           new: 1,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: null,
     },
@@ -229,19 +219,19 @@ describe("validateSubmission", () => {
       // Would delete the Nayax product while logging Total 3
       input: ok("Topoff", [
         submitted({
-          slot: 1,
+          slotNumber: 1,
           previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee",
           previous: 3,
           waste: 0,
           new: 0,
         }),
-        submitted({ slot: 2 }),
+        submitted({ slotNumber: 2 }),
       ]),
       error: /slot 1: a slot with no drink must end at 0, not 3/i,
     },
     {
       name: "an event that is not Load, Topoff or Clearout",
-      input: ok("load", [submitted({ slot: 1 }), submitted({ slot: 2 })]),
+      input: ok("load", [submitted({ slotNumber: 1 }), submitted({ slotNumber: 2 })]),
       error: /unknown event load/,
     },
   ];

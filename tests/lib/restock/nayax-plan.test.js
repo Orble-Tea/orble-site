@@ -72,7 +72,7 @@ describe("buildNayaxUpdate", () => {
     const put = buildNayaxUpdate({
       currentProducts: [changed, untouched, outsideConfig],
       catalog,
-      slots: [{ slot: 1, drink: THAI, total: 4 }],
+      slots: [{ slotNumber: 1, drink: THAI, total: 4 }],
     });
     // Full objects: a PUT replaces each product and drops anything left out
     expect(put).toEqual([
@@ -87,7 +87,7 @@ describe("buildNayaxUpdate", () => {
     const put = buildNayaxUpdate({
       currentProducts: current,
       catalog,
-      slots: [{ slot: 1, drink: THAI, total: 3 }],
+      slots: [{ slotNumber: 1, drink: THAI, total: 3 }],
     });
     expect(put).toBeNull();
   });
@@ -97,7 +97,7 @@ describe("buildNayaxUpdate", () => {
     const put = buildNayaxUpdate({
       currentProducts: current,
       catalog,
-      slots: [{ slot: 1, drink: MATCHA, total: 4 }],
+      slots: [{ slotNumber: 1, drink: MATCHA, total: 4 }],
     });
     expect(put).toEqual([
       {
@@ -116,7 +116,7 @@ describe("buildNayaxUpdate", () => {
     const created = nayaxSlotsToCreate({
       currentProducts: [],
       catalog,
-      slots: [{ slot: 50, drink: MATCHA, total: 3 }],
+      slots: [{ slotNumber: 50, drink: MATCHA, total: 3 }],
     });
     expect(created).toEqual([
       {
@@ -143,8 +143,8 @@ describe("buildNayaxUpdate", () => {
       currentProducts: [emptied, keep, outsideConfig],
       catalog,
       slots: [
-        { slot: 1, drink: null, total: 0 },
-        { slot: 2, drink: THAI, total: 4 },
+        { slotNumber: 1, drink: null, total: 0 },
+        { slotNumber: 2, drink: THAI, total: 4 },
       ],
     });
     expect(put).toEqual([
@@ -157,7 +157,7 @@ describe("buildNayaxUpdate", () => {
     nayaxSlotsToCreate({
       currentProducts: [],
       catalog,
-      slots: [{ slot: 50, drink, total: 2 }],
+      slots: [{ slotNumber: 50, drink, total: 2 }],
     })[0];
 
   it("takes DEX name and prices from a slot already using the product when the catalog lacks them", () => {

@@ -64,7 +64,7 @@ test("Topoff: real allocation and previous counts flow through", async ({
   // Real determineEvent read the fixture Restock Log's Load row for this
   // batch. Inventory allocates from "To 30th"; slot 1 keeps its drink.
   const slot1 = slotCard(page, 1);
-  await expect(slot1).toContainText("previous: 3");
+  await expect(slot1).toContainText("before: 3");
   await expect(slot1).toContainText("waste: 0");
   await expect(slot1).not.toContainText("replacing");
 });

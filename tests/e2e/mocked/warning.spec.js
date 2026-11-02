@@ -7,7 +7,7 @@ import { loadPayload, mockData, startLog, slot, slotCard } from "./helpers.mjs";
 function warningPayload() {
   const payload = loadPayload();
   payload.slots[1] = slot({
-    slot: 2,
+    slotNumber: 2,
     previousDrink: "BMT22",
     previous: 3,
     waste: 3,

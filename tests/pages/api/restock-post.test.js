@@ -13,14 +13,14 @@ import {
 const BATCH_ID = "30th-2026-07-10";
 const THAI_PARTS = { flavor: "Thai Tea", size: "16oz", topping: "Lychee", sweetness: "Less Sweet" };
 const MATCHA_PARTS = { flavor: "Matcha", size: "16oz", topping: null, sweetness: "Less Sweet" };
-const EMPTY_SLOT_2 = { slot: 2, drink: null, previousDrink: null, previous: 0, waste: 0, new: 0 };
+const EMPTY_SLOT_2 = { slotNumber: 2, drink: null, previousDrink: null, previous: 0, waste: 0, new: 0 };
 
 const LOAD_SLOTS = [
-  { slot: 1, drink: MATCHA_PARTS, previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee", previous: 3, waste: 3, new: 3 },
+  { slotNumber: 1, drink: MATCHA_PARTS, previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee", previous: 3, waste: 3, new: 3 },
   EMPTY_SLOT_2,
 ];
 const TOPOFF_SLOTS = [
-  { slot: 1, drink: THAI_PARTS, previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee", previous: 3, waste: 0, new: 1 },
+  { slotNumber: 1, drink: THAI_PARTS, previousDrink: "Thai Tea 16oz Less Sweet w/ Lychee", previous: 3, waste: 0, new: 1 },
   EMPTY_SLOT_2,
 ];
 
@@ -29,8 +29,6 @@ function body(event, slots, overrides = {}) {
     key: "secret",
     batchId: BATCH_ID,
     event,
-    machine: "30th",
-    date: "2026-07-10",
     duration: "5m 32s",
     slots,
     ...overrides,

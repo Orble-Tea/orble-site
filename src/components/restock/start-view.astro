@@ -258,9 +258,9 @@ const drinkNameRules: [string, string[]][] = [
       newCount: plannedNew(s),
       approved: false,
       edited: false,
-      warning: warned.get(s.slot)?.code,
-      warningReason: warned.get(s.slot)?.reason,
-      warningMessage: warned.get(s.slot)?.message,
+      warning: warned.get(s.slotNumber)?.code,
+      warningReason: warned.get(s.slotNumber)?.reason,
+      warningMessage: warned.get(s.slotNumber)?.message,
     }));
   }
 
@@ -320,10 +320,19 @@ const drinkNameRules: [string, string[]][] = [
     }
     startStatus(null);
     setStartedAt(Date.now());
+    if (body.event === "Split") {
+      batch(() => {
+        $payload.set({ ...body, slots: [], machine, date });
+        $showErrors.set(false);
+        $slots.set([]);
+      });
+      navigate("split");
+      return;
+    }
     $("approve-banner").classList.add("hidden");
     $("complete-hint").classList.add("hidden");
     batch(() => {
-      $payload.set(body);
+      $payload.set({ ...body, machine, date });
       $showErrors.set(false);
       $slots.set(initSlots(body));
     });
