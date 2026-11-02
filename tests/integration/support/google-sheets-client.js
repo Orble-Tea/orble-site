@@ -96,7 +96,12 @@ function quoteSheetName(sheetName) {
   return `'${String(sheetName).replace(/'/g, "''")}'`;
 }
 
-async function sheetsRequest(spreadsheetId, path, options = {}) {
+// The Sheets read quota is 60 requests per minute per user and the suite runs
+// close to it, so a 429 waits for the window to roll over and tries again.
+const RATE_LIMIT_RETRIES = 3;
+const RATE_LIMIT_WAIT_MS = 30_000;
+
+async function sheetsRequest(spreadsheetId, path, options = {}, attempt = 0) {
   const token = await getAccessToken();
   const response = await fetch(`${SHEETS_BASE_URL}/${spreadsheetId}${path}`, {
     ...options,
@@ -107,6 +112,10 @@ async function sheetsRequest(spreadsheetId, path, options = {}) {
     },
   });
 
+  if (response.status === 429 && attempt < RATE_LIMIT_RETRIES) {
+    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_WAIT_MS));
+    return sheetsRequest(spreadsheetId, path, options, attempt + 1);
+  }
   if (!response.ok) {
     const details = await response.text();
     throw new Error(

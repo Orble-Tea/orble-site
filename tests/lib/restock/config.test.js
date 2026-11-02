@@ -47,6 +47,7 @@ describe("restock config", () => {
       LOAD: "Load",
       TOPOFF: "Topoff",
       CLEAROUT: "Clearout",
+      SPLIT: "Split",
     });
     expect(NAYAX_BASE_URL).toBe("https://lynx.nayax.com/operational/v1");
   });

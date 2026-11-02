@@ -42,11 +42,11 @@ function requireEnv(name) {
 const thirtieth = () => requireEnv("NAYAX_MACHINE_30TH_ID");
 const nayax = () => import("../../src/lib/restock/nayax.js");
 
-/** A Load (and optionally more events) already logged for the batch. */
-const logRows = (...events) => [
+/** Rows already logged, each a [batchId, event] pair. */
+const logRows = (...rows) => [
   Object.values(RESTOCK_LOG_HEADER),
-  ...events.map((event) => [
-    BATCH_ID,
+  ...rows.map(([batchId, event]) => [
+    batchId,
     event,
     TEST_DATE,
     "1m 0s",
@@ -83,35 +83,37 @@ async function getRestockData(query = "") {
   });
 }
 
-const slotOf = (body, slot) => body.slots.find((s) => s.slot === slot);
+const slotOf = (body, slot) => body.slots.find((s) => s.slotNumber === slot);
 
 describe("restock data integration", () => {
   let snapshot;
 
   beforeAll(async () => {
     const {
+      getMachine,
       getMachineProducts,
-      getProductName,
+      getOperatorProducts,
       getProductSlot,
       putMachineProducts,
     } = await nayax();
-    const { normalizeDrinkName } =
+    const { buildNayaxCatalog } =
+      await import("../../src/lib/restock/nayax-plan.js");
+    const { canonicalDrinkKey } =
       await import("../../src/lib/restock/drink-parsing.js");
     const products = await getMachineProducts(thirtieth());
     snapshot = products.filter((p) => OWNED_SLOTS.includes(getProductSlot(p)));
     // Updated in place, never created or removed, so the restore is exact
     expect(snapshot.map(getProductSlot).sort()).toEqual(OWNED_SLOTS);
 
+    const machine = await getMachine(thirtieth());
+    const catalog = buildNayaxCatalog(
+      await getOperatorProducts(machine?.OperatorActorID ?? machine?.ActorID),
+      products,
+    );
     const source = (drink) => {
-      const found = products.find(
-        (p) =>
-          !OWNED_SLOTS.includes(getProductSlot(p)) &&
-          normalizeDrinkName(getProductName(p)) === drink,
-      );
-      if (!found) throw new Error(`30th has no slot holding ${drink} to copy`);
-      const { NayaxProductID, DEXProductName, CashPrice, CreditCardPrice } =
-        found;
-      return { NayaxProductID, DEXProductName, CashPrice, CreditCardPrice };
+      const found = catalog.get(canonicalDrinkKey(drink));
+      if (!found) throw new Error(`Nayax catalog has no product for ${drink}`);
+      return found;
     };
     const onHand = { 50: 1, 51: 0, 52: 0 };
     const seeded = snapshot.map((p) => {
@@ -197,7 +199,6 @@ describe("restock data integration", () => {
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Load",
-      machine: "30th",
     });
     for (const slot of [51, 52]) {
       expect(slotOf(body, slot)).toMatchObject({
@@ -234,7 +235,9 @@ describe("restock data integration", () => {
   for (const c of topoffs) {
     it(`builds a Topoff from the batch date's Inventory tab: ${c.name}`, async () => {
       await seedInventory(c.toThirtieth);
-      await seedRestockLog(logRows("Load"));
+      await seedRestockLog(
+        logRows([BATCH_ID, "Load"], [`Kitchen-${TEST_DATE}`, "Split"]),
+      );
 
       const response = await getRestockData();
 
@@ -243,7 +246,6 @@ describe("restock data integration", () => {
       expect(body).toMatchObject({
         batchId: BATCH_ID,
         event: "Topoff",
-        machine: "30th",
       });
       expect(slotOf(body, 50)).toMatchObject({
         previousDrink: THAI,
@@ -260,8 +262,36 @@ describe("restock data integration", () => {
     });
   }
 
+  it("builds a Split after the Load, until the kitchen logs one", async () => {
+    // Towne is limited to one slot with no product: an empty slot on a machine
+    // that holds no Thai, so the leftover stays in the fridge
+    vi.stubEnv("RESTOCK_SLOTS_TOWNE", "53");
+    await seedSheet(requireEnv("INVENTORY_SHEET_ID"), INVENTORY_TAB, [
+      ["Drink", "Storage"],
+      [THAI, 6],
+      [MATCHA, 1],
+    ]);
+    await seedRestockLog(logRows([BATCH_ID, "Load"]));
+
+    const response = await getRestockData();
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({
+      batchId: `Kitchen-${TEST_DATE}`,
+      event: "Split",
+      drinks: [
+        // slot 50 takes 3 to reach 4; the 3 left have no Thai machine with room
+        { drink: THAI, storage: 6, to30th: 3, toTowne: 0 },
+        // one can is below the empty-slot line, so it tops up slot 51
+        { drink: MATCHA, storage: 1, to30th: 1, toTowne: 0 },
+      ],
+      warnings: [],
+    });
+  });
+
   it("builds a Clearout for the batch after its Load", async () => {
-    await seedRestockLog(logRows("Load"));
+    await seedRestockLog(logRows([BATCH_ID, "Load"]));
 
     const response = await getRestockData("&mode=clearout");
 

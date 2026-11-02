@@ -25,6 +25,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -88,6 +89,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -141,6 +143,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -178,7 +181,7 @@ describe("prefill: Topoff", () => {
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
-      slot: 1,
+      slotNumber: 1,
       previous: 0,
       expectedNew: 0,
       total: 0,
@@ -194,6 +197,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -237,16 +241,73 @@ describe("prefill: Topoff", () => {
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
-      slot: 1,
+      slotNumber: 1,
       previous: 3,
       expectedNew: 0,
       total: 3,
     });
     expect(data.slots[1]).toMatchObject({
-      slot: 2,
+      slotNumber: 2,
       previous: 0,
       expectedNew: 3,
       total: 3,
+    });
+  });
+
+  it("names the drink on an empty slot the Topoff opens for the leftover", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      const urlText = String(url);
+      if (urlText.includes("Restock%20Log")) {
+        return new Response(
+          JSON.stringify({
+            values: [
+              ["Batch ID", "Event"],
+              ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
+            ],
+          }),
+        );
+      }
+      if (urlText.endsWith("/inventory-sheet")) {
+        return new Response(
+          JSON.stringify({
+            sheets: [{ properties: { title: "07/10/2026", index: 0 } }],
+          }),
+        );
+      }
+      if (urlText.includes("07%2F10%2F2026")) {
+        return new Response(
+          JSON.stringify({
+            values: [
+              ["Drink", "Storage", "To 30th", "To Towne"],
+              ["Thai Tea 16oz Less Sweet w/ Lychee", 6, 6, 0],
+            ],
+          }),
+        );
+      }
+      return new Response(
+        JSON.stringify([
+          {
+            MDBCode: 1,
+            PAR: 4,
+            MissingStockByMDB: 2,
+            DEXProductName: "THAI_16_LESS_LYC",
+          },
+        ]),
+      );
+    });
+
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
+
+    expect(data.slots[0]).toMatchObject({ slotNumber: 1, expectedNew: 2 });
+    expect(data.slots[1]).toMatchObject({
+      slotNumber: 2,
+      flavor: "Thai Tea",
+      size: "16oz",
+      topping: "Lychee",
+      sweetness: "Less Sweet",
+      expectedNew: 4,
+      total: 4,
     });
   });
 
@@ -259,6 +320,7 @@ describe("prefill: Topoff", () => {
             values: [
               ["Batch ID", "Event"],
               ["30th-2026-07-10", "Load"],
+              ["Kitchen-2026-07-10", "Split"],
             ],
           }),
         );
@@ -282,7 +344,10 @@ describe("prefill: Topoff", () => {
   it.each([
     ["Matcha 16oz Less Sugar", 'unrecognized "Less Sugar"'],
     ["Taro Tea 22oz LessSweet", 'unrecognized "LessSweet"'],
-    ["Thai Tea 24oz Less Sweet", 'unrecognized "24oz", missing or invalid size'],
+    [
+      "Thai Tea 24oz Less Sweet",
+      'unrecognized "24oz", missing or invalid size',
+    ],
     ["Matcha with Strawberry", "missing or invalid size"],
     ["BMT22", 'unrecognized "BMT22", missing flavor, missing or invalid size'],
   ])(
@@ -296,6 +361,7 @@ describe("prefill: Topoff", () => {
               values: [
                 ["Batch ID", "Event"],
                 ["30th-2026-07-10", "Load"],
+                ["Kitchen-2026-07-10", "Split"],
               ],
             }),
           );
