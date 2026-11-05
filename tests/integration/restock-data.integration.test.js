@@ -53,16 +53,20 @@ async function getLiveTopoffFixture(storage) {
     hasProductOnHand,
   } = await import("../../src/lib/restock/nayax.js");
   const products = await getMachineProducts(requireEnv("NAYAX_MACHINE_30TH_ID"));
-  const product = products.find((candidate) => {
+  const inRange = products.filter((candidate) => {
     const slot = getProductSlot(candidate);
+    return Number.isInteger(slot) && slot >= 1 && slot <= 35;
+  });
+  // Topoff spreads storage across every slot holding the drink, so the
+  // expectation below only holds for a drink that lives in exactly one slot.
+  const slotsPerDrink = new Map();
+  for (const candidate of inRange) {
     const drink = normalizeDrinkName(getProductName(candidate));
-    return (
-      Number.isInteger(slot) &&
-      slot >= 1 &&
-      slot <= 35 &&
-      drink &&
-      hasProductOnHand(candidate)
-    );
+    slotsPerDrink.set(drink, (slotsPerDrink.get(drink) || 0) + 1);
+  }
+  const product = inRange.find((candidate) => {
+    const drink = normalizeDrinkName(getProductName(candidate));
+    return drink && slotsPerDrink.get(drink) === 1 && hasProductOnHand(candidate);
   });
 
   if (!product) {
