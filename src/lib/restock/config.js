@@ -7,12 +7,14 @@ export const SHEET_IDS = {
 export const MACHINE_CONFIG = [
   {
     label: "30TH",
+    labelCode: "30TH",
     machineId: process.env.NAYAX_MACHINE_30TH_ID,
     rows: 7,
     columns: 5,
   },
   {
     label: "Towne",
+    labelCode: "TWNE",
     machineId: process.env.NAYAX_MACHINE_TOWNE_ID,
     rows: 7,
     columns: 5,

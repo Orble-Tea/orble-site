@@ -1,0 +1,42 @@
+---
+import "~/styles/global.css";
+import "~/styles/theme.css";
+import LabelPrinterShell from "~/components/label-printer/LabelPrinterShell.astro";
+import logo from "~/assets/images/logo_inkscape.svg";
+import { requireRestockSecretKey } from "~/lib/restock/config.js";
+
+const hasAccess = requireRestockSecretKey(Astro.url.searchParams.get("key"));
+---
+
+<!doctype html>
+<html lang="en" data-theme="light" class="h-full font-sans">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Orble Label Printer</title>
+  </head>
+  <body class="min-h-screen bg-default text-default">
+    {
+      hasAccess ? (
+        <LabelPrinterShell logoSrc={logo.src} />
+      ) : (
+        <main class="grid min-h-screen place-items-center gap-3 p-6 text-center">
+          <img class="h-12 w-12" src={logo.src} alt="" />
+          <h1 class="m-0 text-accent text-2xl">Label Printer</h1>
+          <p class="m-0 text-offset">Add a valid key to the URL to open the printer.</p>
+        </main>
+      )
+    }
+
+    {
+      hasAccess && (
+        <script>
+          import { startLabelPrinter } from "~/lib/label-printer/client.js";
+
+          startLabelPrinter();
+        </script>
+      )
+    }
+  </body>
+</html>

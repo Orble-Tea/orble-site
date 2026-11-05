@@ -11,12 +11,14 @@
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
+    "test:labels": "playwright test --config playwright.label-printer.config.mjs",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:coverage": "vitest run --coverage",
     "format": "prettier --write ."
   },
   "devDependencies": {
     "@astrojs/tailwind": "^6.0.2",
+    "@playwright/test": "^1.64.1",
     "@types/dompurify": "^3.0.5",
     "@types/micromodal": "^0.3.3",
     "@types/node": "^18.11.18",
