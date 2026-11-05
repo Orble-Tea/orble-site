@@ -4,7 +4,8 @@ import { assertConfigured } from "./config.js";
 import { UpstreamServiceError } from "./errors.js";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const SHEETS_BASE_URL = "https://sheets.googleapis.com/v4/spreadsheets";
+const SHEETS_BASE_URL =
+  process.env.SHEETS_BASE_URL || "https://sheets.googleapis.com/v4/spreadsheets";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 
 let tokenCache;

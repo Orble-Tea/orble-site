@@ -13,7 +13,7 @@ import {
 } from "../../src/lib/restock/drinks.js";
 
 const TEST_DATE = "2026-08-31";
-const BATCH_ID = `30TH-${TEST_DATE}`;
+const BATCH_ID = `30th-${TEST_DATE}`;
 const PRODUCTION_PLAN_ROWS = [
   ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
   ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1, 2"],
@@ -53,16 +53,20 @@ async function getLiveTopoffFixture(storage) {
     hasProductOnHand,
   } = await import("../../src/lib/restock/nayax.js");
   const products = await getMachineProducts(requireEnv("NAYAX_MACHINE_30TH_ID"));
-  const product = products.find((candidate) => {
+  const inRange = products.filter((candidate) => {
     const slot = getProductSlot(candidate);
+    return Number.isInteger(slot) && slot >= 1 && slot <= 35;
+  });
+  // Topoff spreads storage across every slot holding the drink, so the
+  // expectation below only holds for a drink that lives in exactly one slot.
+  const slotsPerDrink = new Map();
+  for (const candidate of inRange) {
     const drink = normalizeDrinkName(getProductName(candidate));
-    return (
-      Number.isInteger(slot) &&
-      slot >= 1 &&
-      slot <= 35 &&
-      drink &&
-      hasProductOnHand(candidate)
-    );
+    slotsPerDrink.set(drink, (slotsPerDrink.get(drink) || 0) + 1);
+  }
+  const product = inRange.find((candidate) => {
+    const drink = normalizeDrinkName(getProductName(candidate));
+    return drink && slotsPerDrink.get(drink) === 1 && hasProductOnHand(candidate);
   });
 
   if (!product) {
@@ -148,7 +152,7 @@ describe("restock data integration", () => {
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Load",
-      machine: "30TH",
+      machine: "30th",
       slots: expect.arrayContaining([
         expect.objectContaining({
           slot: 1,
@@ -188,7 +192,7 @@ describe("restock data integration", () => {
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Load",
-      machine: "30TH",
+      machine: "30th",
     });
     expect(targetSlots).not.toContain(liveProduct.slot);
     for (const slotNumber of targetSlots) {
@@ -243,7 +247,7 @@ describe("restock data integration", () => {
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Topoff",
-      machine: "30TH",
+      machine: "30th",
       slots: expect.arrayContaining([
         expect.objectContaining({
           slot: topoff.slot,

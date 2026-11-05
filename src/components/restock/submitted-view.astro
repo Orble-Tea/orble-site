@@ -1,0 +1,48 @@
+<section
+  id="view-submitted"
+  class="flex hidden min-h-screen flex-col items-center justify-center p-6"
+>
+  <div class="w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-md">
+    <div
+      class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-orble-tint"
+    >
+      <svg
+        class="h-8 w-8 text-orble-dark"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="3"
+          d="M5 13l4 4L19 7"></path>
+      </svg>
+    </div>
+    <h1 class="mb-1 font-bold text-gray-900 text-xl">Restock submitted</h1>
+    <p class="mb-8 text-gray-400 text-sm" id="submitted-meta"></p>
+    <button
+      id="new-log"
+      class="w-full rounded-2xl bg-gray-100 py-3.5 font-medium text-gray-700 text-sm active:bg-gray-200"
+    >
+      Start new log
+    </button>
+  </div>
+</section>
+
+<script>
+  import {
+    $,
+    $payload,
+    $slots,
+    $showErrors,
+    navigate,
+  } from "~/components/restock/runtime";
+
+  $("new-log").addEventListener("click", () => {
+    $payload.set(null);
+    $slots.set([]);
+    $showErrors.set(false);
+    navigate("start", true);
+  });
+</script>

@@ -3,6 +3,11 @@
   --color-secondary: #eacaac;
   --color-accent: #54486b;
   /* --color-accent: #b5c2f6; */
+  --color-orble-tint: #eaf6f2;
+  --color-orble-light: #b1d9cd;
+  --color-orble: #9dd9c8;
+  --color-orble-dark: #7ac4b3;
+  --color-orble-ink: #3e7a6c;
   --color-text: theme("colors.gray.900");
   --color-text-offset: theme("colors.gray.600");
   --color-background: theme("colors.gray.50");

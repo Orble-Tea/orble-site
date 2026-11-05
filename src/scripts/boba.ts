@@ -5,12 +5,11 @@ import {
   Texture,
   Program,
   GLTFLoader,
-  RendererSortable,
   Mesh,
   Orbit,
   Vec3,
-  TextureOptions,
 } from "ogl";
+import type { RendererSortable, TextureOptions } from "ogl";
 
 import vert from "./standard.vert";
 import pbr from "./pbr.frag";

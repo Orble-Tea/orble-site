@@ -36,7 +36,7 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
+              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
               ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1"],
             ],
           }),
@@ -62,7 +62,7 @@ describe("restock service", () => {
       "2026-07-10",
     );
 
-    expect(data.batchId).toBe("30TH-2026-07-10");
+    expect(data.batchId).toBe("30th-2026-07-10");
     expect(data.event).toBe("Load");
     expect(data.slots).toHaveLength(35);
     expect(data.slots[0]).toMatchObject({
@@ -94,7 +94,7 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
+              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
               ["Thai Tea Normal 16oz", 9, "1, 2, 3"],
             ],
           }),
@@ -125,7 +125,7 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
+              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
               ["Thai Tea 16oz Less Sugar w/ Lychee", 4, "8"],
             ],
           }),
@@ -189,7 +189,7 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
+              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
               ["Strawberry Matcha 16oz", 8, "2; 22"],
             ],
           }),
@@ -205,14 +205,16 @@ describe("restock service", () => {
 
     expect(data.slots[1]).toMatchObject({
       slot: 2,
-      flavor: "Strawberry Matcha",
+      flavor: "Matcha",
+      topping: "Strawberry",
       size: "16oz",
       expectedNew: 4,
       total: 4,
     });
     expect(data.slots[21]).toMatchObject({
       slot: 22,
-      flavor: "Strawberry Matcha",
+      flavor: "Matcha",
+      topping: "Strawberry",
       size: "16oz",
       expectedNew: 4,
       total: 4,
@@ -227,7 +229,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Batch ID", "Event"],
-              ["30TH-2026-07-10", "Load"],
+              ["30th-2026-07-10", "Load"],
             ],
           }),
         );
@@ -246,7 +248,7 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink", "Storage", "To 30TH", "To Towne"],
+              ["Drink", "Storage", "To 30th", "To Towne"],
               ["Thai Tea 16oz Less Sugar w/ Lychee", 8, 2, 6],
             ],
           }),
@@ -293,7 +295,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["batch id", "EVENT"],
-              ["30TH-2026-07-10", "load"],
+              ["30th-2026-07-10", "load"],
             ],
           }),
         );
@@ -351,7 +353,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Batch ID", "Event"],
-              ["30TH-2026-07-10", "Load"],
+              ["30th-2026-07-10", "Load"],
             ],
           }),
         );
@@ -369,7 +371,7 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink", "Storage", "To 30TH", "To Towne"],
+              ["Drink", "Storage", "To 30th", "To Towne"],
               ["Thai Tea 16oz Less Sugar w/ Lychee", 3, 0, 3],
             ],
           }),
@@ -409,7 +411,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Batch ID", "Event"],
-              ["30TH-2026-07-10", "Load"],
+              ["30th-2026-07-10", "Load"],
             ],
           }),
         );
@@ -427,7 +429,7 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink", "Storage", "To 30TH", "To Towne"],
+              ["Drink", "Storage", "To 30th", "To Towne"],
               ["Thai Tea 16oz Less Sugar w/ Lychee", 6, 3, 3],
             ],
           }),
@@ -480,7 +482,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Batch ID", "Event"],
-              ["30TH-2026-07-10", "Load"],
+              ["30th-2026-07-10", "Load"],
             ],
           }),
         );
@@ -497,7 +499,7 @@ describe("restock service", () => {
       if (urlText.includes("Inventory-2026-08-18")) {
         return new Response(
           JSON.stringify({
-            values: [["Drink", "Storage", "To 30TH"]],
+            values: [["Drink", "Storage", "To 30th"]],
           }),
         );
       }
@@ -540,7 +542,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Batch ID", "Event"],
-              ["30TH-2026-07-10", "Load"],
+              ["30th-2026-07-10", "Load"],
             ],
           }),
         );
@@ -558,7 +560,7 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink", "Storage", "To 30TH"],
+              ["Drink", "Storage", "To 30th"],
               ["Thai Tea 16oz Less Sugar w/ Lychee", 2, 2],
             ],
           }),
@@ -607,7 +609,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Batch ID", "Event"],
-              ["30TH-2026-07-10", "Load"],
+              ["30th-2026-07-10", "Load"],
             ],
           }),
         );
@@ -624,7 +626,7 @@ describe("restock service", () => {
       if (urlText.includes("Inventory-2026-08-18")) {
         return new Response(
           JSON.stringify({
-            values: [["Drink", "Storage", "To 30TH"]],
+            values: [["Drink", "Storage", "To 30th"]],
           }),
         );
       }
@@ -675,7 +677,7 @@ describe("restock service", () => {
           JSON.stringify({
             values: [
               ["Batch ID", "Event"],
-              ["30TH-2026-07-10", "Load"],
+              ["30th-2026-07-10", "Load"],
             ],
           }),
         );
@@ -734,8 +736,8 @@ describe("restock service", () => {
         JSON.stringify({
           values: [
             ["Batch ID", "Event"],
-            ["30TH-2026-07-10", "Load"],
-            ["30TH-2026-07-10", "Clearout"],
+            ["30th-2026-07-10", "Load"],
+            ["30th-2026-07-10", "Clearout"],
           ],
         }),
       ),
@@ -757,8 +759,8 @@ describe("restock service", () => {
         JSON.stringify({
           values: [
             ["Batch ID", "Event"],
-            ["30TH-2026-07-10", "Load"],
-            ["30TH-2026-07-10", "Topoff"],
+            ["30th-2026-07-10", "Load"],
+            ["30th-2026-07-10", "Topoff"],
           ],
         }),
       ),
