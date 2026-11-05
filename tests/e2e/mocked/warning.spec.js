@@ -1,4 +1,4 @@
-// Browser tests for the unknown-Nayax-code warning flow: the amber slot,
+// Browser tests for the unknown-drink warning flow: the amber slot,
 // the defaults-preselected edit form, and flavor-only resolution.
 import { test, expect } from "@playwright/test";
 import { loadPayload, mockData, startLog, slot, slotCard } from "./helpers.mjs";
@@ -13,7 +13,13 @@ function warningPayload() {
     waste: 3,
     expectedNew: 3,
   });
-  payload.warnings = [{ slot: 2, code: "UNPARSEABLE_DRINK_NAME" }];
+  payload.warnings = [
+    {
+      slot: 2,
+      code: "UNPARSED_NAYAX_PRODUCT_NAME",
+      reason: 'unrecognized "BMT22", missing flavor, missing or invalid size',
+    },
+  ];
   return payload;
 }
 
@@ -25,7 +31,7 @@ test("warning slot renders amber and cannot resolve without a flavor", async ({
 
   const card = slotCard(page, 2);
   await expect(card).toContainText("?");
-  await expect(card).toContainText(/unrecognized flavor code/i);
+  await expect(card).toContainText(/unrecognized "BMT22"/i);
 
   // The edit form opens with no flavor picked and the defaults checked.
   await card.locator("[data-edit]").evaluate((el) => el.click());
@@ -37,12 +43,12 @@ test("warning slot renders amber and cannot resolve without a flavor", async ({
     page.locator('#edit-chips input[name="Topping"][value="None"]'),
   ).toBeChecked();
   await expect(
-    page.locator('#edit-chips input[name="Sweetness"][value="Regular"]'),
+    page.locator('#edit-chips input[name="Sweetness"][value="Regular Sweetness"]'),
   ).toBeChecked();
 
   // Saving without picking a flavor keeps the warning on the table.
   await page.click("#edit-save");
-  await expect(card).toContainText(/unrecognized flavor code/i);
+  await expect(card).toContainText(/unrecognized "BMT22"/i);
 });
 
 test("flavor-only save clears the warning and applies the visible defaults", async ({
@@ -56,7 +62,7 @@ test("flavor-only save clears the warning and applies the visible defaults", asy
   await page.selectOption("#edit-flavor", "Matcha");
   await page.click("#edit-save");
 
-  await expect(card).not.toContainText(/unrecognized flavor code/i);
+  await expect(card).not.toContainText(/unrecognized "BMT22"/i);
   await expect(card).toContainText("Matcha");
   await expect(card).toContainText("16oz");
   await expect(card).toContainText("(edited)");

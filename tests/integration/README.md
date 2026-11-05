@@ -4,17 +4,17 @@ These tests exercise the backend against real Google Sheets workbooks, using a s
 
 ## Sheet-to-backend flows under test
 
-- `Production Plan` -> `GET /api/restock-data` -> `Load`
-- `Production Plan` slot assignments differ from current Nayax slots -> `GET /api/restock-data` -> `Load` returns the Production Plan slot layout
-- `Restock Log` + latest inventory tab -> `GET /api/restock-data` -> `Topoff`
+- `Production Plan` -> `GET /api/restock` -> `Load`
+- `Production Plan` slot assignments differ from current Nayax slots -> `GET /api/restock` -> `Load` returns the Production Plan slot layout
+- `Restock Log` + latest inventory tab -> `GET /api/restock` -> `Topoff`
 - `Restock Log` already contains both `Load` and `Topoff` for the batch -> `409 Conflict`
 
 ## What they cover
 
-- `GET /api/restock-data` for the `Load` flow
-- `GET /api/restock-data` uses Production Plan slot assignments during `Load`, even when the same drink is currently in a different Nayax slot
-- `GET /api/restock-data` for the `Topoff` flow
-- `GET /api/restock-data` conflict handling after `Load` and `Topoff` already exist
+- `GET /api/restock` for the `Load` flow
+- `GET /api/restock` uses Production Plan slot assignments during `Load`, even when the same drink is currently in a different Nayax slot
+- `GET /api/restock` for the `Topoff` flow
+- `GET /api/restock` conflict handling after `Load` and `Topoff` already exist
 - Live Nayax production authentication and `machineProducts` reads
 
 ## Local setup

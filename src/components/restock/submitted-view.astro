@@ -1,3 +1,7 @@
+---
+import { MESSAGES } from "~/lib/restock/errors.js";
+---
+
 <section
   id="view-submitted"
   class="flex hidden min-h-screen flex-col items-center justify-center p-6"
@@ -19,7 +23,7 @@
           d="M5 13l4 4L19 7"></path>
       </svg>
     </div>
-    <h1 class="mb-1 font-bold text-gray-900 text-xl">Restock submitted</h1>
+    <h1 class="mb-1 font-bold text-gray-900 text-xl">{MESSAGES.restockSubmitted}</h1>
     <p class="mb-8 text-gray-400 text-sm" id="submitted-meta"></p>
     <button
       id="new-log"

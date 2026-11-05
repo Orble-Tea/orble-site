@@ -1,7 +1,11 @@
 import { assertConfigured, NAYAX_BASE_URL } from "./config.js";
 import { UpstreamServiceError } from "./errors.js";
 
-async function nayaxFetch(path, options = {}) {
+async function nayaxFetch(
+  path,
+  options = {},
+  operation = "get_machine_products",
+) {
   const token = assertConfigured(
     process.env.NAYAX_API_TOKEN,
     "NAYAX_API_TOKEN",
@@ -16,17 +20,21 @@ async function nayaxFetch(path, options = {}) {
   });
 
   if (!response.ok) {
+    console.error(
+      `nayax ${operation} ${response.status}:`,
+      (await response.text()).slice(0, 1000),
+    );
     if (response.status === 401) {
       throw new UpstreamServiceError("Invalid NAYAX_API_TOKEN", {
         service: "nayax",
-        operation: "get_machine_products",
+        operation,
         status: response.status,
       });
     }
     if (response.status === 403) {
       throw new UpstreamServiceError("NAYAX_API_TOKEN is not authorized", {
         service: "nayax",
-        operation: "get_machine_products",
+        operation,
         status: response.status,
       });
     }
@@ -34,7 +42,7 @@ async function nayaxFetch(path, options = {}) {
       `Nayax request failed with status ${response.status}`,
       {
         service: "nayax",
-        operation: "get_machine_products",
+        operation,
         status: response.status,
       },
     );
@@ -46,6 +54,48 @@ async function nayaxFetch(path, options = {}) {
 
 export async function getMachineProducts(machineId) {
   const payload = await nayaxFetch(`/machines/${machineId}/machineProducts`);
+  return Array.isArray(payload)
+    ? payload
+    : payload?.data || payload?.items || [];
+}
+
+/** One machine's record; carries the operator ID the catalog is keyed by. */
+export async function getMachine(machineId) {
+  const payload = await nayaxFetch(`/machines/${machineId}`, {}, "get_machine");
+  return Array.isArray(payload) ? payload[0] : payload;
+}
+
+/** The operator's product catalog: every product that can go in a slot. */
+export async function getOperatorProducts(operatorId) {
+  const payload = await nayaxFetch(
+    `/operators/${operatorId}/products`,
+    {},
+    "get_operator_products",
+  );
+  return Array.isArray(payload) ? payload : payload?.data || [];
+}
+
+/**
+ * Writes machine products. With avoidDelete the listed products are
+ * updated in place; without it Nayax replaces the machine's whole list and
+ * drops anything left out, which is the only way to remove a slot.
+ */
+export async function putMachineProducts(machineId, products, { avoidDelete }) {
+  const query = avoidDelete ? "?avoidDelete=true" : "";
+  return nayaxFetch(
+    `/machines/${machineId}/machineProducts${query}`,
+    { method: "PUT", body: JSON.stringify(products) },
+    "put_machine_products",
+  );
+}
+
+/** Creates machine products for slots Nayax does not have yet; returns the created records. */
+export async function createMachineProducts(machineId, products) {
+  const payload = await nayaxFetch(
+    `/machines/${machineId}/machineProducts`,
+    { method: "POST", body: JSON.stringify(products) },
+    "create_machine_products",
+  );
   return Array.isArray(payload)
     ? payload
     : payload?.data || payload?.items || [];

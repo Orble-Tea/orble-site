@@ -1,11 +1,12 @@
 import { createPrivateKey, createSign } from "node:crypto";
 
 import { assertConfigured } from "./config.js";
-import { UpstreamServiceError } from "./errors.js";
+import { ERRORS, UpstreamServiceError } from "./errors.js";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SHEETS_BASE_URL =
-  process.env.SHEETS_BASE_URL || "https://sheets.googleapis.com/v4/spreadsheets";
+  process.env.SHEETS_BASE_URL ||
+  "https://sheets.googleapis.com/v4/spreadsheets";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 
 let tokenCache;
@@ -122,46 +123,29 @@ export async function readSpreadsheetMetadata(spreadsheetId) {
   });
 }
 
-export async function readLatestSheetValues(spreadsheetId) {
-  const latestSheet = await getLatestSheetName(spreadsheetId);
-  return readSheetValues(spreadsheetId, latestSheet);
-}
-
-export async function getLatestSheetName(spreadsheetId) {
+/**
+ * The title of the workbook tab named for a date (YYYY-MM-DD or MM/DD/YYYY),
+ * or null when the workbook has none.
+ * @param {string} spreadsheetId
+ * @param {string} date YYYY-MM-DD
+ * @returns {Promise<string | null>}
+ */
+export async function findSheetNameForDate(spreadsheetId, date) {
   const metadata = await readSpreadsheetMetadata(spreadsheetId);
   const sheets = Array.isArray(metadata?.sheets) ? metadata.sheets : [];
-  const latestSheet =
-    findLatestDateSheetName(sheets) || sheets.at(-1)?.properties?.title;
-
-  if (!latestSheet) {
-    throw new UpstreamServiceError("Google Sheets workbook has no sheets", {
-      service: "google_sheets",
-      operation: "read_latest_sheet",
-      spreadsheetId,
-      status: 404,
-      authMode: googleAuthMode(),
-    });
-  }
-
-  return latestSheet;
-}
-
-function findLatestDateSheetName(sheets) {
-  return sheets
-    .map((sheet) => {
-      const title = sheet?.properties?.title;
-      return {
-        title,
-        time: parseSheetDate(title)?.getTime() ?? Number.NEGATIVE_INFINITY,
-      };
-    })
-    .filter((sheet) => sheet.title && Number.isFinite(sheet.time))
-    .sort((left, right) => right.time - left.time)[0]?.title;
+  const wanted = parseSheetDate(date)?.getTime();
+  return (
+    sheets
+      .map((sheet) => sheet?.properties?.title)
+      .find((title) => parseSheetDate(title)?.getTime() === wanted) ?? null
+  );
 }
 
 function parseSheetDate(title) {
   const text = String(title || "").trim();
-  const isoMatch = text.match(/(?:^|[^\d])(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[^\d])/);
+  const isoMatch = text.match(
+    /(?:^|[^\d])(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[^\d])/,
+  );
   if (isoMatch) {
     return new Date(
       Date.UTC(
@@ -226,11 +210,20 @@ export async function readSheetValues(spreadsheetId, sheetName) {
   return payload.values || [];
 }
 
-export async function appendSheetValues(spreadsheetId, sheetName, rows) {
-  if (!Array.isArray(rows) || rows.length === 0) return null;
+/**
+ * Appends rows to a sheet.
+ * @returns {Promise<number>} the row number of the first appended row, read
+ *   from the range Sheets reports writing (e.g. "'Restock Log'!A5:F6" -> 5)
+ */
+export async function appendSheetValues(
+  spreadsheetId,
+  sheetName,
+  rows,
+  valueInputOption = "USER_ENTERED",
+) {
   const range = encodeURIComponent(`${quoteSheetName(sheetName)}`);
-  return sheetsFetch(
-    `/${spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED`,
+  const response = await sheetsFetch(
+    `/${spreadsheetId}/values/${range}:append?valueInputOption=${valueInputOption}`,
     {
       method: "POST",
       body: JSON.stringify({ values: rows }),
@@ -240,6 +233,15 @@ export async function appendSheetValues(spreadsheetId, sheetName, rows) {
       },
     },
   );
+  const firstRowNumber = Number(
+    response?.updates?.updatedRange?.match(/![A-Z]+(\d+)/)?.[1],
+  );
+  if (!firstRowNumber)
+    throw new UpstreamServiceError(ERRORS.appendRangeMissing.message, {
+      service: "google_sheets",
+      operation: `appending ${sheetName}`,
+    });
+  return firstRowNumber;
 }
 
 export async function updateSheetValues(
@@ -247,10 +249,11 @@ export async function updateSheetValues(
   sheetName,
   rangeA1,
   rows,
+  valueInputOption = "USER_ENTERED",
 ) {
   const range = encodeURIComponent(`${quoteSheetName(sheetName)}!${rangeA1}`);
   return sheetsFetch(
-    `/${spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`,
+    `/${spreadsheetId}/values/${range}?valueInputOption=${valueInputOption}`,
     {
       method: "PUT",
       body: JSON.stringify({ values: rows }),
@@ -271,4 +274,26 @@ export function rowsToObjects(values) {
     });
     return object;
   });
+}
+
+/**
+ * Maps a row object onto a sheet's header order; unknown columns stay blank.
+ * @param {string[]} header the sheet's header row
+ * @param {Record<string, unknown>} row values keyed by column name
+ * @returns {unknown[]} one sheet row in header order
+ */
+export function toSheetRow(header, row) {
+  return header.map((column) => row[String(column).trim()] ?? "");
+}
+
+/**
+ * The A1 column letters for a zero-based index, for Sheets ranges.
+ * @param {number} index 0 = A, 25 = Z, 26 = AA
+ * @returns {string}
+ */
+export function columnLetter(index) {
+  let letters = "";
+  for (let n = index + 1; n > 0; n = Math.floor((n - 1) / 26))
+    letters = String.fromCharCode(65 + ((n - 1) % 26)) + letters;
+  return letters;
 }
