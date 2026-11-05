@@ -90,28 +90,31 @@ describe("restock data integration", () => {
 
   beforeAll(async () => {
     const {
+      getMachine,
       getMachineProducts,
-      getProductName,
+      getOperatorProducts,
       getProductSlot,
       putMachineProducts,
     } = await nayax();
-    const { normalizeDrinkName } =
+    const { buildNayaxCatalog } =
+      await import("../../src/lib/restock/nayax-plan.js");
+    const { canonicalDrinkKey } =
       await import("../../src/lib/restock/drink-parsing.js");
     const products = await getMachineProducts(thirtieth());
     snapshot = products.filter((p) => OWNED_SLOTS.includes(getProductSlot(p)));
     // Updated in place, never created or removed, so the restore is exact
     expect(snapshot.map(getProductSlot).sort()).toEqual(OWNED_SLOTS);
 
+    // The operator catalog always has the product; a live slot holding it may not
+    const machine = await getMachine(thirtieth());
+    const catalog = buildNayaxCatalog(
+      await getOperatorProducts(machine?.OperatorActorID ?? machine?.ActorID),
+      products,
+    );
     const source = (drink) => {
-      const found = products.find(
-        (p) =>
-          !OWNED_SLOTS.includes(getProductSlot(p)) &&
-          normalizeDrinkName(getProductName(p)) === drink,
-      );
-      if (!found) throw new Error(`30th has no slot holding ${drink} to copy`);
-      const { NayaxProductID, DEXProductName, CashPrice, CreditCardPrice } =
-        found;
-      return { NayaxProductID, DEXProductName, CashPrice, CreditCardPrice };
+      const found = catalog.get(canonicalDrinkKey(drink));
+      if (!found) throw new Error(`Nayax catalog has no product for ${drink}`);
+      return found;
     };
     const onHand = { 50: 1, 51: 0, 52: 0 };
     const seeded = snapshot.map((p) => {
