@@ -1,6 +1,14 @@
 import { test, expect } from "@playwright/test";
 import { buildLabelPrintData } from "../../../src/lib/label-printer/production-plan.js";
 
+// Global setup discovers the port before Playwright starts its workers.
+test.use({
+  baseURL: async ({}, use) => {
+    if (!process.env.LABEL_TEST_BASE_URL) throw new Error("Label test server was not started.");
+    await use(process.env.LABEL_TEST_BASE_URL);
+  },
+});
+
 const plan = buildLabelPrintData(
   [
     {

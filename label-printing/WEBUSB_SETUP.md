@@ -157,3 +157,5 @@ The local page still requires the shared restock key. WebUSB works on `localhost
 Install Chromium once for browser tests with `npx playwright install chromium`.
 
 Media geometry is configured in `src/lib/label-printer/media.js`: 39 × 48 mm stock, a 425 × 495 dot printable area, and a six-dot right margin. The landscape preview is 495 × 425 dots. Print one label to verify alignment after changing rolls.
+
+The label browser suite starts its own local Astro server, automatically selects an available port, and passes the actual URL to both browser projects. No fixed test port or manually started server is required; the server is stopped after the run.
