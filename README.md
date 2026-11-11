@@ -54,7 +54,7 @@ PRODUCTION_PLAN_SHEET_ID=... RESTOCK_LOG_SHEET_ID=... INVENTORY_SHEET_ID=... \
 npm run smoke
 ```
 
-Optional: `SMOKE_URL=https://deploy-preview-NN--orble-tea.netlify.app` to target a preview, `SMOKE_MACHINE` (default 30TH), `GOOGLE_SHEETS_ACCESS_TOKEN` instead of the service account pair.
+Optional: `SMOKE_URL=https://deploy-preview-NN--orble-tea.netlify.app` to target a preview, `SMOKE_MACHINE` (default `30th`; must match a machine label in `src/lib/restock/config.js`, so `30th` or `Towne`), `GOOGLE_SHEETS_ACCESS_TOKEN` instead of the service account pair.
 
 Rules the smoke lives by:
 

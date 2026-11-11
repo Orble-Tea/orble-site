@@ -6,6 +6,7 @@ import {
   canonicalDrinkKeyFromParts,
   parseDrinkName,
 } from "../../src/lib/restock/drinks.js";
+import { RESTOCK_EVENTS } from "../../src/lib/restock/config.js";
 
 const KEY = required("RESTOCK_SECRET_KEY");
 const DATE = required("SMOKE_DATE"); // batch date that exists for machine 30th
@@ -131,14 +132,14 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
   );
 
   // Expected event, derived naively from the raw log.
-  const batchId = `${MACHINE}-${DATE}`;
+  const batchId = `${MACHINE}-${DATE}`.toLowerCase();
   const events = log
-    .filter((r) => cell(r, "Batch ID") === batchId)
+    .filter((r) => String(cell(r, "Batch ID")).toLowerCase() === batchId)
     .map((r) => String(cell(r, "Event")).toLowerCase());
-  const expectedEvent = !events.includes("load")
-    ? "Load"
-    : !events.includes("topoff")
-      ? "Topoff"
+  const expectedEvent = !events.includes(RESTOCK_EVENTS.load.toLowerCase())
+    ? RESTOCK_EVENTS.load
+    : !events.includes(RESTOCK_EVENTS.topoff.toLowerCase())
+      ? RESTOCK_EVENTS.topoff
       : null;
   test.skip(
     expectedEvent === null,
@@ -147,6 +148,8 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
 
   // Drive the real page. READ-ONLY: never tap Complete.
   await page.goto(`/restock?key=${KEY}`);
+  // The radio is visually hidden behind its label, so force the check.
+  await page.check(`input[name=machine][value="${MACHINE}"]`, { force: true });
   await page.fill("#batch-date", DATE);
   await page.click("#start-log");
   // The backend may refuse the batch (unreadable sheet rows, auth). Fail with
@@ -164,7 +167,7 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
   const dump = () =>
     `rendered:\n${rows.map((r) => `  ${r.text}`).join("\n")}\nsee smoke-table.png`;
 
-  if (expectedEvent === "Load") {
+  if (expectedEvent === RESTOCK_EVENTS.load) {
     // Per drink: units the plan calls for == units the table tells the
     // restocker to load. A mismatch means the derivation lost or invented
     // drinks somewhere between the sheet and the screen.
