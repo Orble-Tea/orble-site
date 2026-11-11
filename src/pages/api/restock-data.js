@@ -11,25 +11,39 @@ import {
   upstreamError,
 } from "../../lib/restock/http.js";
 import { buildRestockData } from "../../lib/restock/restock-service.js";
+import { RestockDataQuery } from "../../lib/restock/schemas.js";
+
+const QUERY_ERRORS = {
+  machine: "Unknown machine",
+  date: "Invalid date",
+  mode: "Invalid mode",
+};
 
 export async function GET({ url }) {
   try {
-    if (!requireRestockSecretKey(url.searchParams.get("key"))) return invalidKey();
+    if (!requireRestockSecretKey(url.searchParams.get("key")))
+      return invalidKey();
 
-    const machineConfig = getMachineConfig(url.searchParams.get("machine"));
-    if (!machineConfig) return badRequest("Unknown machine");
-
-    const date = url.searchParams.get("date");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return badRequest("Invalid date");
-    if (!machineConfig.machineId) return serverError("Machine is not configured");
-
-    const requestedMode = url.searchParams.get("mode") || url.searchParams.get("event");
-    if (requestedMode && String(requestedMode).toLowerCase() !== "clearout") {
-      return badRequest("Invalid mode");
+    const query = RestockDataQuery.safeParse({
+      key: url.searchParams.get("key"),
+      machine: url.searchParams.get("machine"),
+      date: url.searchParams.get("date"),
+      mode:
+        url.searchParams.get("mode") ||
+        url.searchParams.get("event") ||
+        undefined,
+    });
+    if (!query.success) {
+      const field = query.error.issues[0].path[0];
+      return badRequest(QUERY_ERRORS[field] || "Invalid request");
     }
 
-    const data = await buildRestockData(machineConfig, date, {
-      mode: requestedMode || null,
+    const machineConfig = getMachineConfig(query.data.machine);
+    if (!machineConfig.machineId)
+      return serverError("Machine is not configured");
+
+    const data = await buildRestockData(machineConfig, query.data.date, {
+      mode: query.data.mode || null,
     });
     return json(data);
   } catch (error) {

@@ -1,0 +1,52 @@
+---
+// Swagger UI over /api/openapi.json. Open as /docs?key=<RESTOCK_SECRET_KEY>;
+// the key is forwarded to the spec request and to every try-it request.
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Orble restock API</title>
+  </head>
+  <body>
+    <div id="swagger"></div>
+    <p
+      id="no-key"
+      class="hidden"
+      style="font-family: sans-serif; padding: 2rem"
+    >
+      Add <code>?key=&lt;RESTOCK_SECRET_KEY&gt;</code> to the URL to load the docs.
+    </p>
+    <script>
+      import "swagger-ui-dist/swagger-ui.css";
+      import SwaggerUIBundle from "swagger-ui-dist/swagger-ui-es-bundle.js";
+
+      const key = new URLSearchParams(location.search).get("key") || "";
+      if (!key) {
+        document.getElementById("no-key")!.classList.remove("hidden");
+      } else {
+        SwaggerUIBundle({
+          url: `/api/openapi.json?key=${encodeURIComponent(key)}`,
+          dom_id: "#swagger",
+          // Only GET may be sent from the page; POST writes to Nayax and Sheets once it is real.
+          supportedSubmitMethods: ["get"],
+          tryItOutEnabled: true,
+          requestInterceptor: (request: { url: string }) => {
+            const url = new URL(request.url, location.origin);
+            if (!url.searchParams.get("key")) url.searchParams.set("key", key);
+            request.url = url.toString();
+            return request;
+          },
+        });
+      }
+    </script>
+    <style>
+      .hidden {
+        display: none;
+      }
+    </style>
+  </body>
+</html>

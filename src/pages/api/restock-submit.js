@@ -7,6 +7,7 @@ import {
   json,
   parseJson,
 } from "../../lib/restock/http.js";
+import { RestockSubmitBody } from "../../lib/restock/schemas.js";
 
 export async function POST({ request }) {
   let body;
@@ -18,10 +19,16 @@ export async function POST({ request }) {
 
   if (!requireRestockSecretKey(body.key)) return invalidKey();
 
-  const required = ["batchId", "event", "machine", "date", "slots"];
-  const missing = required.filter((field) => !body[field]);
-  if (missing.length > 0 || !Array.isArray(body.slots)) {
-    return badRequest("Missing required fields");
+  const parsed = RestockSubmitBody.safeParse(body);
+  if (!parsed.success) {
+    const missing = parsed.error.issues.some(
+      (issue) =>
+        issue.code === "invalid_type" &&
+        /received undefined/.test(issue.message),
+    );
+    return badRequest(
+      missing ? "Missing required fields" : "Invalid request body",
+    );
   }
 
   return json({ success: true, message: "Restock complete" });

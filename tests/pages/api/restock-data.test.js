@@ -142,6 +142,9 @@ describe("GET /api/restock-data", () => {
       ]),
     });
     expect(body.slots[0]).not.toHaveProperty("drink");
+    // The documented response shape must accept the real response.
+    const { RestockData } = await import("../../../src/lib/restock/schemas.js");
+    expect(RestockData.safeParse(body).success).toBe(true);
   });
 
   it("returns clearout when requested explicitly", async () => {
