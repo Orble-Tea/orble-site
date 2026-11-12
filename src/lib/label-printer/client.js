@@ -20,6 +20,9 @@ export function startLabelPrinter() {
       "cancelPrintButton",
       "previewCount",
       "printStatus",
+      "validationDialog",
+      "validationErrors",
+      "dismissValidationButton",
     ].map((id) => [id, document.getElementById(id)]),
   );
   const session = {
@@ -27,6 +30,7 @@ export function startLabelPrinter() {
     printing: false,
     loading: false,
     rows: [],
+    validationErrors: [],
     preview: [],
   };
   const log = createLogger(elements.log);
@@ -59,6 +63,9 @@ export function startLabelPrinter() {
   });
   elements.printSelectedButton.addEventListener("click", () =>
     openPrintPreview(elements, session),
+  );
+  elements.dismissValidationButton.addEventListener("click", () =>
+    elements.validationDialog.close(),
   );
   elements.cancelPrintButton.addEventListener("click", () =>
     elements.printDialog.close(),
@@ -105,6 +112,9 @@ function createLogger(element) {
 async function refreshProductionPlan(elements, session, log) {
   session.loading = true;
   session.rows = [];
+  session.validationErrors = [];
+  session.preview = [];
+  elements.previewLabels.replaceChildren();
   renderPlanTable(elements, session);
   showTableMessage(elements.planRows, "Loading production plan...");
   try {
@@ -117,6 +127,7 @@ async function refreshProductionPlan(elements, session, log) {
     if (!response.ok)
       throw new Error(`Plan request failed: ${response.status}`);
     const plan = await response.json();
+    session.validationErrors = plan.validationErrors || [];
     session.rows = plan.rows.map((row) => ({ ...row, selected: true }));
     renderPlanTable(elements, session);
     if (!session.rows.length)
@@ -226,6 +237,19 @@ function updateSelectionSummary(elements, session) {
  * @returns {void}
  */
 function openPrintPreview(elements, session) {
+  if (session.validationErrors.length) {
+    elements.validationErrors.replaceChildren(
+      ...session.validationErrors.map(
+        ({ drinkName, amountToMake, machineAmount }) => {
+          const item = document.createElement("li");
+          item.textContent = `${drinkName}: Amount to Make is ${amountToMake}, but the machine amounts total ${machineAmount}.`;
+          return item;
+        },
+      ),
+    );
+    elements.validationDialog.showModal();
+    return;
+  }
   session.preview = session.rows.flatMap((row, rowIndex) =>
     row.selected ? row.labels.map((label) => ({ label, rowIndex })) : [],
   );

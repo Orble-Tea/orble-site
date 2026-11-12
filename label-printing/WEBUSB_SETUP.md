@@ -70,7 +70,7 @@ When the Production Plan assigns multiple slots to a drink, the label uses the l
 
 Storage labels leave the top-left corner blank.
 
-For each Production Plan row, each machine amount generates that many labels with the machine's full slot list. `Amount to Make` is used only for storage labels: any excess above the sum of machine amounts becomes storage. It never caps machine labels, even when blank, zero, or lower than their sum. Each nonempty drink row also gets one backup label. The backup label is blank in the top-left corner, like a storage label.
+For each Production Plan row, each machine amount generates that many labels with the machine's full slot list. `Amount to Make` is used only for storage labels: any excess above the sum of machine amounts becomes storage. If Amount to Make is blank, zero, or lower than the machine total, Print Selected shows a quantity-error popup and blocks the preview for the entire plan. Correct the sheet and Reload to continue. Machine labels are never silently truncated. Each nonempty drink row also gets one backup label. The backup label is blank in the top-left corner, like a storage label.
 
 ## Printing Behavior
 

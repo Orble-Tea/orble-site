@@ -5,7 +5,7 @@ const plan = buildLabelPrintData(
   [
     {
       "Drink Variation": 'Matcha "Less Sugar" 16oz',
-      "Amount to Make": 1,
+      "Amount to Make": 2,
       "Amount to 30TH": 1,
       "Slot (30TH)": "1, 2",
       "Amount to Towne": 1,
@@ -173,4 +173,54 @@ test("USB failure stops later drinks and prevents an accidental retry", async ({
   await expect(
     page.getByRole("button", { name: "Cancel", exact: true }),
   ).toBeEnabled();
+});
+
+test("blocks preview for quantity conflicts until the sheet is corrected and reloaded", async ({
+  page,
+}, testInfo) => {
+  const invalidPlan = {
+    ...plan,
+    validationErrors: [
+      {
+        drinkName: 'Matcha "Less Sugar" 16oz',
+        amountToMake: 1,
+        machineAmount: 2,
+      },
+      {
+        drinkName: "<img src=x onerror=alert(1)>",
+        amountToMake: 0,
+        machineAmount: 3,
+      },
+    ],
+  };
+  await page.route("**/api/label-print-data?*", (route) =>
+    route.fulfill({ json: invalidPlan }),
+  );
+  await page.getByRole("button", { name: "Reload", exact: true }).click();
+  await expect(page.locator(".row-checkbox")).toHaveCount(2);
+  await page.locator(".row-checkbox").first().uncheck();
+  await page.getByRole("button", { name: "Print Selected" }).click();
+  const popup = page.getByRole("dialog", {
+    name: "Production plan needs correction",
+  });
+  await expect(popup).toBeVisible();
+  await expect(popup).toContainText(
+    'Matcha "Less Sugar" 16oz: Amount to Make is 1, but the machine amounts total 2.',
+  );
+  await expect(popup).toContainText("<img src=x onerror=alert(1)>");
+  await expect(popup.locator("img")).toHaveCount(0);
+  await expect(page.locator("#printDialog")).not.toBeVisible();
+  await expect(page.locator("#previewLabels canvas")).toHaveCount(0);
+  expect(await page.evaluate(() => window.usbPrompts)).toBe(0);
+  expect(await page.evaluate(() => window.usbWrites.length)).toBe(0);
+  await page.screenshot({ path: testInfo.outputPath("quantity-error.png") });
+  await popup.getByRole("button", { name: "OK", exact: true }).click();
+  await page.route("**/api/label-print-data?*", (route) =>
+    route.fulfill({ json: plan }),
+  );
+  await page.getByRole("button", { name: "Reload", exact: true }).click();
+  await expect(page.locator("#selectedLabelCount")).toHaveText("5");
+  await page.getByRole("button", { name: "Print Selected" }).click();
+  await expect(page.locator("#printDialog")).toBeVisible();
+  await expect(page.locator("#previewLabels canvas")).toHaveCount(5);
 });

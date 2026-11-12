@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("real label API preserves both machines when their sum exceeds Amount to Make", async ({
+test("real label API blocks preview when machine amounts exceed Amount to Make", async ({
   page,
   request,
 }) => {
@@ -24,9 +24,12 @@ test("real label API preserves both machines when their sum exceeds Amount to Ma
   await page.goto("/label-printer?key=test-key");
   await expect(page.locator(".row-checkbox")).toHaveCount(2);
   await page.getByRole("button", { name: "Print Selected" }).click();
-  await expect(page.locator("#previewLabels canvas")).toHaveCount(9);
-  await expect(page.locator("#previewLabels canvas").nth(3)).toHaveAttribute(
-    "aria-label",
-    /TWNE#14,15/,
+  await expect(
+    page.getByRole("dialog", { name: "Production plan needs correction" }),
+  ).toBeVisible();
+  await expect(page.locator("#validationErrors")).toContainText(
+    "Amount to Make is 1, but the machine amounts total 5.",
   );
+  await expect(page.locator("#printDialog")).not.toBeVisible();
+  await expect(page.locator("#previewLabels canvas")).toHaveCount(0);
 });

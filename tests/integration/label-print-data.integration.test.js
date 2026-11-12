@@ -48,6 +48,9 @@ it("loads seeded machine slots, storage, and backup labels through the real API"
   expect(response.status).toBe(200);
   const data = await response.json();
   expect(data.rows).toHaveLength(2);
+  expect(data.validationErrors).toEqual([
+    { drinkName: "Matcha 16oz", amountToMake: 1, machineAmount: 4 },
+  ]);
   expect(data.rows[0]).toMatchObject({
     drinkName: "Matcha 16oz",
     directLabels: 4,

@@ -148,6 +148,30 @@ const tableHeadClass =
   </div>
 
   <dialog
+    id="validationDialog"
+    aria-labelledby="validationHeading"
+    aria-describedby="validationInstructions"
+    class="m-auto max-h-[90dvh] w-[min(95vw,680px)] overflow-auto rounded-lg border border-default bg-default p-4 text-default shadow-lg backdrop:bg-black/50"
+  >
+    <h2 id="validationHeading" class="m-0 font-bold text-lg">
+      Production plan needs correction
+    </h2>
+    <p id="validationInstructions">
+      Amount to Make must be at least Amount to 30th + Amount to Towne for every
+      drink. Correct these quantities in Google Sheets, then click Reload before
+      printing.
+    </p>
+    <ul id="validationErrors" class="my-4 list-disc space-y-2 pl-5"></ul>
+    <div class="flex justify-end">
+      <button
+        id="dismissValidationButton"
+        type="button"
+        class={primaryButtonClass}>OK</button
+      >
+    </div>
+  </dialog>
+
+  <dialog
     id="printDialog"
     aria-labelledby="previewHeading"
     class="m-auto max-h-[90dvh] w-[min(95vw,680px)] rounded-lg border border-default bg-default p-0 text-default shadow-lg backdrop:bg-black/50"

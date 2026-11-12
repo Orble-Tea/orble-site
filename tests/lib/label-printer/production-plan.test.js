@@ -35,9 +35,9 @@ describe("buildLabelPrintData", () => {
   });
 
   it.each([undefined, "", "0", "1", "3"])(
-    "keeps both machines and every slot when Amount to Make is %s",
+    "reports a quantity conflict without truncating slots when Amount to Make is %s",
     (amountToMake) => {
-      const { rows } = buildLabelPrintData([
+      const { rows, validationErrors } = buildLabelPrintData([
         {
           "Drink Variation": "Matcha 16oz",
           "Amount to Make": amountToMake,
@@ -55,6 +55,29 @@ describe("buildLabelPrintData", () => {
         "",
       ]);
       expect(rows[0].storageLabels).toBe(0);
+      expect(validationErrors).toEqual([
+        {
+          drinkName: "Matcha 16oz",
+          amountToMake: Number(amountToMake || 0),
+          machineAmount: 4,
+        },
+      ]);
+    },
+  );
+
+  it.each([4, 6])(
+    "allows Amount to Make %s at or above the machine total",
+    (amountToMake) => {
+      const data = buildLabelPrintData([
+        {
+          "Drink Variation": "Matcha 16oz",
+          "Amount to Make": amountToMake,
+          "Amount to 30th": 2,
+          "Amount to Towne": 2,
+        },
+      ]);
+      expect(data.validationErrors).toEqual([]);
+      expect(data.rows[0].storageLabels).toBe(amountToMake - 4);
     },
   );
 

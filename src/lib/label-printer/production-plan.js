@@ -17,10 +17,11 @@ const SPARE_LABEL_COUNT = 1;
  * label per drink. Machine labels retain every assigned slot; storage is blank.
  * @param {Object[]} rows Production Plan rows keyed by column header.
  * @param {{now?: Date}} options Clock override for deterministic expiration dates.
- * @returns {{rows: Object[]}} Drink rows in sheet order, each with its labels.
+ * @returns {{rows: Object[], validationErrors: Object[]}} Drink rows and quantity conflicts.
  */
 export function buildLabelPrintData(rows, options = {}) {
   const printRows = [];
+  const validationErrors = [];
   const expirationDate = formatExpirationDate(options.now || new Date());
 
   for (const row of rows) {
@@ -29,6 +30,13 @@ export function buildLabelPrintData(rows, options = {}) {
 
     const quantity = parseInteger(getRowValue(row, "Amount to Make"));
     const directLabels = buildMachineLabels(row, expirationDate, drinkName);
+    if (quantity < directLabels.length) {
+      validationErrors.push({
+        drinkName,
+        amountToMake: quantity,
+        machineAmount: directLabels.length,
+      });
+    }
     const storageLabels = Array.from(
       { length: Math.max(0, quantity - directLabels.length) },
       () => ({ code: "", expirationDate, drinkName }),
@@ -51,7 +59,7 @@ export function buildLabelPrintData(rows, options = {}) {
     });
   }
 
-  return { rows: printRows };
+  return { rows: printRows, validationErrors };
 }
 
 /**
