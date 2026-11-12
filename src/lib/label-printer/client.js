@@ -20,9 +20,9 @@ export function startLabelPrinter() {
       "cancelPrintButton",
       "previewCount",
       "printStatus",
-      "validationDialog",
+      "validationPanel",
+      "planSelection",
       "validationErrors",
-      "dismissValidationButton",
     ].map((id) => [id, document.getElementById(id)]),
   );
   const session = {
@@ -63,9 +63,6 @@ export function startLabelPrinter() {
   });
   elements.printSelectedButton.addEventListener("click", () =>
     openPrintPreview(elements, session),
-  );
-  elements.dismissValidationButton.addEventListener("click", () =>
-    elements.validationDialog.close(),
   );
   elements.cancelPrintButton.addEventListener("click", () =>
     elements.printDialog.close(),
@@ -128,8 +125,16 @@ async function refreshProductionPlan(elements, session, log) {
       throw new Error(`Plan request failed: ${response.status}`);
     const plan = await response.json();
     session.validationErrors = plan.validationErrors || [];
-    session.rows = plan.rows.map((row) => ({ ...row, selected: true }));
+    session.rows = session.validationErrors.length
+      ? []
+      : plan.rows.map((row) => ({ ...row, selected: true }));
     renderPlanTable(elements, session);
+    if (session.validationErrors.length) {
+      log(
+        "Production Plan sheet quantities need correction. Fix the sheet, then Reload.",
+      );
+      return;
+    }
     if (!session.rows.length)
       showTableMessage(elements.planRows, "No labels in the production plan.");
     log(`Loaded ${session.rows.length} drinks.`);
@@ -171,6 +176,18 @@ function showTableMessage(body, message) {
  * @returns {void}
  */
 function renderPlanTable(elements, session) {
+  const hasErrors = session.validationErrors.length > 0;
+  elements.validationPanel.hidden = !hasErrors;
+  elements.planSelection.hidden = hasErrors;
+  elements.validationErrors.replaceChildren(
+    ...session.validationErrors.map(
+      ({ drinkName, amountToMake, machineAmount }) => {
+        const item = document.createElement("li");
+        item.textContent = `${drinkName}: Amount to Make is ${amountToMake}, but the machine amounts total ${machineAmount}.`;
+        return item;
+      },
+    ),
+  );
   elements.planRows.replaceChildren(
     ...session.rows.map((row, index) => {
       const tr = document.createElement("tr");
@@ -227,7 +244,10 @@ function updateSelectionSummary(elements, session) {
   elements.reloadPlanButton.disabled = session.loading || session.printing;
   elements.connectButton.disabled = session.printing;
   elements.printSelectedButton.disabled =
-    session.loading || session.printing || !selected.length;
+    session.loading ||
+    session.printing ||
+    session.validationErrors.length > 0 ||
+    !selected.length;
 }
 
 /**
@@ -237,19 +257,7 @@ function updateSelectionSummary(elements, session) {
  * @returns {void}
  */
 function openPrintPreview(elements, session) {
-  if (session.validationErrors.length) {
-    elements.validationErrors.replaceChildren(
-      ...session.validationErrors.map(
-        ({ drinkName, amountToMake, machineAmount }) => {
-          const item = document.createElement("li");
-          item.textContent = `${drinkName}: Amount to Make is ${amountToMake}, but the machine amounts total ${machineAmount}.`;
-          return item;
-        },
-      ),
-    );
-    elements.validationDialog.showModal();
-    return;
-  }
+  if (session.validationErrors.length) return;
   session.preview = session.rows.flatMap((row, rowIndex) =>
     row.selected ? row.labels.map((label) => ({ label, rowIndex })) : [],
   );

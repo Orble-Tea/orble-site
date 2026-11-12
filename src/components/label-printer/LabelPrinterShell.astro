@@ -54,55 +54,75 @@ const tableHeadClass =
         >
       </div>
 
-      <div
-        class="mx-4 mt-4 rounded-lg border border-default bg-offset p-3 font-bold text-offset"
+      <section
+        id="validationPanel"
+        role="alert"
+        aria-labelledby="validationHeading"
+        class="m-4 rounded-lg border border-default bg-offset p-4"
+        hidden
       >
-        Selected <strong class="text-accent"
-          ><span id="selectedLabelCount">0</span> of <span id="planLabelCount"
-            >0</span
-          ></strong
-        > labels
-      </div>
-      <p class="mx-4 mb-0 mt-2 text-offset text-sm">
-        Includes one extra backup label for each drink variation.
-      </p>
+        <h3 id="validationHeading" class="m-0 font-bold text-accent text-lg">
+          Production Plan sheet needs correction
+        </h3>
+        <p>
+          Amount to Make must be at least Amount to 30th + Amount to Towne for
+          every drink. Correct these quantities in Google Sheets, then click
+          Reload to load the corrected plan.
+        </p>
+        <ul id="validationErrors" class="my-4 list-disc space-y-2 pl-5"></ul>
+      </section>
 
-      <label
-        class="my-4 flex items-center gap-3 pl-6 pr-4 font-extrabold text-accent"
-      >
-        <input
-          id="selectEverything"
-          class="h-[18px] w-[18px] accent-primary"
-          type="checkbox"
-          checked
-        />
-        <span>Select everything</span>
-      </label>
+      <div id="planSelection">
+        <div
+          class="mx-4 mt-4 rounded-lg border border-default bg-offset p-3 font-bold text-offset"
+        >
+          Selected <strong class="text-accent"
+            ><span id="selectedLabelCount">0</span> of <span id="planLabelCount"
+              >0</span
+            ></strong
+          > labels
+        </div>
+        <p class="mx-4 mb-0 mt-2 text-offset text-sm">
+          Includes one extra backup label for each drink variation.
+        </p>
 
-      <div
-        class="max-h-[min(52vh,520px)] overflow-auto border-y border-default"
-      >
-        <table class="w-full border-separate border-spacing-0 text-sm">
-          <thead>
-            <tr>
-              <th
-                class={`${tableHeadClass} w-12 pl-6 pr-0`}
-                aria-label="Selected"></th>
-              <th class={`${tableHeadClass} text-left`}>Drink</th>
-              <th class={`${tableHeadClass} orble-table-number`}>Labels</th>
-              <th class={`${tableHeadClass} orble-table-number`}>Machine</th>
-              <th class={`${tableHeadClass} orble-table-number`}>Storage</th>
-            </tr>
-          </thead>
-          <tbody id="planRows">
-            <tr>
-              <td
-                class="border-b border-default px-2.5 py-3 text-default"
-                colspan="5">Loading production plan...</td
-              >
-            </tr>
-          </tbody>
-        </table>
+        <label
+          class="my-4 flex items-center gap-3 pl-6 pr-4 font-extrabold text-accent"
+        >
+          <input
+            id="selectEverything"
+            class="h-[18px] w-[18px] accent-primary"
+            type="checkbox"
+            checked
+          />
+          <span>Select everything</span>
+        </label>
+
+        <div
+          class="max-h-[min(52vh,520px)] overflow-auto border-y border-default"
+        >
+          <table class="w-full border-separate border-spacing-0 text-sm">
+            <thead>
+              <tr>
+                <th
+                  class={`${tableHeadClass} w-12 pl-6 pr-0`}
+                  aria-label="Selected"></th>
+                <th class={`${tableHeadClass} text-left`}>Drink</th>
+                <th class={`${tableHeadClass} orble-table-number`}>Labels</th>
+                <th class={`${tableHeadClass} orble-table-number`}>Machine</th>
+                <th class={`${tableHeadClass} orble-table-number`}>Storage</th>
+              </tr>
+            </thead>
+            <tbody id="planRows">
+              <tr>
+                <td
+                  class="border-b border-default px-2.5 py-3 text-default"
+                  colspan="5">Loading production plan...</td
+                >
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="grid gap-3 p-4 md:grid-cols-2">
@@ -146,30 +166,6 @@ const tableHeadClass =
       </pre>
     </section>
   </div>
-
-  <dialog
-    id="validationDialog"
-    aria-labelledby="validationHeading"
-    aria-describedby="validationInstructions"
-    class="m-auto max-h-[90dvh] w-[min(95vw,680px)] overflow-auto rounded-lg border border-default bg-default p-4 text-default shadow-lg backdrop:bg-black/50"
-  >
-    <h2 id="validationHeading" class="m-0 font-bold text-lg">
-      Production plan needs correction
-    </h2>
-    <p id="validationInstructions">
-      Amount to Make must be at least Amount to 30th + Amount to Towne for every
-      drink. Correct these quantities in Google Sheets, then click Reload before
-      printing.
-    </p>
-    <ul id="validationErrors" class="my-4 list-disc space-y-2 pl-5"></ul>
-    <div class="flex justify-end">
-      <button
-        id="dismissValidationButton"
-        type="button"
-        class={primaryButtonClass}>OK</button
-      >
-    </div>
-  </dialog>
 
   <dialog
     id="printDialog"

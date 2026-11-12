@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("real label API blocks preview when machine amounts exceed Amount to Make", async ({
+test("real label API replaces the table with sheet quantity errors on load", async ({
   page,
   request,
 }) => {
@@ -22,11 +22,11 @@ test("real label API blocks preview when machine amounts exceed Amount to Make",
     "",
   ]);
   await page.goto("/label-printer?key=test-key");
-  await expect(page.locator(".row-checkbox")).toHaveCount(2);
-  await page.getByRole("button", { name: "Print Selected" }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("table")).not.toBeVisible();
   await expect(
-    page.getByRole("dialog", { name: "Production plan needs correction" }),
-  ).toBeVisible();
+    page.getByRole("button", { name: "Print Selected" }),
+  ).toBeDisabled();
   await expect(page.locator("#validationErrors")).toContainText(
     "Amount to Make is 1, but the machine amounts total 5.",
   );

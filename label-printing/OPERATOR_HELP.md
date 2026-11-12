@@ -11,6 +11,6 @@ The browser remembers permission for this site and tries to reconnect on later v
 
 - Printer missing? Check its power and USB cable, use Chrome or Edge, and click Connect QL-600 again.
 - Cannot connect? Close other apps or tabs using the printer, reconnect the USB cable, and try again.
-- Quantity error? Amount to Make must be at least the sum of Amount to 30th and Amount to Towne for every drink. Correct the rows listed in the popup in Google Sheets, close it, and click Reload.
+- Quantity error? Amount to Make must be at least the sum of Amount to 30th and Amount to Towne for every drink. The page shows sheet quantity errors in place of the drink table as soon as the plan loads. Correct the listed rows in Google Sheets and click Reload to restore the table and enable printing.
 - Plan missing or out of date? Check your connection, then click Reload. Reload selects all drinks again and recalculates expiration as today's UTC date plus seven days.
 - Printing stopped? Check the label roll and Status Log. Check which labels printed before reopening the preview and retrying to avoid duplicates.
