@@ -5,9 +5,11 @@ const plan = buildLabelPrintData(
   [
     {
       "Drink Variation": 'Matcha "Less Sugar" 16oz',
-      "Amount to Make": 2,
+      "Amount to Make": 1,
       "Amount to 30TH": 1,
       "Slot (30TH)": "1, 2",
+      "Amount to Towne": 1,
+      "Slot (Towne)": "8, 9",
     },
     {
       "Drink Variation": "Strawberry Matcha 24oz with Lychee",
@@ -71,12 +73,17 @@ test("previews every label with full slot codes before permission or USB writes"
   page,
 }, testInfo) => {
   await expect(page.locator("#selectedLabelCount")).toHaveText("5");
+  expect(await page.locator("#log").textContent()).toMatch(/^\[/);
   await page.getByRole("button", { name: "Print Selected" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator("#previewLabels canvas")).toHaveCount(5);
   await expect(page.locator("#previewLabels canvas").first()).toHaveAttribute(
     "aria-label",
     /30TH#1,2/,
+  );
+  await expect(page.locator("#previewLabels canvas").nth(1)).toHaveAttribute(
+    "aria-label",
+    /TWNE#8,9/,
   );
   await expect(page.locator("#previewLabels canvas").nth(3)).toHaveAttribute(
     "aria-label",
@@ -100,16 +107,19 @@ test("previews every label with full slot codes before permission or USB writes"
   expect(await page.evaluate(() => window.usbWrites.length)).toBe(0);
 });
 
-test("prints one checked label from the preview", async ({ page }) => {
+test("prints the selected drink's complete preview without a second selection", async ({
+  page,
+}) => {
+  await page.locator(".row-checkbox").first().uncheck();
   await page.getByRole("button", { name: "Print Selected" }).click();
-  const checkboxes = page.locator(".preview-checkbox");
-  for (let i = 1; i < 5; i++) await checkboxes.nth(i).uncheck();
-  await expect(page.locator("#previewCount")).toHaveText("1");
+  await expect(page.locator("#previewLabels canvas")).toHaveCount(2);
+  await expect(page.getByRole("dialog").getByRole("checkbox")).toHaveCount(0);
+  await expect(page.locator("#previewCount")).toHaveText("2");
   await page.getByRole("button", { name: "Print Labels", exact: true }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   expect(await page.evaluate(() => window.usbWrites.length)).toBe(1);
   expect(await page.evaluate(() => window.usbPrompts)).toBe(1);
-  await expect(page.locator("#log")).toContainText("Sent 1 labels");
+  await expect(page.locator("#log")).toContainText("Sent 2 labels");
 });
 
 test("selection controls totals and each drink becomes one USB cut job", async ({

@@ -28,17 +28,13 @@ export function buildLabelPrintData(rows, options = {}) {
     if (!drinkName) continue;
 
     const quantity = parseInteger(getRowValue(row, "Amount to Make"));
-    if (quantity <= 0) continue;
-
-    const directLabels = buildMachineLabels(
-      row,
-      expirationDate,
-      drinkName,
-    ).slice(0, quantity);
+    const directLabels = buildMachineLabels(row, expirationDate, drinkName);
     const storageLabels = Array.from(
       { length: Math.max(0, quantity - directLabels.length) },
       () => ({ code: "", expirationDate, drinkName }),
     );
+    if (!directLabels.length && !storageLabels.length) continue;
+
     const spareLabels = Array.from({ length: SPARE_LABEL_COUNT }, () => ({
       code: "",
       expirationDate,

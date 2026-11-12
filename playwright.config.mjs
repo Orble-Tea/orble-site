@@ -4,7 +4,6 @@ import { defineConfig } from "@playwright/test";
 import { BACKEND_ENV, PORT } from "./tests/e2e/fixture-server.mjs";
 
 const APP_PORT = 4321;
-const LABEL_TEST = /mocked\/label-printer\.spec\.js/;
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -25,19 +24,9 @@ export default defineConfig({
   },
   projects: [
     // Browser tests: page.route() intercepts /api/* so only the page is real.
-    {
-      name: "browser",
-      testMatch: /mocked\/.*\.spec\.js/,
-      testIgnore: LABEL_TEST,
-    },
+    { name: "browser", testMatch: /mocked\/.*\.spec\.js/ },
     // Integration tests: real API routes + service code; only Nayax/Sheets faked.
     { name: "integration", testMatch: /backend\/.*\.spec\.js/ },
-    {
-      name: "label-desktop",
-      testMatch: LABEL_TEST,
-      use: { viewport: { width: 1280, height: 900 } },
-    },
-    { name: "label-mobile", testMatch: LABEL_TEST },
   ],
   webServer: [
     {

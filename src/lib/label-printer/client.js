@@ -60,13 +60,6 @@ export function startLabelPrinter() {
   elements.printSelectedButton.addEventListener("click", () =>
     openPrintPreview(elements, session),
   );
-  elements.previewLabels.addEventListener("change", (event) => {
-    const index = Number(event.target.dataset.index);
-    if (!event.target.matches(".preview-checkbox") || !session.preview[index])
-      return;
-    session.preview[index].selected = event.target.checked;
-    updatePreviewCount(elements, session);
-  });
   elements.cancelPrintButton.addEventListener("click", () =>
     elements.printDialog.close(),
   );
@@ -95,6 +88,7 @@ export function startLabelPrinter() {
  * @returns {(message: string) => void} Timestamped logger.
  */
 function createLogger(element) {
+  element.textContent = "";
   return (message) => {
     element.textContent += `[${new Date().toLocaleTimeString()}] ${message}\n`;
     element.scrollTop = element.scrollHeight;
@@ -227,32 +221,17 @@ function updateSelectionSummary(elements, session) {
 
 /**
  * Snapshots every selected label into a scrollable dialog before any USB write.
- * Individual checkboxes let an operator print a single test from that same data.
  * @param {Object} elements Page controls and native dialog.
- * @param {Object} session Rows to snapshot and preview selection.
+ * @param {Object} session Rows to snapshot for confirmation.
  * @returns {void}
  */
 function openPrintPreview(elements, session) {
   session.preview = session.rows.flatMap((row, rowIndex) =>
-    row.selected
-      ? row.labels.map((label) => ({ label, rowIndex, selected: true }))
-      : [],
+    row.selected ? row.labels.map((label) => ({ label, rowIndex })) : [],
   );
   elements.printStatus.textContent = "";
   elements.previewLabels.replaceChildren(
     ...session.preview.map(({ label }, index) => {
-      const item = document.createElement("label");
-      item.className = "flex min-w-0 items-center gap-3";
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = true;
-      checkbox.className =
-        "preview-checkbox h-[18px] w-[18px] shrink-0 accent-primary";
-      checkbox.dataset.index = index;
-      checkbox.setAttribute(
-        "aria-label",
-        `Print label ${index + 1}: ${label.drinkName} ${label.code || "Storage or backup"}`,
-      );
       const canvas = document.createElement("canvas");
       canvas.className = "block h-auto min-w-0 w-full border border-default";
       canvas.setAttribute("role", "img");
@@ -261,8 +240,7 @@ function openPrintPreview(elements, session) {
         `${index + 1}. ${label.drinkName}, ${label.code || "Storage or backup"}, EXP ${label.expirationDate}`,
       );
       renderLabel(canvas, label);
-      item.append(checkbox, canvas);
-      return item;
+      return canvas;
     }),
   );
   updatePreviewCount(elements, session);
@@ -270,13 +248,13 @@ function openPrintPreview(elements, session) {
 }
 
 /**
- * Keeps confirmation aligned with the exact labels checked in the preview.
+ * Keeps confirmation aligned with the exact labels in the preview.
  * @param {Object} elements Preview controls.
- * @param {Object} session Preview selection and print lock.
+ * @param {Object} session Preview snapshot and print lock.
  * @returns {void}
  */
 function updatePreviewCount(elements, session) {
-  const count = session.preview.filter((item) => item.selected).length;
+  const count = session.preview.length;
   elements.previewCount.textContent = count;
   elements.confirmPrintButton.disabled = session.printing || !count;
 }
@@ -304,13 +282,10 @@ async function connectAndStorePrinter(elements, session, allowPrompt) {
  */
 async function printPreview(elements, session, log) {
   if (session.printing) return;
-  const selected = session.preview.filter((item) => item.selected);
+  const selected = session.preview;
   if (!selected.length) return;
   session.printing = true;
   elements.cancelPrintButton.disabled = true;
-  elements.previewLabels.querySelectorAll("input").forEach((input) => {
-    input.disabled = true;
-  });
   updatePreviewCount(elements, session);
   updateSelectionSummary(elements, session);
   elements.printStatus.textContent = "Sending labels...";

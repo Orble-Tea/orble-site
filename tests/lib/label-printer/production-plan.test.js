@@ -34,6 +34,30 @@ describe("buildLabelPrintData", () => {
     ).toBe(true);
   });
 
+  it.each([undefined, "", "0", "1", "3"])(
+    "keeps both machines and every slot when Amount to Make is %s",
+    (amountToMake) => {
+      const { rows } = buildLabelPrintData([
+        {
+          "Drink Variation": "Matcha 16oz",
+          "Amount to Make": amountToMake,
+          "Amount to 30th": "2",
+          "Slot (30th)": "1, 2",
+          "Amount to Towne": "2",
+          "Slot (Towne)": "14, 15",
+        },
+      ]);
+      expect(rows[0].labels.map(({ code }) => code)).toEqual([
+        "30TH#1,2",
+        "30TH#1,2",
+        "TWNE#14,15",
+        "TWNE#14,15",
+        "",
+      ]);
+      expect(rows[0].storageLabels).toBe(0);
+    },
+  );
+
   it("needs no recipe column and keeps separate drink rows in sheet order", () => {
     const data = buildLabelPrintData([
       {

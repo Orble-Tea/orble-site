@@ -11,7 +11,6 @@
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
-    "test:labels": "playwright test --config playwright.label-printer.config.mjs",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:coverage": "vitest run --coverage",
     "format": "prettier --write .",

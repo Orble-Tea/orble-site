@@ -70,11 +70,11 @@ When the Production Plan assigns multiple slots to a drink, the label uses the l
 
 Storage labels leave the top-left corner blank.
 
-For each Production Plan row, total labels come from `Amount to Make`, plus one backup label for that drink variation. Machine labels are generated from the machine amount and slot columns. Any remaining labels become storage labels. The backup label is blank in the top-left corner, like a storage label.
+For each Production Plan row, each machine amount generates that many labels with the machine's full slot list. `Amount to Make` is used only for storage labels: any excess above the sum of machine amounts becomes storage. It never caps machine labels, even when blank, zero, or lower than their sum. Each nonempty drink row also gets one backup label. The backup label is blank in the top-left corner, like a storage label.
 
 ## Printing Behavior
 
-The page has no recipe grouping. Each selected drink row is one print job, with no cuts between its labels and a cut at the end. Print Selected opens a scrollable preview of every label before anything is sent to USB. The operator can uncheck individual labels in the preview, including printing just one as a test.
+The page has no recipe grouping. Each selected drink row is one print job, with no cuts between its labels and a cut at the end. Print Selected opens a scrollable preview of every label before anything is sent to USB. Selection happens in the drink table; the preview shows the exact batch to be confirmed.
 
 The page starts with every row selected. Operators can clear the top checkbox or uncheck individual drink variations before printing.
 
@@ -150,12 +150,12 @@ The local page still requires the shared restock key. WebUSB works on `localhost
 ## Verification
 
 - `npm test` checks label data, UTC date boundaries, API error handling, and raster command boundaries.
-- `npm run test:labels` runs Playwright on desktop and mobile viewports. It uses the real page and renderer with mocked plan responses and a simulated USB device, covering full preview, slot lists, selection, single-label printing, and failures. It does not send anything to a physical printer.
-- `npm run test:integration -- tests/integration/label-print-data.integration.test.js` reads the configured Google Sheet through the real API handler. Use a test sheet and the existing integration environment settings. This label test never writes to Sheets; other integration tests in the repository do, so run this file explicitly.
+- Browser and fixture-backed integration coverage run with the existing Playwright projects documented in the repository README. They cover preview, slot lists, selection, confirmation, and USB failures without a physical printer.
+- The live integration suite seeds its test Production Plan, asserts exact machine and storage labels through the API, and clears the sheet afterward. Follow `tests/integration/README.md` and use copied test workbooks only.
 - Before release, print one label and a multi-label drink row on the QL-600 to verify physical alignment and the final cut. Browser tests cannot verify printer mechanics.
 
 Install Chromium once for browser tests with `npx playwright install chromium`.
 
 Media geometry is configured in `src/lib/label-printer/media.js`: 39 × 48 mm stock, a 425 × 495 dot printable area, and a six-dot right margin. The landscape preview is 495 × 425 dots. Print one label to verify alignment after changing rolls.
 
-The label browser suite shares PR #26's Playwright harness, which starts the fixture server and Astro on ports 4545 and 4321. A test-only Node adapter avoids starting Netlify's local Edge runtime. Both desktop and mobile label projects run automatically with `npm run test:e2e` in CI. Use `npm run test:labels` to run just those projects. No manually started server is required.
+The label tests use the shared Playwright harness and its fixture server. No manually started server is required.

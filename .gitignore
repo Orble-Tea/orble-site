@@ -18,10 +18,6 @@ pnpm-debug.log*
 .env.production
 .env.integration
 
-# Browser test artifacts
-test-results/
-playwright-report/
-
 # macOS-specific files
 .DS_Store
 

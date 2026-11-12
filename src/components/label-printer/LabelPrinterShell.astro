@@ -38,26 +38,6 @@ const tableHeadClass =
     </p>
   </header>
 
-  <details
-    class="mt-6 rounded-lg border border-default bg-default text-default"
-  >
-    <summary
-      class="cursor-pointer rounded-lg px-4 py-3 font-bold text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    >
-      <span
-        aria-hidden="true"
-        class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary"
-        >?</span
-      >
-      Help: printing labels
-    </summary>
-    <div
-      class="border-t border-default px-4 py-4 text-sm [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:font-bold [&_h2]:text-base [&_li]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
-    >
-      <PrinterHelp />
-    </div>
-  </details>
-
   <div class="grid gap-6 pt-6">
     <section class={panelClass} aria-labelledby="productionHeading">
       <div class={headingClass}>
@@ -136,6 +116,25 @@ const tableHeadClass =
           disabled>Print Selected</button
         >
       </div>
+      <details
+        class="mx-4 mb-4 rounded-lg border border-default bg-default text-default"
+      >
+        <summary
+          class="cursor-pointer rounded-lg px-4 py-3 font-bold text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <span
+            aria-hidden="true"
+            class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary"
+            >?</span
+          >
+          Help: printing labels
+        </summary>
+        <div
+          class="border-t border-default px-4 py-4 text-sm [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:font-bold [&_h2]:text-base [&_li]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+        >
+          <PrinterHelp />
+        </div>
+      </details>
     </section>
 
     <section class="border-t border-default pt-4" aria-label="Status log">

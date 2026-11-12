@@ -2,7 +2,7 @@
 
 1. Use Chrome or Edge on the computer connected to the Brother QL-600. Turn on the printer and load 39 × 48 mm die-cut labels.
 2. Review the drinks and quantities. Uncheck drinks you do not want to print, or use Select everything. Each drink variation includes one backup label.
-3. Click Print Selected to preview every selected label. Scroll to check drink names, machine slots, and expiration dates. Uncheck individual labels here to print only one as a test.
+3. Click Print Selected to preview every selected label. Scroll to check drink names, machine slots, and expiration dates.
 4. Click Print Labels to confirm. Choose the QL-600 in the browser permission window if asked. The printer cuts between drink variations.
 
 The browser remembers permission for this site and tries to reconnect on later visits. Connect QL-600 also lets you choose the printer before opening the preview.
