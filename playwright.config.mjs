@@ -35,7 +35,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
     },
     {
-      command: `npx astro dev --host 127.0.0.1 --port ${APP_PORT}`,
+      command: `npx astro dev --config astro.config.playwright.mjs --host 127.0.0.1 --port ${APP_PORT}`,
       url: `http://127.0.0.1:${APP_PORT}/restock?key=test-key`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,

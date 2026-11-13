@@ -30,8 +30,15 @@ const NAYAX_PRODUCTS = [
 
 // Production Plan: headers must match getAmountHeader/getSlotHeader for 30th.
 const PRODUCTION_PLAN_VALUES = [
-  ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-  ["Matcha 16oz Less Sugar w/ Lychee", "3", "1"],
+  [
+    "Drink Variation",
+    "Amount to 30th",
+    "Slot (30th)",
+    "Amount to Towne",
+    "Slot (Towne)",
+    "Amount to Make",
+  ],
+  ["Matcha 16oz Less Sugar w/ Lychee", "3", "1", "2", "14, 15", "1"],
   ["Strawberry Matcha 16oz Less Sugar", "2", "2"],
 ];
 
