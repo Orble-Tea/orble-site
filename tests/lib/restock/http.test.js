@@ -24,12 +24,16 @@ describe("http helpers", () => {
     await expect(invalidKey().json()).resolves.toEqual({
       error: "Invalid RESTOCK_SECRET_KEY",
     });
-    await expect(badRequest("Bad input").json()).resolves.toEqual({ error: "Bad input" });
+    await expect(badRequest("Bad input").json()).resolves.toEqual({
+      error: "Bad input",
+    });
     await expect(conflict("Already submitted", 12).json()).resolves.toEqual({
       error: "Already submitted",
       existingEntryRow: 12,
     });
-    await expect(serverError().json()).resolves.toEqual({ error: "Internal server error" });
+    await expect(serverError().json()).resolves.toEqual({
+      error: "Internal server error",
+    });
     await expect(
       upstreamError("NAYAX_API_TOKEN is not authorized", {
         service: "nayax",
@@ -46,10 +50,17 @@ describe("http helpers", () => {
 
   it("parses valid JSON and rejects invalid JSON", async () => {
     await expect(
-      parseJson(new Request("https://orble.test", { method: "POST", body: '{"ok":true}' })),
+      parseJson(
+        new Request("https://orble.test", {
+          method: "POST",
+          body: '{"ok":true}',
+        }),
+      ),
     ).resolves.toEqual({ ok: true });
     await expect(
-      parseJson(new Request("https://orble.test", { method: "POST", body: "{bad" })),
+      parseJson(
+        new Request("https://orble.test", { method: "POST", body: "{bad" }),
+      ),
     ).rejects.toThrow("Invalid JSON body");
   });
 });

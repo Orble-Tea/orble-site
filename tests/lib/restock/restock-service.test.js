@@ -14,9 +14,8 @@ describe("restock service", () => {
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
 
     ({ getMachineConfig } = await import("../../../src/lib/restock/config.js"));
-    ({ buildRestockData } = await import(
-      "../../../src/lib/restock/restock-service.js"
-    ));
+    ({ buildRestockData } =
+      await import("../../../src/lib/restock/restock-service.js"));
   });
 
   afterEach(() => {
@@ -57,10 +56,7 @@ describe("restock service", () => {
       throw new Error(`Unexpected URL: ${urlText}`);
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.batchId).toBe("30th-2026-07-10");
     expect(data.event).toBe("Load");
@@ -103,10 +99,7 @@ describe("restock service", () => {
       return new Response(JSON.stringify([]));
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.slots.slice(0, 3).map((slot) => slot.expectedNew)).toEqual([
       3, 3, 3,
@@ -146,10 +139,7 @@ describe("restock service", () => {
       throw new Error(`Unexpected URL: ${urlText}`);
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.slots[2]).toMatchObject({
       slot: 3,
@@ -198,10 +188,7 @@ describe("restock service", () => {
       return new Response(JSON.stringify([]));
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.slots[1]).toMatchObject({
       slot: 2,
@@ -266,10 +253,7 @@ describe("restock service", () => {
       );
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
@@ -331,10 +315,7 @@ describe("restock service", () => {
       );
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
@@ -389,10 +370,7 @@ describe("restock service", () => {
       );
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
@@ -453,10 +431,7 @@ describe("restock service", () => {
       );
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.event).toBe("Topoff");
     expect(data.slots[0]).toMatchObject({
@@ -515,10 +490,7 @@ describe("restock service", () => {
       );
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.warnings).toEqual([
       expect.objectContaining({
@@ -577,10 +549,7 @@ describe("restock service", () => {
       );
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.slots[0]).toMatchObject({
       previous: 0,
@@ -642,10 +611,7 @@ describe("restock service", () => {
       );
     });
 
-    const data = await buildRestockData(
-      getMachineConfig("30th"),
-      "2026-07-10",
-    );
+    const data = await buildRestockData(getMachineConfig("30th"), "2026-07-10");
 
     expect(data.slots[25]).toMatchObject({
       slot: 26,
@@ -773,5 +739,4 @@ describe("restock service", () => {
       existingEntryRow: 2,
     });
   });
-
 });
