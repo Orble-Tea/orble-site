@@ -132,9 +132,14 @@ export type DrinkParts = {
 };
 
 /** The flavor as a title, and size, topping and sweetness each on its own small line. */
-export function drinkLines(d: DrinkParts, titleClass = "text-gray-900") {
+export function drinkLines(
+  d: DrinkParts & { previousDrink?: string | null },
+  titleClass = "text-gray-900",
+) {
+  // An unrecognized Nayax name has no flavor; show the raw name so the restocker knows what is there
+  const title = d.flavor || d.previousDrink || "?";
   return {
-    title: `<div class="text-base font-semibold ${titleClass}">${esc(d.flavor || "?")}</div>`,
+    title: `<div class="text-base font-semibold ${titleClass}">${esc(title)}</div>`,
     quals: [d.size, d.topping, d.sweetness]
       .filter(Boolean)
       .map((q) => `<div class="text-xs text-gray-500">${esc(q!)}</div>`)

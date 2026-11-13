@@ -14,7 +14,7 @@ export const ERRORS = {
   invalidJson: { status: 400, message: "Invalid JSON body" },
   missingFields: { status: 400, message: "Missing required fields" },
   invalidDate: { status: 400, message: "Invalid date" },
-  invalidMode: { status: 400, message: "Invalid mode" },
+  invalidIsClearout: { status: 400, message: "Invalid isClearout" },
   alreadySubmitted: {
     status: 409,
     message: "This event was already submitted for this batch.",

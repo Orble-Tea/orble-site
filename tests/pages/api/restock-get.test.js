@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ERRORS } from "../../../src/lib/restock/errors.js";
+import { MachineForm, SplitForm } from "../../../src/lib/restock/schemas.js";
 
 describe("GET /api/restock", () => {
   beforeEach(() => {
@@ -150,6 +151,8 @@ describe("GET /api/restock", () => {
       ]),
     });
     expect(body.slots[0]).not.toHaveProperty("drink");
+    // The documented shape must accept the real response
+    expect(MachineForm.safeParse(body).success).toBe(true);
   });
 
   it("returns a Split after the Load, until the kitchen logs one", async () => {
@@ -249,6 +252,8 @@ describe("GET /api/restock", () => {
         }),
       ],
     });
+    // The documented shape must accept the real response
+    expect(SplitForm.safeParse(body).success).toBe(true);
   });
 
   it("returns clearout when requested explicitly", async () => {
@@ -287,7 +292,7 @@ describe("GET /api/restock", () => {
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10&mode=clearout",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10&isClearout=true",
       ),
     });
 
@@ -313,7 +318,7 @@ describe("GET /api/restock", () => {
 
     const response = await GET({
       url: new URL(
-        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10&mode=clearout",
+        "https://orble.test/api/restock?key=secret&machine=30th&date=2026-07-10&isClearout=true",
       ),
     });
 
