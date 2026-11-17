@@ -22,7 +22,6 @@ const COMPARED_FIELDS = [
   "PAR",
   "MissingStockByMDB",
   "DEXProductName",
-  "CashPrice",
   "CreditCardPrice",
 ];
 const NAYAX_SETTLE_MS = 3000;
@@ -170,7 +169,7 @@ describe("restock submit, live", () => {
       MissingStockByMDB: 0,
       DEXProductName: "TARO_22_LESS_LYC",
     });
-    expect(created.CashPrice).toBeGreaterThan(0); // prices copied, not blanked
+    expect(created.CreditCardPrice).toBeGreaterThan(0); // prices copied, not blanked
 
     // The row reached the real sheet and the submit finished; its shape is unit-tested
     expect((await logRows()).map((row) => row.Status)).toEqual([

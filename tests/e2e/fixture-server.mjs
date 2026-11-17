@@ -35,7 +35,6 @@ const HTTP_NOT_FOUND = 404;
 // submit copies back into its PUT, so they must be present.
 const product = (fields) => ({
   MachineID: MACHINE_30TH,
-  CashPrice: 6.5,
   CreditCardPrice: 6.5,
   ...fields,
 });
@@ -94,7 +93,6 @@ const TOWNE_PRODUCTS = [
     DEXProductName: "Matcha 16oz Less Sweet w/ Lychee",
     PAR: 4,
     MissingStockByMDB: 0,
-    CashPrice: 7,
     CreditCardPrice: 7,
   }),
   product({
@@ -111,11 +109,11 @@ const TOWNE_PRODUCTS = [
 // The operator's catalog: which Nayax product each drink is. Every drink a
 // machine sells is in it; the two Load drinks have no DEX name or prices here.
 const CATALOG_PRODUCTS = [
-  { NayaxProductID: 101, ProductName: "Thai Tea 16oz Less Sweet w/ Lychee", DEXProductName: "Thai Tea 16oz Less Sweet w/ Lychee", ProductCashPrice: 6.5, ProductCreditCardPrice: 6.5, ProductStatus: 1 },
-  { NayaxProductID: 102, ProductName: "Matcha 16oz Less Sweet", DEXProductName: "Matcha 16oz Less Sweet", ProductCashPrice: 7, ProductCreditCardPrice: 7, ProductStatus: 1 },
-  { NayaxProductID: 104, ProductName: "Taro Tea 16oz", DEXProductName: "Taro Tea 16oz", ProductCashPrice: 6.5, ProductCreditCardPrice: 6.5, ProductStatus: 1 },
-  { NayaxProductID: 201, ProductName: "Matcha 16oz Less Sweet w/ Lychee", DEXProductName: null, ProductCashPrice: null, ProductCreditCardPrice: null, ProductStatus: 1 },
-  { NayaxProductID: 202, ProductName: "Strawberry Matcha 16oz Less Sweet", DEXProductName: null, ProductCashPrice: null, ProductCreditCardPrice: null, ProductStatus: 1 },
+  { NayaxProductID: 101, ProductName: "Thai Tea 16oz Less Sweet w/ Lychee", DEXProductName: "Thai Tea 16oz Less Sweet w/ Lychee", ProductCreditCardPrice: 6.5, ProductStatus: 1 },
+  { NayaxProductID: 102, ProductName: "Matcha 16oz Less Sweet", DEXProductName: "Matcha 16oz Less Sweet", ProductCreditCardPrice: 7, ProductStatus: 1 },
+  { NayaxProductID: 104, ProductName: "Taro Tea 16oz", DEXProductName: "Taro Tea 16oz", ProductCreditCardPrice: 6.5, ProductStatus: 1 },
+  { NayaxProductID: 201, ProductName: "Matcha 16oz Less Sweet w/ Lychee", DEXProductName: null, ProductCreditCardPrice: null, ProductStatus: 1 },
+  { NayaxProductID: 202, ProductName: "Strawberry Matcha 16oz Less Sweet", DEXProductName: null, ProductCreditCardPrice: null, ProductStatus: 1 },
 ];
 
 // Production Plan: headers must match getAmountHeader/getSlotHeader for 30th.

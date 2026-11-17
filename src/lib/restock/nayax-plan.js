@@ -24,7 +24,7 @@ const hasValue = (value) => value != null && value !== "";
  * the fallback.
  * @param {object[]} catalogProducts Nayax operator products
  * @param {object[]} [machineProducts] machine products from every machine, for DEX names and prices
- * @returns {Map<string, { NayaxProductID: unknown, DEXProductName: unknown, CashPrice: unknown, CreditCardPrice: unknown }>}
+ * @returns {Map<string, { NayaxProductID: unknown, DEXProductName: unknown, CreditCardPrice: unknown }>}
  *   keyed by canonical drink key
  */
 export function buildNayaxCatalog(catalogProducts, machineProducts = []) {
@@ -37,7 +37,8 @@ export function buildNayaxCatalog(catalogProducts, machineProducts = []) {
 
   const slotFor = new Map();
   for (const slot of machineProducts) {
-    if (!hasValue(slot.DEXProductName) || !hasValue(slot.CashPrice)) continue;
+    if (!hasValue(slot.DEXProductName) || !hasValue(slot.CreditCardPrice))
+      continue;
     if (!slotFor.has(slot.NayaxProductID))
       slotFor.set(slot.NayaxProductID, slot);
   }
@@ -48,7 +49,6 @@ export function buildNayaxCatalog(catalogProducts, machineProducts = []) {
     catalog.set(key, {
       NayaxProductID: product.NayaxProductID,
       DEXProductName: slot ? slot.DEXProductName : product.DEXProductName,
-      CashPrice: slot ? slot.CashPrice : product.ProductCashPrice,
       CreditCardPrice: slot
         ? slot.CreditCardPrice
         : product.ProductCreditCardPrice,
@@ -60,20 +60,18 @@ export function buildNayaxCatalog(catalogProducts, machineProducts = []) {
 /**
  * Whether a catalog entry has everything a slot record needs. A blank price
  * would make the slot free, so an incomplete entry is never written.
- * @param {{ DEXProductName: unknown, CashPrice: unknown, CreditCardPrice: unknown }} entry
+ * @param {{ DEXProductName: unknown, CreditCardPrice: unknown }} entry
  * @returns {boolean}
  */
 export function isCompleteProduct(entry) {
-  return [entry.DEXProductName, entry.CashPrice, entry.CreditCardPrice].every(
-    hasValue,
-  );
+  return [entry.DEXProductName, entry.CreditCardPrice].every(hasValue);
 }
 
 /**
  * The catalog product for a drink.
  * @param {ReturnType<typeof buildNayaxCatalog>} catalog
  * @param {DrinkParts} drink
- * @returns {{ NayaxProductID: unknown, DEXProductName: unknown, CashPrice: unknown, CreditCardPrice: unknown }}
+ * @returns {{ NayaxProductID: unknown, DEXProductName: unknown, CreditCardPrice: unknown }}
  * @throws {RestockError} 400 unknownProduct or incompleteProduct when Nayax has no usable product
  */
 export function lookupProduct(catalog, drink) {

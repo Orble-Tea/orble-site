@@ -18,14 +18,12 @@ describe("buildNayaxUpdate", () => {
         NayaxProductID: 1001,
         ProductName: "Thai Tea 16oz Less Sweet w/ Lychee",
         DEXProductName: null,
-        ProductCashPrice: null,
         ProductCreditCardPrice: null,
       }),
       catalogProduct({
         NayaxProductID: 4004,
         ProductName: "Strawberry Matcha 16oz",
         DEXProductName: "SMAT_16",
-        ProductCashPrice: 6.25,
         ProductCreditCardPrice: 6.25,
       }),
       catalogProduct({
@@ -37,7 +35,6 @@ describe("buildNayaxUpdate", () => {
         NayaxProductID: 7007,
         ProductName: "Black Tea 16oz",
         DEXProductName: null,
-        ProductCashPrice: null,
         ProductCreditCardPrice: null,
       }),
     ],
@@ -49,7 +46,6 @@ describe("buildNayaxUpdate", () => {
         NayaxProductID: 1001,
         MDBCode: 8,
         DEXProductName: "THAI_16_LESS_LYC",
-        CashPrice: 6.5,
         CreditCardPrice: 6.5,
       }),
     ],
@@ -104,7 +100,6 @@ describe("buildNayaxUpdate", () => {
         ...current[0],
         NayaxProductID: 2002,
         DEXProductName: "MATC_16_LESS",
-        CashPrice: 7,
         CreditCardPrice: 7.25,
         PAR: 4,
         MissingStockByMDB: 0,
@@ -124,7 +119,6 @@ describe("buildNayaxUpdate", () => {
         MDBCode: 50,
         PAR: 3,
         DEXProductName: "MATC_16_LESS",
-        CashPrice: 7,
         CreditCardPrice: 7.25,
       },
     ]);
@@ -164,7 +158,6 @@ describe("buildNayaxUpdate", () => {
     expect(create(THAI)).toMatchObject({
       NayaxProductID: 1001,
       DEXProductName: "THAI_16_LESS_LYC",
-      CashPrice: 6.5,
       CreditCardPrice: 6.5,
     });
   });
@@ -175,7 +168,6 @@ describe("buildNayaxUpdate", () => {
     ).toMatchObject({
       NayaxProductID: 4004,
       DEXProductName: "SMAT_16",
-      CashPrice: 6.25,
       CreditCardPrice: 6.25,
     });
   });

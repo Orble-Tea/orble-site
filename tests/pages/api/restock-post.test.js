@@ -65,7 +65,6 @@ const THAI_30TH = {
   PAR: 4,
   MissingStockByMDB: 1, // on hand 3
   DEXProductName: "THAI_16_LESS_LYC",
-  CashPrice: 6.5,
   CreditCardPrice: 6.5,
 };
 
