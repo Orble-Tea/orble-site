@@ -87,6 +87,7 @@ async function trackUmamiEvent(request, eventName, eventData = {}) {
     
     if (!response.ok) {
       console.error(`Umami tracking failed with status: ${response.status}`);
+      const responseText = await response.text();
       console.error(`Response body:`, responseText);
     } else {
       console.debug(`Umami tracking success!`);
