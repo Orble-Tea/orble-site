@@ -1,6 +1,65 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("GET /api/restock-data", () => {
+  it.each(["Load", "Topoff", "Clearout"])(
+    "rejects an invalid plan before building %s slots",
+    async (event) => {
+      vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
+      vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
+      vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "plan");
+      vi.stubEnv("RESTOCK_LOG_SHEET_ID", "log");
+      vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "token");
+      const fetchMock = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation(async (url) => {
+          if (String(url).includes("Restock%20Log"))
+            return new Response(
+              JSON.stringify({
+                values: [
+                  ["Batch ID", "Event"],
+                  ...(event === "Load" ? [] : [["30th-2026-07-10", "Load"]]),
+                ],
+              }),
+            );
+          return new Response(
+            JSON.stringify({
+              values: [
+                [
+                  "Drink Variation",
+                  "Amount to Make",
+                  "Amount to 30th",
+                  "Slot (30th)",
+                  "Amount to Towne",
+                  "Slot (Towne)",
+                ],
+                ["Thai Tea 16oz", 4, 4, "1,invalid", 0, ""],
+              ],
+            }),
+          );
+        });
+      const { GET } = await import("../../../src/pages/api/restock-data.js");
+      const mode = event === "Clearout" ? "&mode=clearout" : "";
+      const response = await GET({
+        url: new URL(
+          `https://orble.test/api/restock-data?key=secret&machine=30th&date=2026-07-10${mode}`,
+        ),
+      });
+      expect(response.status).toBe(502);
+      expect(await response.json()).toMatchObject({
+        details: {
+          code: "INVALID_PRODUCTION_PLAN",
+          issues: expect.arrayContaining([
+            expect.objectContaining({ code: "INVALID_SLOTS", rowNumber: 2 }),
+          ]),
+        },
+      });
+      expect(
+        fetchMock.mock.calls.some(([url]) =>
+          String(url).includes("machineProducts"),
+        ),
+      ).toBe(false);
+    },
+  );
   beforeEach(() => {
     vi.resetModules();
   });
@@ -92,6 +151,7 @@ describe("GET /api/restock-data", () => {
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
     vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
     vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
+    vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
     vi.stubEnv("INVENTORY_SHEET_ID", "inventory-sheet");
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
@@ -109,8 +169,15 @@ describe("GET /api/restock-data", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-              ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1"],
+              [
+                "Drink Variation",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Make",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1", 4, 0, ""],
             ],
           }),
         );
@@ -156,6 +223,7 @@ describe("GET /api/restock-data", () => {
     vi.resetModules();
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
     vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
+    vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
     vi.stubEnv("INVENTORY_SHEET_ID", "inventory-sheet");
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
@@ -163,6 +231,23 @@ describe("GET /api/restock-data", () => {
     const { GET } = await import("../../../src/pages/api/restock-data.js");
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
@@ -204,6 +289,7 @@ describe("GET /api/restock-data", () => {
     vi.resetModules();
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
     vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
+    vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
     vi.stubEnv("NAYAX_API_TOKEN", "nayax-token");
@@ -229,6 +315,7 @@ describe("GET /api/restock-data", () => {
     vi.resetModules();
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
     vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
+    vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
     vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
     vi.stubEnv("INVENTORY_SHEET_ID", "inventory-sheet");
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
@@ -265,6 +352,7 @@ describe("GET /api/restock-data", () => {
     vi.stubEnv("RESTOCK_SECRET_KEY", "secret");
     vi.stubEnv("NAYAX_MACHINE_30TH_ID", "machine-1");
     vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
+    vi.stubEnv("PRODUCTION_PLAN_SHEET_ID", "production-plan-sheet");
     vi.stubEnv("INVENTORY_SHEET_ID", "inventory-sheet");
     vi.stubEnv("RESTOCK_LOG_SHEET_ID", "restock-log-sheet");
     vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
@@ -273,6 +361,23 @@ describe("GET /api/restock-data", () => {
     const { GET } = await import("../../../src/pages/api/restock-data.js");
 
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       if (String(url).includes("Restock%20Log")) {
         return new Response(
           JSON.stringify({ values: [["Batch ID", "Event"]] }),

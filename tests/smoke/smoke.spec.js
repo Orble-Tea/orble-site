@@ -7,6 +7,7 @@ import {
   parseDrinkName,
 } from "../../src/lib/restock/drinks.js";
 import { RESTOCK_EVENTS } from "../../src/lib/restock/config.js";
+import { validatedProductionPlanValues } from "../../src/lib/production-plan.js";
 
 const KEY = required("RESTOCK_SECRET_KEY");
 const DATE = required("SMOKE_DATE"); // batch date that exists for machine 30th
@@ -120,13 +121,12 @@ test("live derivation: rendered table corresponds to Production Plan / Inventory
 }) => {
   // Independent sheet reads happen FIRST so a backend outage fails clearly.
   const token = await sheetsToken();
-  const plan = toObjects(
-    await readSheet(
-      token,
-      required("PRODUCTION_PLAN_SHEET_ID"),
-      "'Production Plan'",
-    ),
+  const planValues = await readSheet(
+    token,
+    required("PRODUCTION_PLAN_SHEET_ID"),
+    "'Production Plan'",
   );
+  const plan = toObjects(validatedProductionPlanValues(planValues));
   const log = toObjects(
     await readSheet(token, required("RESTOCK_LOG_SHEET_ID"), "'Restock Log'"),
   );

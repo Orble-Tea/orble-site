@@ -30,9 +30,16 @@ const NAYAX_PRODUCTS = [
 
 // Production Plan: headers must match getAmountHeader/getSlotHeader for 30th.
 const PRODUCTION_PLAN_VALUES = [
-  ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-  ["Matcha 16oz Less Sugar w/ Lychee", "3", "1"],
-  ["Strawberry Matcha 16oz Less Sugar", "2", "2"],
+  [
+    "Drink Variation",
+    "Amount to 30th",
+    "Slot (30th)",
+    "Amount to Make",
+    "Amount to Towne",
+    "Slot (Towne)",
+  ],
+  ["Matcha 16oz Less Sugar w/ Lychee", "3", "1", 3, 0, ""],
+  ["Strawberry Matcha 16oz Less Sugar", "2", "2", 2, 0, ""],
 ];
 
 // Restock Log: one static sheet covers every scenario, because the backend

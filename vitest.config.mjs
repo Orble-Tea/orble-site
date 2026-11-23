@@ -12,6 +12,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text"],
       include: [
+        "src/lib/production-plan.js",
         "src/lib/restock/**/*.js",
         "src/pages/api/restock-data.js",
         "src/pages/api/restock-submit.js",

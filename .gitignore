@@ -27,3 +27,7 @@ pnpm-debug.log*
 test-results/
 playwright-report/
 smoke-table.png
+
+# Local Apps Script staging and OAuth tokens
+.apps-script/
+.clasprc*.json

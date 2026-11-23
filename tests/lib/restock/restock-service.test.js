@@ -35,8 +35,15 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-              ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1"],
+              [
+                "Drink Variation",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Make",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1", 4, 0, ""],
             ],
           }),
         );
@@ -90,8 +97,15 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-              ["Thai Tea Normal 16oz", 9, "1, 2, 3"],
+              [
+                "Drink Variation",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Make",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea Normal 16oz", 9, "1, 2, 3", 9, 0, ""],
             ],
           }),
         );
@@ -118,8 +132,15 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-              ["Thai Tea 16oz Less Sugar w/ Lychee", 4, "8"],
+              [
+                "Drink Variation",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Make",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz Less Sugar w/ Lychee", 4, "8", 4, 0, ""],
             ],
           }),
         );
@@ -179,8 +200,15 @@ describe("restock service", () => {
         return new Response(
           JSON.stringify({
             values: [
-              ["Drink Variation", "Amount to 30th", "Slot (30th)"],
-              ["Strawberry Matcha 16oz", 8, "2; 22"],
+              [
+                "Drink Variation",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Make",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Strawberry Matcha 16oz", 8, "2; 22", 8, 0, ""],
             ],
           }),
         );
@@ -210,6 +238,23 @@ describe("restock service", () => {
 
   it("prefills Topoff quantities from the Inventory column for the requested machine", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
@@ -273,6 +318,23 @@ describe("restock service", () => {
 
   it("matches Inventory allocation columns regardless of capitalization or spacing", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
@@ -328,6 +390,23 @@ describe("restock service", () => {
 
   it("does not use Inventory amounts assigned to a different machine for Topoff", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
@@ -383,6 +462,23 @@ describe("restock service", () => {
 
   it("allocates the requested machine Topoff amount to its emptiest matching slots", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
@@ -451,6 +547,23 @@ describe("restock service", () => {
   it("warns when Nayax returns an occupied slot without a parseable drink name", async () => {
     const warnMock = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
@@ -508,6 +621,23 @@ describe("restock service", () => {
   it("warns when Nayax returns PAR without an on-hand count", async () => {
     const warnMock = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
@@ -572,6 +702,23 @@ describe("restock service", () => {
   it("warns when Nayax returns a configured slot without a product name", async () => {
     const warnMock = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(
@@ -637,6 +784,23 @@ describe("restock service", () => {
 
   it("returns Clearout when explicitly requested for an existing batch", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      if (String(url).includes("Production%20Plan"))
+        return new Response(
+          JSON.stringify({
+            values: [
+              [
+                "Drink Variation",
+                "Amount to Make",
+                "Amount to 30th",
+                "Slot (30th)",
+                "Amount to Towne",
+                "Slot (Towne)",
+              ],
+              ["Thai Tea 16oz", 4, 4, "1", 0, ""],
+            ],
+          }),
+        );
+
       const urlText = String(url);
       if (urlText.includes("Restock%20Log")) {
         return new Response(

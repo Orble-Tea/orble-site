@@ -42,3 +42,10 @@ The workflow at `.github/workflows/integration-tests.yml` runs the same suite on
 ## Cleanup behavior
 
 Each test clears and reseeds the Google Sheets ranges it touches so the suite can be rerun safely and independently.
+
+Fixture seeding replaces the test tab's values in one atomic `updateCells` request,
+preserving formatting while clearing stale rows and columns. The test Sheets
+client reuses fixture tab IDs to reduce metadata reads and retries HTTP 429
+responses up to six times with exponential backoff and jitter, for a maximum
+total delay of 68 seconds per request. Other HTTP errors
+still fail immediately. Test and hook timeouts allow two minutes for quota recovery.

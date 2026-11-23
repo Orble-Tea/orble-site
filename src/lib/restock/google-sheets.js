@@ -1,11 +1,16 @@
 import { createPrivateKey, createSign } from "node:crypto";
+import { Buffer } from "node:buffer";
+import process from "node:process";
 
 import { assertConfigured } from "./config.js";
 import { UpstreamServiceError } from "./errors.js";
+import { validatedProductionPlanValues } from "../production-plan.js";
+import { PRODUCTION_PLAN_SHEET } from "./config.js";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SHEETS_BASE_URL =
-  process.env.SHEETS_BASE_URL || "https://sheets.googleapis.com/v4/spreadsheets";
+  process.env.SHEETS_BASE_URL ||
+  "https://sheets.googleapis.com/v4/spreadsheets";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 
 let tokenCache;
@@ -161,7 +166,9 @@ function findLatestDateSheetName(sheets) {
 
 function parseSheetDate(title) {
   const text = String(title || "").trim();
-  const isoMatch = text.match(/(?:^|[^\d])(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[^\d])/);
+  const isoMatch = text.match(
+    /(?:^|[^\d])(\d{4})-(\d{1,2})-(\d{1,2})(?:$|[^\d])/,
+  );
   if (isoMatch) {
     return new Date(
       Date.UTC(
@@ -223,7 +230,11 @@ export async function readSheetValues(spreadsheetId, sheetName) {
       sheetName,
     },
   });
-  return payload.values || [];
+  const values = payload.values || [];
+  if (sheetName.trim().toLowerCase() === PRODUCTION_PLAN_SHEET.toLowerCase()) {
+    return validatedProductionPlanValues(values);
+  }
+  return values;
 }
 
 export async function appendSheetValues(spreadsheetId, sheetName, rows) {

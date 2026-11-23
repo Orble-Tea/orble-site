@@ -15,8 +15,15 @@ import {
 const TEST_DATE = "2026-08-31";
 const BATCH_ID = `30th-${TEST_DATE}`;
 const PRODUCTION_PLAN_ROWS = [
-  ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
-  ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1, 2"],
+  [
+    "Drink Variation",
+    "Amount to 30TH",
+    "Slot (30TH)",
+    "Amount to Make",
+    "Amount to Towne",
+    "Slot (Towne)",
+  ],
+  ["Thai Tea Less Sweet w/ Lychee 16oz", 4, "1, 2", 4, 0, ""],
 ];
 const RESTOCK_LOG_HEADER = [
   [
@@ -85,7 +92,9 @@ async function getLiveTopoffFixture(storage) {
   }
   const product = inRange.find((candidate) => {
     const drink = normalizeDrinkName(getProductName(candidate));
-    return drink && slotsPerDrink.get(drink) === 1 && hasProductOnHand(candidate);
+    return (
+      drink && slotsPerDrink.get(drink) === 1 && hasProductOnHand(candidate)
+    );
   });
 
   if (!product) {
@@ -160,11 +169,11 @@ describe("restock data integration", () => {
   });
 
   beforeEach(async () => {
+    await seedProductionPlan(PRODUCTION_PLAN_ROWS);
     await seedRestockLog(RESTOCK_LOG_HEADER);
   });
 
   it("builds Load payloads from the Production Plan workbook", async () => {
-    await seedProductionPlan(PRODUCTION_PLAN_ROWS);
     await clearLatestSheet(requireEnv("INVENTORY_SHEET_ID"));
 
     const { GET } = await import("../../src/pages/api/restock-data.js");
@@ -174,8 +183,8 @@ describe("restock data integration", () => {
       ),
     });
 
-    expect(response.status).toBe(200);
     const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Load",
@@ -201,8 +210,15 @@ describe("restock data integration", () => {
     const parsed = parseDrinkName(liveProduct.drink);
 
     await seedProductionPlan([
-      ["Drink Variation", "Amount to 30TH", "Slot (30TH)"],
-      [liveProduct.drink, 4, targetSlots.join(", ")],
+      [
+        "Drink Variation",
+        "Amount to 30TH",
+        "Slot (30TH)",
+        "Amount to Make",
+        "Amount to Towne",
+        "Slot (Towne)",
+      ],
+      [liveProduct.drink, 4, targetSlots.join(", "), 4, 0, ""],
     ]);
     await clearLatestSheet(requireEnv("INVENTORY_SHEET_ID"));
 
@@ -213,8 +229,8 @@ describe("restock data integration", () => {
       ),
     });
 
-    expect(response.status).toBe(200);
     const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
 
     expect(body).toMatchObject({
       batchId: BATCH_ID,
@@ -276,8 +292,8 @@ describe("restock data integration", () => {
       ),
     });
 
-    expect(response.status).toBe(200);
     const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Topoff",
@@ -326,8 +342,8 @@ describe("restock data integration", () => {
       ),
     });
 
-    expect(response.status).toBe(200);
     const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Topoff",
@@ -372,8 +388,8 @@ describe("restock data integration", () => {
       ),
     });
 
-    expect(response.status).toBe(200);
     const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
     expect(body.slots[topoff.slot - 1]).toMatchObject({
       slot: topoff.slot,
       previous: topoff.previous,
@@ -408,8 +424,8 @@ describe("restock data integration", () => {
       ),
     });
 
-    expect(response.status).toBe(200);
     const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
     expect(body).toMatchObject({
       batchId: BATCH_ID,
       event: "Clearout",
@@ -426,7 +442,6 @@ describe("restock data integration", () => {
   });
 
   it("returns a conflict once Load and Topoff already exist for the batch", async () => {
-    await seedProductionPlan(PRODUCTION_PLAN_ROWS);
     await seedInventory(INVENTORY_ROWS);
     await seedSheet(requireEnv("RESTOCK_LOG_SHEET_ID"), "Restock Log", [
       ...RESTOCK_LOG_HEADER,
