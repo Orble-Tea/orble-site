@@ -1,0 +1,69 @@
+name: Apps Script validation sync
+
+on:
+  push:
+    branches: [master, slot-validation]
+    paths:
+      - src/lib/production-plan.js
+      - apps-script/**
+      - scripts/prepare-apps-script.mjs
+      - .github/workflows/apps-script.yml
+      - package.json
+      - package-lock.json
+  workflow_dispatch:
+    inputs:
+      push_to_apps_script:
+        description: Push the prepared project to Apps Script
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-plan-apps-script
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    environment: apps-script
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Configure clasp credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          test -n "$CLASPRC_JSON"
+          umask 077
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+      - run: npm run apps-script:init
+      - name: Pull the complete existing project
+        working-directory: .apps-script
+        run: ../node_modules/.bin/clasp pull
+      - name: Back up existing source
+        uses: actions/upload-artifact@v4
+        with:
+          name: apps-script-before-${{ github.run_id }}
+          path: .apps-script/*
+          retention-days: 7
+      - run: npm run apps-script:prepare
+      - name: Save prepared project for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: apps-script-prepared-${{ github.run_id }}
+          path: .apps-script/*
+          retention-days: 7
+      - name: Push shared validation and guarded readers
+        if: github.event_name == 'push' || inputs.push_to_apps_script
+        working-directory: .apps-script
+        run: ../node_modules/.bin/clasp push --force
+      - name: Remove credentials
+        if: always()
+        run: rm -f "$HOME/.clasprc.json"

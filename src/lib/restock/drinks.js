@@ -1,5 +1,10 @@
-export const DEFAULT_DRINK_SLOT_CAPACITY = 4;
-export const BOBA_PACK_SLOT_CAPACITY = 6;
+import { slotCapacityForDrink } from "../production-plan.js";
+export {
+  DEFAULT_DRINK_SLOT_CAPACITY,
+  BOBA_PACK_SLOT_CAPACITY,
+  isBobaPack,
+  slotCapacityForDrink,
+} from "../production-plan.js";
 
 const SIZE_PATTERN = /\b(\d{1,2}\s*oz)\b/i;
 const SWEETNESS_LEVELS = ["less sugar", "less sweet", "normal", "regular"];
@@ -36,7 +41,9 @@ export function normalizeDrinkName(value) {
 }
 
 export function expandNayaxDrinkCode(value) {
-  const code = String(value || "").trim().toUpperCase();
+  const code = String(value || "")
+    .trim()
+    .toUpperCase();
   if (!/^[A-Z]+_\d{1,2}(?:_[A-Z]+)*$/.test(code)) return null;
 
   const [flavorCode, sizeCode, ...modifiers] = code.split("_");
@@ -129,14 +136,6 @@ function canonicalDrinkKeyFromValues({ flavor, size, sweetness, topping }) {
     .join("|");
 }
 
-export function isBobaPack(drink) {
-  return /\bboba\s*pack\b/i.test(drink);
-}
-
-export function slotCapacityForDrink(drink) {
-  return isBobaPack(drink) ? BOBA_PACK_SLOT_CAPACITY : DEFAULT_DRINK_SLOT_CAPACITY;
-}
-
 export function slotCapacityForDrinkParts(parts) {
   const searchableText = [
     parts.flavor,
@@ -147,7 +146,5 @@ export function slotCapacityForDrinkParts(parts) {
   ]
     .filter(Boolean)
     .join(" ");
-  return isBobaPack(searchableText)
-    ? BOBA_PACK_SLOT_CAPACITY
-    : DEFAULT_DRINK_SLOT_CAPACITY;
+  return slotCapacityForDrink(searchableText);
 }

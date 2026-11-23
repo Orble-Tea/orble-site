@@ -1,10 +1,18 @@
 import { createPrivateKey, createSign } from "node:crypto";
+import { Buffer } from "node:buffer";
+import process from "node:process";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SHEETS_BASE_URL = "https://sheets.googleapis.com/v4/spreadsheets";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
+const SHEETS_RATE_LIMIT_STATUS = 429;
+const SHEETS_MAX_RETRIES = 6;
+const SHEETS_INITIAL_RETRY_MS = 1000;
+const SHEETS_MAX_RETRY_MS = 32000;
+const SHEETS_RETRY_JITTER_MS = 1000;
 
 let cachedToken;
+const sheetIds = new Map();
 
 function base64Url(input) {
   return Buffer.from(input)
@@ -98,24 +106,35 @@ function quoteSheetName(sheetName) {
 
 async function sheetsRequest(spreadsheetId, path, options = {}) {
   const token = await getAccessToken();
-  const response = await fetch(`${SHEETS_BASE_URL}/${spreadsheetId}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
-
-  if (!response.ok) {
+  for (let attempt = 0; ; attempt++) {
+    const response = await fetch(`${SHEETS_BASE_URL}/${spreadsheetId}${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+    if (response.ok) {
+      return response.status === 204 ? null : response.json();
+    }
     const details = await response.text();
+    if (
+      response.status === SHEETS_RATE_LIMIT_STATUS &&
+      attempt < SHEETS_MAX_RETRIES
+    ) {
+      const delay = Math.min(
+        SHEETS_INITIAL_RETRY_MS * 2 ** attempt +
+          Math.random() * SHEETS_RETRY_JITTER_MS,
+        SHEETS_MAX_RETRY_MS,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      continue;
+    }
     throw new Error(
       `Google Sheets request failed with status ${response.status}${details ? `: ${details}` : ""}`,
     );
   }
-
-  if (response.status === 204) return null;
-  return response.json();
 }
 
 export async function readSpreadsheetMetadata(spreadsheetId) {
@@ -123,13 +142,19 @@ export async function readSpreadsheetMetadata(spreadsheetId) {
 }
 
 export async function ensureSheet(spreadsheetId, sheetName) {
+  const key = JSON.stringify([spreadsheetId, sheetName]);
+  if (sheetIds.has(key)) return sheetIds.get(key);
   const metadata = await readSpreadsheetMetadata(spreadsheetId);
   const sheets = Array.isArray(metadata?.sheets) ? metadata.sheets : [];
-  if (sheets.some((sheet) => sheet.properties?.title === sheetName)) {
-    return;
+  const existing = sheets.find(
+    (sheet) => sheet.properties?.title === sheetName,
+  );
+  if (existing) {
+    sheetIds.set(key, existing.properties.sheetId);
+    return existing.properties.sheetId;
   }
 
-  await sheetsRequest(spreadsheetId, ":batchUpdate", {
+  const result = await sheetsRequest(spreadsheetId, ":batchUpdate", {
     method: "POST",
     body: JSON.stringify({
       requests: [
@@ -143,6 +168,9 @@ export async function ensureSheet(spreadsheetId, sheetName) {
       ],
     }),
   });
+  const sheetId = result.replies[0].addSheet.properties.sheetId;
+  sheetIds.set(key, sheetId);
+  return sheetId;
 }
 
 export async function getLatestSheetTitle(spreadsheetId) {
@@ -251,11 +279,33 @@ export async function readSheetValues(
 }
 
 export async function seedSheet(spreadsheetId, sheetName, values) {
-  await ensureSheet(spreadsheetId, sheetName);
-  await clearSheetRange(spreadsheetId, sheetName);
-  if (values.length > 0) {
-    await writeSheetValues(spreadsheetId, sheetName, values);
-  }
+  const sheetId = await ensureSheet(spreadsheetId, sheetName);
+  await sheetsRequest(spreadsheetId, ":batchUpdate", {
+    method: "POST",
+    body: JSON.stringify({
+      requests: [
+        {
+          updateCells: {
+            range: { sheetId },
+            fields: "userEnteredValue",
+            rows: values.map((row) => ({
+              values: row.map((value) => {
+                if (value === null || value === undefined || value === "")
+                  return {};
+                const field =
+                  typeof value === "number"
+                    ? "numberValue"
+                    : typeof value === "boolean"
+                      ? "boolValue"
+                      : "stringValue";
+                return { userEnteredValue: { [field]: value } };
+              }),
+            })),
+          },
+        },
+      ],
+    }),
+  });
 }
 
 export async function seedLatestSheet(spreadsheetId, values) {

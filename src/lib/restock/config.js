@@ -1,23 +1,16 @@
+import process from "node:process";
+import { PLAN_MACHINES } from "../production-plan.js";
+
 export const SHEET_IDS = {
   productionPlan: process.env.PRODUCTION_PLAN_SHEET_ID,
   inventory: process.env.INVENTORY_SHEET_ID,
   restockLog: process.env.RESTOCK_LOG_SHEET_ID,
 };
 
-export const MACHINE_CONFIG = [
-  {
-    label: "30th",
-    machineId: process.env.NAYAX_MACHINE_30TH_ID,
-    rows: 7,
-    columns: 5,
-  },
-  {
-    label: "Towne",
-    machineId: process.env.NAYAX_MACHINE_TOWNE_ID,
-    rows: 7,
-    columns: 5,
-  },
-];
+export const MACHINE_CONFIG = PLAN_MACHINES.map((machine) => ({
+  ...machine,
+  machineId: process.env[`NAYAX_MACHINE_${machine.label.toUpperCase()}_ID`],
+}));
 
 export const RESTOCK_LOG_SHEET = "Restock Log";
 export const VISITS_SHEET = "Visits";

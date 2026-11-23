@@ -1,6 +1,8 @@
 import { defineConfig } from "vitest/config";
 import dotenv from "dotenv";
 
+const INTEGRATION_TIMEOUT_MS = 120000;
+
 dotenv.config({ path: ".env.integration" });
 
 export default defineConfig({
@@ -8,8 +10,8 @@ export default defineConfig({
     environment: "node",
     include: ["tests/integration/**/*.test.js"],
     globals: true,
-    testTimeout: 60000,
-    hookTimeout: 60000,
+    testTimeout: INTEGRATION_TIMEOUT_MS,
+    hookTimeout: INTEGRATION_TIMEOUT_MS,
     fileParallelism: false,
   },
 });

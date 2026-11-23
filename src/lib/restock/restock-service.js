@@ -30,19 +30,13 @@ import {
   slotCapacityForDrink,
   slotCapacityForDrinkParts,
 } from "./drinks.js";
+import { parseSlots } from "../production-plan.js";
 
 function parseInteger(value, fallback = 0) {
   if (value === "" || value === null || typeof value === "undefined")
     return fallback;
   const number = parseInt(value, 10);
   return Number.isInteger(number) && number >= 0 ? number : fallback;
-}
-
-function parseSlots(value) {
-  return String(value || "")
-    .split(/[,\s;]+/)
-    .map((slot) => Number(slot.trim()))
-    .filter((slot) => Number.isInteger(slot) && slot > 0);
 }
 
 function normalizeColumnName(value) {
@@ -340,12 +334,13 @@ export async function determineEvent(batchId, options = {}) {
 export async function buildRestockData(machineConfig, date, options = {}) {
   const batchId = `${machineConfig.label}-${date}`;
   const event = await determineEvent(batchId, options);
+  const productionPlanRows = await loadProductionPlanRows();
 
   // call Nayax and sheets in parallel to reduce latency
   const [machineProducts, sheetRows] = await Promise.all([
     getMachineProducts(machineConfig.machineId),
     event === RESTOCK_EVENTS.load
-      ? loadProductionPlanRows()
+      ? productionPlanRows
       : event === RESTOCK_EVENTS.topoff
         ? readInventoryRows()
         : null,

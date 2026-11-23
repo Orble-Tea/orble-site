@@ -35,12 +35,12 @@
 
 We have four levels of tests in this repo. The first three run in CI on every push with zero secrets.
 
-| Level | What is mocked | Command |
-| --- | --- | --- |
-| Unit (vitest) | everything outside the function | `npm test` |
-| Browser (Playwright) | everything server-side | `npx playwright test --project=browser` |
+| Level                    | What is mocked                                                           | Command                                     |
+| ------------------------ | ------------------------------------------------------------------------ | ------------------------------------------- |
+| Unit (vitest)            | everything outside the function                                          | `npm test`                                  |
+| Browser (Playwright)     | everything server-side                                                   | `npx playwright test --project=browser`     |
 | Integration (Playwright) | external dependencies (Nayax/Sheets, via `tests/e2e/fixture-server.mjs`) | `npx playwright test --project=integration` |
-| Smoke | nothing | `npm run smoke` (manual only, see below) |
+| Smoke                    | nothing                                                                  | `npm run smoke` (manual only, see below)    |
 
 ### Live smoke test
 
@@ -70,3 +70,9 @@ Rules the smoke lives by:
 - moon image
   - source: https://unsplash.com/@nasa
 - other than that, a lot of material (showcase data, copy) was taken from official Astro sources, in particular https://astro.build/blog/introducing-astro/ and https://github.com/withastro/astro.build
+
+## Production plan validation
+
+The website and Apps Script share production-plan slot validation. See
+[Apps Script setup and live inventory](apps-script/README.md) for the clasp
+workflow, GitHub secret, and one-time trigger setup.

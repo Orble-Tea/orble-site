@@ -10,6 +10,39 @@ import {
 } from "../../../src/lib/restock/google-sheets.js";
 
 describe("google sheets helpers", () => {
+  it("returns validated drinks and Boba Pack while preserving source positions", async () => {
+    vi.stubEnv("GOOGLE_SHEETS_ACCESS_TOKEN", "sheets-token");
+    const values = [
+      [
+        "Recipe",
+        "Drink Variation",
+        "Amount to Make",
+        "Amount to 30th",
+        "Slot (30th)",
+        "Amount to Towne",
+        "Slot (Towne)",
+        "Total Stickers",
+      ],
+      ["Tea", "Thai Tea 16oz", 4, 4, "1", 0, "", 4],
+      ["Topping", "Boba Pack", 6, 6, "3", 0, ""],
+      ["", "", 4, "", "", "", "", 4],
+      ["Tea", "Matcha 16oz", 4, 0, "", 4, "2", 4],
+      ["Catering"],
+    ];
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ values })),
+    );
+    const selected = await readSheetValues("sheet-id", "Production Plan");
+    expect(selected).toHaveLength(5);
+    expect(selected[2][1]).toBe("Boba Pack");
+    expect(selected[3]).toEqual([]);
+    expect(selected[4][0]).toBe("Tea");
+    expect(
+      rowsToObjects(selected)
+        .filter((row) => row["Drink Variation"])
+        .map((row) => row._rowNumber),
+    ).toEqual([2, 3, 5]);
+  });
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
@@ -23,11 +56,12 @@ describe("google sheets helpers", () => {
       }),
     );
 
-    await expect(
-      readSheetValues("sheet-id", "Production Plan"),
-    ).resolves.toEqual([["Drink"], ["Thai Tea"]]);
+    await expect(readSheetValues("sheet-id", "Inventory")).resolves.toEqual([
+      ["Drink"],
+      ["Thai Tea"],
+    ]);
     expect(fetchMock).toHaveBeenCalledWith(
-      "https://sheets.googleapis.com/v4/spreadsheets/sheet-id/values/'Production%20Plan'",
+      "https://sheets.googleapis.com/v4/spreadsheets/sheet-id/values/'Inventory'",
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer sheets-token",

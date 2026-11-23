@@ -14,16 +14,19 @@ import { buildRestockData } from "../../lib/restock/restock-service.js";
 
 export async function GET({ url }) {
   try {
-    if (!requireRestockSecretKey(url.searchParams.get("key"))) return invalidKey();
+    if (!requireRestockSecretKey(url.searchParams.get("key")))
+      return invalidKey();
 
     const machineConfig = getMachineConfig(url.searchParams.get("machine"));
     if (!machineConfig) return badRequest("Unknown machine");
 
     const date = url.searchParams.get("date");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return badRequest("Invalid date");
-    if (!machineConfig.machineId) return serverError("Machine is not configured");
+    if (!machineConfig.machineId)
+      return serverError("Machine is not configured");
 
-    const requestedMode = url.searchParams.get("mode") || url.searchParams.get("event");
+    const requestedMode =
+      url.searchParams.get("mode") || url.searchParams.get("event");
     if (requestedMode && String(requestedMode).toLowerCase() !== "clearout") {
       return badRequest("Invalid mode");
     }
@@ -33,6 +36,13 @@ export async function GET({ url }) {
     });
     return json(data);
   } catch (error) {
+    if (error.productionPlanInvalid) {
+      return upstreamError(error.message, {
+        service: "google_sheets",
+        code: "INVALID_PRODUCTION_PLAN",
+        issues: error.issues,
+      });
+    }
     if (error.alreadySubmitted || error.clearoutRequiresLoad) {
       return conflict(error.message, error.existingEntryRow);
     }
